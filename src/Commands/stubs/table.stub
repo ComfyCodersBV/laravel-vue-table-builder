@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tables;
+
+use App\TableBuilder\AbstractTable;
+use App\TableBuilder\TableConfig;
+use App\TableBuilder\Fields\Submit;
+use App\TableBuilder\Fields\Text;
+
+class {{ class }} extends AbstractTable
+{
+    public function for()
+    {
+        return {{ model }}::query();
+    }
+
+    /**
+     * Configure the given SpladeTable.
+     *
+     * @param \ProtoneMedia\Splade\SpladeTable $table
+     * @return void
+     */
+    public function configure(SpladeTable $table)
+    {
+        $table
+            ->withGlobalSearch(columns: ['id'])
+            ->column('id', sortable: true);
+
+            // ->searchInput()
+            // ->selectFilter()
+            // ->withGlobalSearch()
+
+            // ->bulkAction()
+            // ->export()
+    }
+}
