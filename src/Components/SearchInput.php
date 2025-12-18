@@ -38,4 +38,17 @@ class SearchInput
             $this->value,
         );
     }
+
+    /**
+     * Convert the search input to an array.
+     */
+    public function toArray(): array
+    {
+        return [
+            'key' => $this->key,
+            'columns' => $this->columns,
+            'label' => $this->label,
+            'value' => $this->value,
+        ];
+    }
 }

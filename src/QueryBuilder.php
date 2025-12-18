@@ -122,7 +122,7 @@ class QueryBuilder extends TableBuilder
      */
     public function parseTermsIntoCollection(string $terms): Collection
     {
-        return Collection::make(str_getcsv($terms, ' ', '"'))
+        return Collection::make(str_getcsv($terms, ' ', '"', '\\'))
             ->reject(function ($term = null) {
                 return is_null($term) || trim($term) === '';
             })

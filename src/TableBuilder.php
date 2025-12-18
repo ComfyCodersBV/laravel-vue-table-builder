@@ -5,6 +5,7 @@ namespace TranquilTools\TableBuilder;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
+use JsonSerializable;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
@@ -20,8 +21,9 @@ use TranquilTools\TableBuilder\Concerns\HasExports;
 use TranquilTools\TableBuilder\Concerns\HasFilters;
 use TranquilTools\TableBuilder\Concerns\HasResource;
 use TranquilTools\TableBuilder\Concerns\HasSearchInputs;
+use TranquilTools\TableBuilder\Exceptions\PaginationException;
 
-class TableBuilder implements Arrayable
+class TableBuilder implements Arrayable, JsonSerializable
 {
     use Conditionable;
     use HasBulkActions;
@@ -114,6 +116,11 @@ class TableBuilder implements Arrayable
         }
 
         if ($resource instanceof Builder || $resource instanceof SpatieQueryBuilder) {
+            return new QueryBuilder($resource);
+        }
+
+        // If it's an Eloquent Builder, wrap it with QueryBuilder
+        if ($resource instanceof \Illuminate\Database\Eloquent\Builder) {
             return new QueryBuilder($resource);
         }
 
@@ -337,10 +344,21 @@ class TableBuilder implements Arrayable
     }
 
     /**
+     * Convert the table to JSON (called by Inertia).
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
+    }
+
+    /**
      * Convert the table to an array for Inertia.
      */
     public function toArray(): array
     {
+        // Ensure the resource is loaded before converting to array
+        $this->beforeRender();
+        
         $data = $this->resource;
         $pagination = null;
 
@@ -377,7 +395,7 @@ class TableBuilder implements Arrayable
             'columns' => $this->columns->map->toArray()->toArray(),
             'pagination' => $pagination,
             'filters' => $this->filters,
-            'searchInputs' => $this->searchInputs,
+            'searchInputs' => $this->searchInputs()->map->toArray()->toArray(),
             'perPageOptions' => $this->perPageOptions,
             'defaultSort' => $this->defaultSort,
             'bulkActions' => $this->bulkActions,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
   Table,
   TableBody,
@@ -22,23 +22,68 @@ import { Button } from '@/Components/ui/button';
 import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Funnel, Search } from 'lucide-vue-next'
 import type { TableData, Column } from '@/types/table-builder'
 import { trans } from 'laravel-vue-i18n';
+import { debounce } from 'lodash-es'
 
 const props = defineProps<{
   table: TableData
   name?: string
 }>()
-console.log(props.table)
+
 const tableName = computed(() => props.name || 'default')
 const columnSelector = computed(() => props.table.columns.some((column) => column.can_be_hidden))
+
+// Column visibility state
+const hiddenColumns = ref<Set<string>>(new Set(
+  props.table.columns.filter(c => c.hidden).map(c => c.key)
+))
+
+const visibleColumns = computed(() =>
+  props.table.columns.filter(column => !hiddenColumns.value.has(column.key))
+)
+
+function toggleColumn(columnKey: string, visible: boolean) {
+    console.log(columnKey, visible, hiddenColumns)
+  if (visible) {
+    hiddenColumns.value.delete(columnKey)
+  } else {
+    hiddenColumns.value.add(columnKey)
+  }
+  // Trigger reactivity
+  hiddenColumns.value = new Set(hiddenColumns.value)
+}
+
+// Search state
+const searchValue = ref(props.table.searchInputs?.[0]?.value || '')
+
+// Debounced search handler
+const handleSearch = debounce((value: string) => {
+  const params = new URLSearchParams(window.location.search)
+
+  if (value) {
+    params.set('filter[global]', value)
+  } else {
+    params.delete('filter[global]')
+  }
+
+  router.get(window.location.pathname + '?' + params.toString(), {}, {
+    preserveState: true,
+    preserveScroll: true,
+  })
+}, 350)
+
+// Watch for search value changes
+watch(searchValue, (newValue) => {
+  handleSearch(newValue)
+})
 
 function handleSort(column: Column) {
   if (!column.sortable) return
 
   const currentSort = column.sorted
   const newSort = currentSort === 'asc' ? 'desc' : currentSort === 'desc' ? false : 'asc'
-  
+
   const sortParam = newSort ? (newSort === 'desc' ? `-${column.key}` : column.key) : undefined
-  
+
   router.get(window.location.pathname, {
     ...Object.fromEntries(new URLSearchParams(window.location.search)),
     sort: sortParam,
@@ -86,7 +131,7 @@ function getCellValue(row: any, key: string) {
               <Input
                   ref="searchInput"
                   v-model="searchValue"
-                  :placeholder="table.searchInputs[0].label"
+                  :placeholder="table.searchInputs.global.label"
                   class="pl-8"
               />
           </div>
@@ -102,15 +147,10 @@ function getCellValue(row: any, key: string) {
               <DropdownMenuContent align="end">
                   <DropdownMenuCheckboxItem
                       v-for="column in table.columns.filter((column) => column.can_be_hidden)"
-                      :key="column.id"
+                      :key="column.key"
                       class="capitalize"
-                      :model-value="! column.hidden"
-                      @update:model-value="
-                          (value) => {
-                              column.hidden = !!value;
-                              console.log(column.hidden, !!value)
-                          }
-                      "
+                      :model-value="! hiddenColumns.has(column.key)"
+                      @update:model-value="(checked) => toggleColumn(column.key, checked)"
                   >
                       {{ column.label }}
                   </DropdownMenuCheckboxItem>
@@ -160,7 +200,7 @@ function getCellValue(row: any, key: string) {
         <TableHeader>
           <TableRow>
             <TableHead
-              v-for="column in table.columns"
+              v-for="column in visibleColumns"
               :key="column.key"
               :class="column.headerClass"
             >
@@ -180,7 +220,7 @@ function getCellValue(row: any, key: string) {
         <TableBody>
           <TableRow v-if="!table.data || table.data.length === 0">
             <TableCell
-              :colspan="table.columns.length"
+              :colspan="visibleColumns.length"
               class="text-center text-muted-foreground"
             >
               No results found.
@@ -188,7 +228,7 @@ function getCellValue(row: any, key: string) {
           </TableRow>
           <TableRow v-for="(row, index) in table.data" :key="index">
             <TableCell
-              v-for="column in table.columns"
+              v-for="column in visibleColumns"
               :key="column.key"
               :class="column.class"
             >
