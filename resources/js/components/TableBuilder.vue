@@ -96,6 +96,22 @@ function handleSort(column: Column) {
 function getCellValue(row: any, key: string) {
   return key.split('.').reduce((obj, k) => obj?.[k], row)
 }
+
+function handleRowClick(index: number) {
+  if (!props.table.rowLinks || !props.table.rowLinks[index]) return
+  
+  const url = props.table.rowLinks[index]
+  
+  if (props.table.rowLinkType === 'modal') {
+    router.visit(url, {
+      only: ['modal'],
+      preserveState: true,
+      preserveScroll: true,
+    })
+  } else {
+    router.visit(url)
+  }
+}
 </script>
 
 <template>
@@ -226,7 +242,12 @@ function getCellValue(row: any, key: string) {
               No results found.
             </TableCell>
           </TableRow>
-          <TableRow v-for="(row, index) in table.data" :key="index">
+          <TableRow 
+            v-for="(row, index) in table.data" 
+            :key="index"
+            @click="table.rowLinks && table.rowLinks[index] ? handleRowClick(index) : undefined"
+            :class="table.rowLinks && table.rowLinks[index] ? 'cursor-pointer hover:bg-muted/50' : ''"
+          >
             <TableCell
               v-for="column in visibleColumns"
               :key="column.key"

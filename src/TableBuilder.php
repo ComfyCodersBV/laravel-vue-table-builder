@@ -399,6 +399,8 @@ class TableBuilder implements Arrayable, JsonSerializable
             'perPageOptions' => $this->perPageOptions,
             'defaultSort' => $this->defaultSort,
             'bulkActions' => $this->bulkActions,
+            'rowLinks' => $this->rowLinks->toArray(),
+            'rowLinkType' => $this->rowLinkType,
         ];
     }
 

@@ -25,13 +25,15 @@ trait HasResource
      * Setter for the row-link callable that will be called for
      * every row in the data set to determine the target URL.
      *
+     * @param  callable  $callback
+     * @param  bool  $modal  Whether to open the link in a modal
      * @return $this
      */
-    public function rowLink(callable $callback): self
+    public function rowLink(callable $callback, bool $modal = false): self
     {
         $this->rowLinkCallable = $callback;
 
-        $this->rowLinkType = 'link';
+        $this->rowLinkType = $modal ? 'modal' : 'link';
 
         return $this;
     }
@@ -58,9 +60,7 @@ trait HasResource
      */
     public function rowModal(callable $callback): self
     {
-        return tap($this->rowLink($callback), function () {
-            $this->rowLinkType = 'modal';
-        });
+        return $this->rowLink($callback, modal: true);
     }
 
     /**
