@@ -5,7 +5,6 @@ namespace TranquilTools\TableBuilder;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
-use JsonSerializable;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
@@ -13,8 +12,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Conditionable;
 use InvalidArgumentException;
-use TranquilTools\TableBuilder\Components\Column;
+use JsonSerializable;
 use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
+use TranquilTools\TableBuilder\Components\Column;
 use TranquilTools\TableBuilder\Concerns\HasBulkActions;
 use TranquilTools\TableBuilder\Concerns\HasColumns;
 use TranquilTools\TableBuilder\Concerns\HasExports;
@@ -303,10 +303,11 @@ class TableBuilder implements Arrayable, JsonSerializable
         bool $hidden = false,
         bool $sortable = false,
         bool $searchable = false,
-        string $alignment = 'left'
+        string $alignment = 'left',
+        ?callable $as = null
     ): self {
         $sorted = false;
-        
+
         // Check if this column is currently being sorted
         $sortQuery = $this->query('sort');
         if ($sortQuery) {
@@ -328,8 +329,8 @@ class TableBuilder implements Arrayable, JsonSerializable
             exportFormat: null,
             exportStyling: null,
             classes: null,
-            as: null,
-            alignment: $alignment,
+            as: $as,
+            alignment: $alignment
         ));
 
         return $this;
@@ -341,6 +342,30 @@ class TableBuilder implements Arrayable, JsonSerializable
     public function columns(): Collection
     {
         return $this->columns;
+    }
+
+    protected function transformItem($item): array
+    {
+        $itemArray = $item;
+        if ($item instanceof Collection) {
+            $itemArray = $item->toArray();
+        }
+
+        if (! is_array($itemArray)) {
+            $itemArray = (array) $item;
+        }
+
+        $this->columns->each(function (Column $column) use (&$itemArray, $item) {
+            if (! is_callable($column->as)) {
+                return;
+            }
+
+            $value = $column->getDataFromItem($item);
+            $transformed = call_user_func($column->as, $value, $item);
+            data_set($itemArray, $column->key, $transformed);
+        });
+
+        return $itemArray;
     }
 
     /**
@@ -358,14 +383,14 @@ class TableBuilder implements Arrayable, JsonSerializable
     {
         // Ensure the resource is loaded before converting to array
         $this->beforeRender();
-        
+
         $data = $this->resource;
         $pagination = null;
 
         // Extract pagination data if the resource is paginated
         if (is_object($data) && method_exists($data, 'toArray')) {
             $paginationData = $data->toArray();
-            
+
             if (isset($paginationData['data'])) {
                 $pagination = [
                     'current_page' => $paginationData['current_page'] ?? 1,
@@ -380,7 +405,7 @@ class TableBuilder implements Arrayable, JsonSerializable
                     'next_page_url' => $paginationData['next_page_url'] ?? null,
                     'prev_page_url' => $paginationData['prev_page_url'] ?? null,
                 ];
-                
+
                 $data = $paginationData['data'];
             }
         }
@@ -388,6 +413,12 @@ class TableBuilder implements Arrayable, JsonSerializable
         // Convert data to array if it's a collection
         if ($data instanceof Collection) {
             $data = $data->toArray();
+        }
+
+        if (is_array($data)) {
+            $data = collect($data)->map(function ($item) {
+                return $this->transformItem($item);
+            })->all();
         }
 
         return [
@@ -493,10 +524,5 @@ class TableBuilder implements Arrayable, JsonSerializable
     public function cursorPaginate($perPage = null)
     {
         $this->preventPaginationCall();
-    }
-
-    public function getSpladeId(): string
-    {
-        return md5("splade-table-{$this->name}");
     }
 }

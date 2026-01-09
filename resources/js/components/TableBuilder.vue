@@ -99,9 +99,9 @@ function getCellValue(row: any, key: string) {
 
 function handleRowClick(index: number) {
   if (!props.table.rowLinks || !props.table.rowLinks[index]) return
-  
+
   const url = props.table.rowLinks[index]
-  
+
   if (props.table.rowLinkType === 'modal') {
     router.visit(url, {
       only: ['modal'],
@@ -242,8 +242,8 @@ function handleRowClick(index: number) {
               No results found.
             </TableCell>
           </TableRow>
-          <TableRow 
-            v-for="(row, index) in table.data" 
+          <TableRow
+            v-for="(row, index) in table.data"
             :key="index"
             @click="table.rowLinks && table.rowLinks[index] ? handleRowClick(index) : undefined"
             :class="table.rowLinks && table.rowLinks[index] ? 'cursor-pointer hover:bg-muted/50' : ''"
@@ -252,8 +252,8 @@ function handleRowClick(index: number) {
               v-for="column in visibleColumns"
               :key="column.key"
               :class="column.class"
+              v-html="getCellValue(row, column.key)"
             >
-              {{ getCellValue(row, column.key) }}
             </TableCell>
           </TableRow>
         </TableBody>
