@@ -6,6 +6,7 @@ export interface Column {
     hidden?: boolean
     class?: string
     headerClass?: string
+    clickable?: boolean
 }
 
 export interface PaginationLink {
