@@ -12,12 +12,6 @@ use Illuminate\Support\Str;
 
 class Column implements Arrayable
 {
-    /**
-     * This class represents a column within a Splade Table.
-     *
-     * @param  Closure|string  $exportFormat
-     * @param  Closure|array  $exportStyling
-     */
     public function __construct(
         public string $key,
         public string $label,
@@ -32,7 +26,9 @@ class Column implements Arrayable
         public array|string|null $classes = null,
         public ?Closure $as = null,
         public string $alignment = 'left',
-    ) {
+        public bool $clickable = true,
+    )
+    {
         if (is_array($classes)) {
             $classes = Arr::flatten($classes);
         }
@@ -59,6 +55,7 @@ class Column implements Arrayable
             $this->classes,
             $this->as,
             $this->alignment,
+            $this->clickable,
         );
     }
 
@@ -70,14 +67,15 @@ class Column implements Arrayable
     public function toArray()
     {
         return [
-            'key'           => $this->key,
-            'label'         => $this->label,
+            'key' => $this->key,
+            'label' => $this->label,
             'can_be_hidden' => $this->canBeHidden,
-            'hidden'        => $this->hidden,
-            'sortable'      => $this->sortable !== false,
-            'sorted'        => $this->sorted,
-            'highlight'     => $this->highlight,
-            'alignment'     => $this->alignment,
+            'hidden' => $this->hidden,
+            'sortable' => $this->sortable !== false,
+            'sorted' => $this->sorted,
+            'highlight' => $this->highlight,
+            'alignment' => $this->alignment,
+            'clickable' => $this->clickable,
         ];
     }
 
@@ -86,7 +84,7 @@ class Column implements Arrayable
      * and whether that column is based on a relationship
      * Supports returning multiple items as well.
      *
-     * @param  mixed  $item
+     * @param mixed $item
      * @return mixed
      */
     public function getDataFromItem($item)
@@ -102,11 +100,11 @@ class Column implements Arrayable
         }
 
         return data_get($item, $this->key, function () use ($item) {
-            if (!is_object($item)) {
+            if (! is_object($item)) {
                 return null;
             }
 
-            return rescue(fn () => $item->{$this->key}, report: false);
+            return rescue(fn() => $item->{$this->key}, report: false);
         });
     }
 

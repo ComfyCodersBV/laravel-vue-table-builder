@@ -97,8 +97,15 @@ function getCellValue(row: any, key: string) {
   return key.split('.').reduce((obj, k) => obj?.[k], row)
 }
 
-function handleRowClick(index: number) {
+function handleRowClick(index: number, e: MouseEvent) {
   if (!props.table.rowLinks || !props.table.rowLinks[index]) return
+
+  const cell = (e.target as HTMLElement).closest('td')
+  if (cell) {
+    const cellIndex = Array.from(cell.parentElement!.children).indexOf(cell)
+    const column = visibleColumns.value[cellIndex]
+    if (column && column.clickable === false) return
+  }
 
   const url = props.table.rowLinks[index]
 
@@ -245,7 +252,7 @@ function handleRowClick(index: number) {
           <TableRow
             v-for="(row, index) in table.data"
             :key="index"
-            @click="table.rowLinks && table.rowLinks[index] ? handleRowClick(index) : undefined"
+            @click="table.rowLinks && table.rowLinks[index] ? handleRowClick(index, $event) : undefined"
             :class="table.rowLinks && table.rowLinks[index] ? 'cursor-pointer hover:bg-muted/50' : ''"
           >
             <TableCell

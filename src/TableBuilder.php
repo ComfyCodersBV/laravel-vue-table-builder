@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace TranquilTools\TableBuilder;
 
 use Illuminate\Contracts\Database\Query\Builder;
@@ -71,21 +73,16 @@ class TableBuilder implements Arrayable, JsonSerializable
 
     protected static bool $defaultResetButton = true;
 
-    /**
-     * Creates a new instance.
-     *
-     * @param  mixed  $resource
-     */
     public function __construct($resource, ?Request $request = null)
     {
         $this->request = $request ?: request();
 
         $this->resource = $resource;
 
-        $this->columns      = new Collection;
-        $this->filters      = new Collection;
+        $this->columns = new Collection;
+        $this->filters = new Collection;
         $this->searchInputs = new Collection;
-        $this->rowLinks     = new Collection;
+        $this->rowLinks = new Collection;
 
         $this->name(static::DEFAULT_NAME);
 
@@ -99,7 +96,7 @@ class TableBuilder implements Arrayable, JsonSerializable
     /**
      * Helper method to create a new instance.
      *
-     * @param  mixed  $resource
+     * @param mixed $resource
      */
     public static function for($resource): QueryBuilder|static
     {
@@ -142,7 +139,7 @@ class TableBuilder implements Arrayable, JsonSerializable
     /**
      * Retrieve a query string item from the request.
      *
-     * @param  mixed|null  $default
+     * @param mixed|null $default
      * @return mixed
      */
     protected function query(string $key, $default = null)
@@ -260,7 +257,7 @@ class TableBuilder implements Arrayable, JsonSerializable
      */
     public function isSorted(): bool
     {
-        return $this->query('sort') ? true : false;
+        return (bool) $this->query('sort');
     }
 
     /**
@@ -304,8 +301,10 @@ class TableBuilder implements Arrayable, JsonSerializable
         bool $sortable = false,
         bool $searchable = false,
         string $alignment = 'left',
-        ?callable $as = null
-    ): self {
+        ?callable $as = null,
+        bool $clickable = true,
+    ): self
+    {
         $sorted = false;
 
         // Check if this column is currently being sorted
@@ -330,15 +329,13 @@ class TableBuilder implements Arrayable, JsonSerializable
             exportStyling: null,
             classes: null,
             as: $as,
-            alignment: $alignment
+            alignment: $alignment,
+            clickable: $clickable,
         ));
 
         return $this;
     }
 
-    /**
-     * Get all columns.
-     */
     public function columns(): Collection
     {
         return $this->columns;
@@ -410,7 +407,6 @@ class TableBuilder implements Arrayable, JsonSerializable
             }
         }
 
-        // Convert data to array if it's a collection
         if ($data instanceof Collection) {
             $data = $data->toArray();
         }
@@ -442,12 +438,12 @@ class TableBuilder implements Arrayable, JsonSerializable
      */
     public function defaultSort(string $sort, string $direction = ''): self
     {
-        if ($direction && !in_array($direction, ['asc', 'desc'], true)) {
+        if ($direction && ! in_array($direction, ['asc', 'desc'], true)) {
             throw new InvalidArgumentException('Direction must be "asc" or "desc".');
         }
 
         if (Str::startsWith($sort, '-')) {
-            $sort      = Str::after($sort, '-');
+            $sort = Str::after($sort, '-');
             $direction = $direction ?: 'desc';
         }
 
@@ -495,7 +491,7 @@ class TableBuilder implements Arrayable, JsonSerializable
      */
     public function loadResource(): self
     {
-        if (!$this->resourceLoaded) {
+        if (! $this->resourceLoaded) {
             $this->resourceLoaded = true;
         }
 
@@ -507,7 +503,7 @@ class TableBuilder implements Arrayable, JsonSerializable
     private function preventPaginationCall()
     {
         throw new PaginationException(
-            'You should call the paginate-method on the resource, or pass a query builder as a resource so you can work with the Splade Query Builder.'
+            'You should call the paginate-method on the resource, or pass a query builder as a resource so you can work with the Query Builder.'
         );
     }
 

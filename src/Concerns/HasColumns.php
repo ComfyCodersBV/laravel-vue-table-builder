@@ -20,7 +20,7 @@ trait HasColumns
     /**
      * Set a default for column hideable.
      *
-     * @param  bool
+     * @param bool
      * @return void
      */
     public static function defaultColumnCanBeHidden(bool $state = true)
@@ -41,9 +41,9 @@ trait HasColumns
     /**
      * Adds a new column to the table.
      *
-     * @param  bool  $searchable
-     * @param  callable|null  $exportFormat
-     * @param  callable|null  $exportStyling
+     * @param bool $searchable
+     * @param callable|null $exportFormat
+     * @param callable|null $exportStyling
      * @return $this
      */
     public function column(
@@ -60,8 +60,10 @@ trait HasColumns
         array|string|null $classes = null,
         ?callable $as = null,
         string $alignment = 'left',
-    ): self {
-        $key   = $key   !== null ? $key : Str::kebab($label);
+        bool $clickable = true,
+    ): self
+    {
+        $key = $key !== null ? $key : Str::kebab($label);
         $label = $label !== null ? $label : Str::headline(str_replace('.', ' ', $key));
 
         $highlight = is_bool($highlight)
@@ -88,9 +90,10 @@ trait HasColumns
             classes: $classes,
             as: $as,
             alignment: $alignment,
+            clickable: $clickable,
         ))->values();
 
-        if (!$searchable) {
+        if (! $searchable) {
             return $this;
         }
 
@@ -115,7 +118,7 @@ trait HasColumns
 
             if ($sort === $column->key) {
                 $sorted = 'asc';
-            } elseif ($sort === "-{$column->key}") {
+            } else if ($sort === "-{$column->key}") {
                 $sorted = 'desc';
             }
 
@@ -125,8 +128,8 @@ trait HasColumns
 
             $queryColumns = $this->query('columns', []);
 
-            if (!empty($queryColumns) && $column->canBeHidden) {
-                $cloned->hidden = !in_array($column->key, $queryColumns);
+            if (! empty($queryColumns) && $column->canBeHidden) {
+                $cloned->hidden = ! in_array($column->key, $queryColumns);
             }
 
             return $cloned;
@@ -139,7 +142,7 @@ trait HasColumns
     public function defaultVisibleToggleableColumns(): array
     {
         return $this->columns
-            ->filter(fn (Column $column) => !$column->canBeHidden || ($column->canBeHidden && !$column->hidden))
+            ->filter(fn(Column $column) => ! $column->canBeHidden || ($column->canBeHidden && ! $column->hidden))
             ->map->key
             ->sort()
             ->values()
@@ -152,7 +155,7 @@ trait HasColumns
     public function hasToggleableColumns(): bool
     {
         return $this->columns
-            ->filter(fn (Column $column) => $column->canBeHidden)
+            ->filter(fn(Column $column) => $column->canBeHidden)
             ->isNotEmpty();
     }
 }
