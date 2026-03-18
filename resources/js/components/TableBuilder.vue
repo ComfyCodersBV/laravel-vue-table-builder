@@ -53,7 +53,7 @@ function toggleColumn(columnKey: string, visible: boolean) {
 }
 
 // Search state
-const searchValue = ref(props.table.searchInputs?.[0]?.value || '')
+const searchValue = ref(props.table.searchInputs?.global?.value || '')
 
 // Debounced search handler
 const handleSearch = debounce((value: string) => {
@@ -149,12 +149,12 @@ function handleRowClick(index: number, e: MouseEvent) {
               </DropdownMenuContent>
           </DropdownMenu>
           <!-- Search Input -->
-          <div v-if="table.searchInputs" class="relative flex-1">
+          <div v-if="table.searchInputs?.global" class="relative flex-1">
               <Search class="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                   ref="searchInput"
                   v-model="searchValue"
-                  :placeholder="table.searchInputs.global.label"
+                  :placeholder="table.searchInputs?.global?.label"
                   class="pl-8"
               />
           </div>

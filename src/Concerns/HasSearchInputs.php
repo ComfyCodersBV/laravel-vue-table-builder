@@ -130,4 +130,13 @@ trait HasSearchInputs
             columns: $columns
         );
     }
+
+    public function withoutGlobalSearch(): self
+    {
+        $this->searchInputs = $this->searchInputs->reject(
+            fn (SearchInput $searchInput) => $searchInput->key === TableBuilder::GLOBAL_SEARCH_KEY
+        )->values();
+
+        return $this;
+    }
 }

@@ -5,6 +5,7 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
 ## 0.3 - 2026-03-18
 * Add clickable-parameter to table columns
 * Pass original Eloquent model instances to TableBuilder column as() callbacks
+* Make ->withGlobalSearch() unrequired & add/fix functionality for global search
 
 ## 0.2 - 2026-01-09
 * Implemented search functionality and column toggling. Fixed tablebuilder for usage

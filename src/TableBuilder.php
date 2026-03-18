@@ -63,8 +63,6 @@ class TableBuilder implements Arrayable, JsonSerializable
 
     protected static bool $hidePaginationWhenResourceContainsOnePage = false;
 
-    protected static bool|string $defaultGlobalSearch = false;
-
     protected ?AbstractTable $configurator = null;
 
     protected bool $resourceLoaded = false;
@@ -495,9 +493,36 @@ class TableBuilder implements Arrayable, JsonSerializable
     {
         if (! $this->resourceLoaded) {
             $this->resourceLoaded = true;
+            $this->filterCollectionResource();
         }
 
         return $this;
+    }
+
+    /**
+     * Applies active search inputs as case-insensitive filters on Collection resources.
+     */
+    private function filterCollectionResource(): void
+    {
+        if (! $this->resource instanceof Collection) {
+            return;
+        }
+
+        $this->searchInputs()->filter->value->each(function ($searchInput) {
+            $term = strtolower($searchInput->value);
+
+            $this->resource = $this->resource->filter(function ($item) use ($searchInput, $term) {
+                foreach (array_keys($searchInput->columns) as $column) {
+                    $value = strtolower((string) data_get($item, $column, ''));
+
+                    if (str_contains($value, $term)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            })->values();
+        });
     }
 
     public function performBulkAction(callable $action, array $ids) {}
