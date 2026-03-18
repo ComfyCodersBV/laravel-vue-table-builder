@@ -341,23 +341,29 @@ class TableBuilder implements Arrayable, JsonSerializable
         return $this->columns;
     }
 
-    protected function transformItem($item): array
+    private function toItemArray($item): array
     {
-        $itemArray = $item;
-        if ($item instanceof Collection) {
-            $itemArray = $item->toArray();
+        if (is_array($item)) {
+            return $item;
         }
 
-        if (! is_array($itemArray)) {
-            $itemArray = (array) $item;
+        if (method_exists($item, 'toArray')) {
+            return $item->toArray();
         }
+
+        return (array) $item;
+    }
+
+    protected function transformItem($item): array
+    {
+        $itemArray = $this->toItemArray($item);
 
         $this->columns->each(function (Column $column) use (&$itemArray, $item) {
             if (! is_callable($column->as)) {
                 return;
             }
 
-            $value = $column->getDataFromItem($item);
+            $value = $column->getDataFromItem($itemArray);
             $transformed = call_user_func($column->as, $value, $item);
             data_set($itemArray, $column->key, $transformed);
         });
@@ -403,18 +409,14 @@ class TableBuilder implements Arrayable, JsonSerializable
                     'prev_page_url' => $paginationData['prev_page_url'] ?? null,
                 ];
 
-                $data = $paginationData['data'];
+                $data = method_exists($data, 'items') ? collect($data->items()) : collect($paginationData['data']);
             }
         }
 
-        if ($data instanceof Collection) {
-            $data = $data->toArray();
-        }
+        $items = $data instanceof Collection ? $data : (is_array($data) ? collect($data) : null);
 
-        if (is_array($data)) {
-            $data = collect($data)->map(function ($item) {
-                return $this->transformItem($item);
-            })->all();
+        if ($items !== null) {
+            $data = $items->map(fn ($item) => $this->transformItem($item))->all();
         }
 
         return [
