@@ -2,6 +2,9 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 0.5 - 2026-03-20
+* Use `fetch()` + `openModal` for row modal links instead of Inertia `router.visit()`
+
 ## 0.4 - 2026-03-20
 * Add `callbackFilter()` method to support custom filter logic via a callable callback
 * Support callable callbacks on `Filter` component, applied in `QueryBuilder` instead of default constraint

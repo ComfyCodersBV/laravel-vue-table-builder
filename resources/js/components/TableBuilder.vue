@@ -21,7 +21,8 @@ import { Input } from '@/Components/ui/input';
 import { Button } from '@/Components/ui/button';
 import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Funnel, Search } from 'lucide-vue-next'
 import type { TableData, Column } from '@/types/table-builder'
-import { trans } from 'laravel-vue-i18n';
+import { trans } from 'laravel-vue-i18n'
+import { openModal } from '@/useModal';
 import { debounce } from 'lodash-es'
 
 const props = defineProps<{
@@ -130,11 +131,9 @@ function handleRowClick(index: number, e: MouseEvent) {
   const url = props.table.rowLinks[index]
 
   if (props.table.rowLinkType === 'modal') {
-    router.visit(url, {
-      only: ['modal'],
-      preserveState: true,
-      preserveScroll: true,
-    })
+    fetch(url, { headers: { Accept: 'application/json' } })
+      .then((r) => r.json())
+      .then(openModal)
   } else {
     router.visit(url)
   }
