@@ -14,6 +14,7 @@ use Kirschbaum\PowerJoins\EloquentJoins;
 use TranquilTools\TableBuilder\Table\PowerJoinsException;
 use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
 use TranquilTools\TableBuilder\Components\Column;
+use TranquilTools\TableBuilder\Components\Filter;
 use TranquilTools\TableBuilder\Components\SearchInput;
 
 class QueryBuilder extends TableBuilder
@@ -224,9 +225,15 @@ class QueryBuilder extends TableBuilder
         $this->ignoreCase(false);
         $this->parseTerms(false);
 
-        $this->filters()->filter->hasValue()->each(
-            fn (Filter $filter) => $this->applyConstraint([$filter->key => SearchInput::EXACT], $filter->value)
-        );
+        $this->filters()->filter->hasValue()->each(function (Filter $filter) {
+            if (is_callable($filter->callback)) {
+                ($filter->callback)($this->builder, $filter->value);
+
+                return;
+            }
+
+            $this->applyConstraint([$filter->key => SearchInput::EXACT], $filter->value);
+        });
 
         $this->ignoreCase($ignoreCaseSetting);
         $this->parseTerms($parseTermsSetting);

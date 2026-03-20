@@ -19,7 +19,8 @@ class Filter implements Arrayable
         public ?string $value,
         public bool $noFilterOption,
         public string $noFilterOptionLabel,
-        public string $type
+        public string $type,
+        public mixed $callback = null,
     ) {}
 
     /**
@@ -34,7 +35,8 @@ class Filter implements Arrayable
             $this->value,
             $this->noFilterOption,
             $this->noFilterOptionLabel,
-            $this->type
+            $this->type,
+            $this->callback,
         );
     }
 

@@ -421,7 +421,7 @@ class TableBuilder implements Arrayable, JsonSerializable
             'data' => $data ?? [],
             'columns' => $this->columns->map->toArray()->toArray(),
             'pagination' => $pagination,
-            'filters' => $this->filters,
+            'filters' => $this->filters()->values(),
             'searchInputs' => $this->searchInputs()->map->toArray()->toArray(),
             'perPageOptions' => $this->perPageOptions,
             'defaultSort' => $this->defaultSort,

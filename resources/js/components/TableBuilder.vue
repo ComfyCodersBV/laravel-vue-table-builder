@@ -52,6 +52,26 @@ function toggleColumn(columnKey: string, visible: boolean) {
   hiddenColumns.value = new Set(hiddenColumns.value)
 }
 
+// Filter dropdown open state
+const filterDropdownOpen = ref(false)
+
+function handleFilterChange(key: string, value: string) {
+  const params = new URLSearchParams(window.location.search)
+
+  if (value) {
+    params.set(`filter[${key}]`, value)
+  } else {
+    params.delete(`filter[${key}]`)
+  }
+
+  filterDropdownOpen.value = false
+
+  router.get(window.location.pathname + '?' + params.toString(), {}, {
+    preserveState: true,
+    preserveScroll: true,
+  })
+}
+
 // Search state
 const searchValue = ref(props.table.searchInputs?.global?.value || '')
 
@@ -126,7 +146,7 @@ function handleRowClick(index: number, e: MouseEvent) {
     <div class="flex items-center gap-4 pt-2 pb-4">
       <div class="flex flex-1 items-center gap-2">
           <!-- Filter dropdown -->
-          <DropdownMenu v-if="table.filters && Object.keys(table.filters).length > 0">
+          <DropdownMenu v-if="table.filters && Object.keys(table.filters).length > 0" v-model:open="filterDropdownOpen">
               <DropdownMenuTrigger as-child>
                   <Button variant="outline">
                       <Funnel class="h-4 w-4" />
@@ -137,12 +157,11 @@ function handleRowClick(index: number, e: MouseEvent) {
                       <label class="mb-2 block text-sm font-medium capitalize">{{ filter.label }}</label>
                       <select
                           class="w-full rounded-md border bg-white px-3 py-2 dark:bg-gray-800"
-                          :value="activeFilters?.[label.toLowerCase().replace(/\s+/g, '_')] || ''"
-                          @change="(e) => onFilterChange?.(label.toLowerCase().replace(/\s+/g, '_'), (e.target as HTMLSelectElement).value)"
+                          :value="filter.value || ''"
+                          @change="(e) => handleFilterChange(filter.key, (e.target as HTMLSelectElement).value)"
                       >
-                          <option value="">{{ trans('table.all') }}</option>
-                          <option v-for="(label, value) in filter.options" :key="filter.key" :value="filter.key">
-                              {{ label }}
+                          <option v-for="(optionLabel, optionValue) in filter.options" :key="optionValue" :value="optionValue">
+                              {{ optionLabel }}
                           </option>
                       </select>
                   </div>
