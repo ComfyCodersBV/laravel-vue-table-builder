@@ -202,7 +202,7 @@ function handleRowClick(index: number, e: MouseEvent) {
 
   <!-- Bulk Actions Bar -->
   <div
-      v-if="table.bulkActions && selectedCount > 0"
+      v-if="table.bulkActions && table.bulkActions.length > 0 && selectedCount > 0"
       class="mb-4 flex items-center justify-between rounded-md border bg-gray-50 p-3 dark:bg-gray-800"
   >
       <div class="flex items-center space-x-2">
