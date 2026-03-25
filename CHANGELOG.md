@@ -2,6 +2,9 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 0.6 - 2026-03-25
+* Apply defaultSort to query when no sort param is present
+
 ## 0.5 - 2026-03-20
 * Use `fetch()` + `openModal` for row modal links instead of Inertia `router.visit()`
 
