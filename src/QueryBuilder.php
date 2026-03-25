@@ -258,9 +258,11 @@ class QueryBuilder extends TableBuilder
      *
      * @return void
      */
-    private function applySortingAndEagerLoading()
+    private function applySortingAndEagerLoading(): void
     {
-        $this->columns()->each(function (Column $column) {
+        $anySorted = false;
+
+        $this->columns()->each(function (Column $column) use (&$anySorted) {
             if ($column->isNested()) {
                 // Eager load the relationship.
                 $this->builder->with($column->relationshipName());
@@ -268,8 +270,15 @@ class QueryBuilder extends TableBuilder
 
             if ($column->sorted) {
                 $this->applySorting($column);
+                $anySorted = true;
             }
         });
+
+        if (! $anySorted && $this->defaultSort !== '') {
+            $key = ltrim($this->defaultSort, '-');
+            $direction = str_starts_with($this->defaultSort, '-') ? 'desc' : 'asc';
+            $this->builder->orderBy($key, $direction);
+        }
     }
 
     /**
