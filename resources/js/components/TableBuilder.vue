@@ -104,10 +104,11 @@ function handleSort(column: Column) {
   const newSort = currentSort === 'asc' ? 'desc' : currentSort === 'desc' ? false : 'asc'
 
   const sortParam = newSort ? (newSort === 'desc' ? `-${column.key}` : column.key) : undefined
+  const sortKey = tableName.value && tableName.value !== 'default' ? `${tableName.value}_sort` : 'sort'
 
   router.get(window.location.pathname, {
     ...Object.fromEntries(new URLSearchParams(window.location.search)),
-    sort: sortParam,
+    [sortKey]: sortParam,
   }, {
     preserveState: true,
     preserveScroll: true,
