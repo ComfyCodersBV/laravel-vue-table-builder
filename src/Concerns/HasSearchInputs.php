@@ -16,11 +16,6 @@ trait HasSearchInputs
 
     protected static bool|string $defaultGlobalSearch = false;
 
-    /**
-     * Loops over the are and verifies that there's both a value
-     * and a (string) key. Items without a key will be handled
-     * in the QueryFilter::getTermAndWhereOperator() method.
-     */
     private static function normalizeSearchColumnsWithMethod(array $keys): array
     {
         return Collection::make($keys)->mapWithKeys(function ($value, $key) {
@@ -32,18 +27,13 @@ trait HasSearchInputs
         })->all();
     }
 
-    /**
-     * Add a search input to the table.
-     *
-     * @param  string  $key
-     * @return $this
-     */
     public function searchInput(
         array|string $key,
         ?string $label = null,
         ?string $defaultValue = null,
         array $columns = []
-    ): self {
+    ): self
+    {
         if (empty($columns)) {
             $columns = Arr::sort(Arr::wrap($key));
         }
@@ -66,16 +56,13 @@ trait HasSearchInputs
         return $this;
     }
 
-    /**
-     * Returns all Search Inputs, or finds on when $key is not empty.
-     */
     public function searchInputs(?string $key = null): Collection|SearchInput|null
     {
         $filters = $this->query('filter', []);
 
         $searchInputs = $this->searchInputs->map->clone()->keyBy->key;
 
-        if (!empty($filters)) {
+        if (! empty($filters)) {
             // Apply the input value from the request query.
             $searchInputs->each(function (SearchInput $searchInput) use ($filters) {
                 if (array_key_exists($searchInput->key, $filters)) {
@@ -87,29 +74,18 @@ trait HasSearchInputs
         return $key ? $searchInputs->get($key) : $searchInputs;
     }
 
-    /**
-     * Returns a boolean whether this table has search filters.
-     */
     public function hasSearchFiltersEnabled(): bool
     {
         return $this->searchInputs()->filter->value->isNotEmpty();
     }
 
-    /**
-     * Returns a boolean whether this table has toggleable search input.
-     */
     public function hasToggleableSearchInputs(): bool
     {
         return $this->searchInputs
-            ->reject(fn (SearchInput $searchInput) => $searchInput->key === TableBuilder::GLOBAL_SEARCH_KEY)
+            ->reject(fn(SearchInput $searchInput) => $searchInput->key === TableBuilder::GLOBAL_SEARCH_KEY)
             ->isNotEmpty();
     }
 
-    /**
-     * Set a default for global search.
-     *
-     * @return void
-     */
     public static function defaultGlobalSearch(bool|string $label = 'Search')
     {
         static::$defaultGlobalSearch = $label !== false
@@ -117,11 +93,6 @@ trait HasSearchInputs
             : false;
     }
 
-    /**
-     * Helper method to add a global search input.
-     *
-     * @return $this
-     */
     public function withGlobalSearch(?string $label = null, array $columns = []): self
     {
         return $this->searchInput(
@@ -134,7 +105,7 @@ trait HasSearchInputs
     public function withoutGlobalSearch(): self
     {
         $this->searchInputs = $this->searchInputs->reject(
-            fn (SearchInput $searchInput) => $searchInput->key === TableBuilder::GLOBAL_SEARCH_KEY
+            fn(SearchInput $searchInput) => $searchInput->key === TableBuilder::GLOBAL_SEARCH_KEY
         )->values();
 
         return $this;

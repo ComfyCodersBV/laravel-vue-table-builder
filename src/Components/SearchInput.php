@@ -14,11 +14,6 @@ class SearchInput
 
     const WILDCARD_RIGHT = 'wildcard_right';
 
-    /**
-     * This class represents a Search Input within a Splade Table.
-     *
-     * @param  string  $method
-     */
     public function __construct(
         public string $key,
         public array $columns,
@@ -26,9 +21,6 @@ class SearchInput
         public ?string $value = null,
     ) {}
 
-    /**
-     * Returns a clone of the instance.
-     */
     public function clone(): static
     {
         return new static(
@@ -39,9 +31,6 @@ class SearchInput
         );
     }
 
-    /**
-     * Convert the search input to an array.
-     */
     public function toArray(): array
     {
         return [

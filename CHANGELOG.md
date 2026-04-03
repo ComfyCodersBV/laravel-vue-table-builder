@@ -2,6 +2,9 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.0.0
+* Cleanup and refactor for 1.0 release
+
 ## 0.8 - 2026-04-03
 * Show which column is currently being sorted in which direction
 

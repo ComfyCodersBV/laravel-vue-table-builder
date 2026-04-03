@@ -11,33 +11,23 @@ trait HasExports
 {
     protected array $exports = [];
 
-    /**
-     * Returns the exports.
-     */
     public function getExports(): array
     {
         return $this->exports;
     }
 
-    /**
-     * Returns a boolean whether this table has exports.
-     */
     public function hasExports(): bool
     {
-        return !empty($this->exports);
+        return ! empty($this->exports);
     }
 
-    /**
-     * Adds an export.
-     *
-     * @return $this
-     */
     public function export(
         ?string $label = null,
         ?string $filename = null,
         ?string $type = null,
         array $events = [],
-    ): self {
+    ): self
+    {
         if (! class_exists(Excel::class)) {
             throw new LaravelExcelException(
                 "To generate exports from a Splade Table, please install the 'maatwebsite/excel' package."

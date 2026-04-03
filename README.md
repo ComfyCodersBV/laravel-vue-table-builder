@@ -7,47 +7,40 @@
 
 A powerful and flexible table builder package for Laravel with Vue 3, Inertia.js, and shadcn-vue components. Similar to Laravel Splade tables but built for modern Vue 3 applications with beautiful UI components.
 
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/laravel-vue-table-builder.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/laravel-vue-table-builder)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
-
 ## Installation
 
 You can install the package via composer:
 
 ```bash
-composer require comfycoders/laravel-vue-table-builder
+composer require tranquil-tools/laravel-vue-table-builder
 ```
+Alter you vite.config.ts to add an `@table-builder` alias:
+```ts
+import { defineConfig } from 'vite';
+import path from 'path';
 
-You can publish and run the migrations with:
+export default defineConfig({
+    plugins: [
+        // ...
+    ],
+    resolve: {
+        alias: {
 
-```bash
-php artisan vendor:publish --tag="laravel-vue-table-builder-migrations"
-php artisan migrate
+            // Add this:
+
+            '@table-builder': path.resolve(__dirname, 'vendor/tranquil-tools/laravel-vue-table-builder/resources/js'),
+        },
+    },
+});
 ```
 
 You can publish the config file with:
 
 ```bash
-php artisan vendor:publish --tag="laravel-vue-table-builder-config"
+php artisan vendor:publish --tag="vue-table-builder-config"
 ```
 
-This is the contents of the published config file:
-
-```php
-return [
-];
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="laravel-vue-table-builder-views"
-```
+The content of the published config can be viewed [here](./config/vue-table-builder.php).
 
 ## Usage
 
@@ -70,11 +63,13 @@ class UsersTable extends AbstractTable
     public function configure(TableBuilder $table)
     {
         $table
+            ->defaultSort('name')
+            ->withGlobalSearch(columns: ['name', 'email'])
             ->column('id', 'ID')
             ->column('name', 'Name', sortable: true)
             ->column('email', 'Email', sortable: true)
             ->column('created_at', 'Created', sortable: true)
-            ->paginate(15);
+            ->paginate(25);
     }
 }
 ```
@@ -87,7 +82,7 @@ use Inertia\Inertia;
 public function index()
 {
     return Inertia::render('Users/Index', [
-        'table' => UsersTable::build(),
+        'table' => \App\Tables\UsersTable::build(),
     ]);
 }
 ```
@@ -124,28 +119,13 @@ defineProps<{
 - ⚡ Optimized navigation with preserve-state and preserve-scroll
 - 📱 Fully responsive design
 
-## Testing
-
-```bash
-composer test
-```
-
 ## Changelog
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
 
-## Contributing
-
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
 ## Credits
 
-- [ComfyCoders](https://github.com/comfycoders)
-- [All Contributors](../../contributors)
+- [ComfyCoders B.V.](https://comfycoders.nl)
 
 ## License
 

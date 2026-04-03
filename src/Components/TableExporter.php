@@ -33,17 +33,11 @@ class TableExporter implements FromQuery, Responsable, ShouldAutoSize, WithColum
         private array $events,
     ) {}
 
-    /**
-     * Returns the Query Builder to fetch the records.
-     */
     public function query(): BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder
     {
         return $this->table->getBuilderForExport();
     }
 
-    /**
-     * Returns a collection with all columns used in the export.
-     */
     private function columns(): Collection
     {
         return $this->table->columns()->reject(function (Column $column) {
@@ -51,23 +45,17 @@ class TableExporter implements FromQuery, Responsable, ShouldAutoSize, WithColum
         })->values();
     }
 
-    /**
-     * Returns an array of all column labels.
-     */
     public function headings(): array
     {
         return $this->columns()->map->label->all();
     }
 
-    /**
-     * Returns an array with optional formatting for the columns.
-     */
     public function columnFormats(): array
     {
         return $this->columns()->mapWithKeys(function (Column $column, $key) {
             $exportFormat = $column->exportFormat;
 
-            if (!$exportFormat) {
+            if (! $exportFormat) {
                 return [];
             }
 
@@ -81,17 +69,11 @@ class TableExporter implements FromQuery, Responsable, ShouldAutoSize, WithColum
         })->all();
     }
 
-    /**
-     * Returns an array with optional styling for each column. The column
-     * may also be styled with a callback.
-     *
-     * @return array
-     */
     public function styles(Worksheet $sheet)
     {
         $highest = $sheet->getHighestRowAndColumn();
 
-        $highestRow    = $highest['row'];
+        $highestRow = $highest['row'];
         $highestColumn = $highest['column'];
 
         $sheet->setAutoFilter("A1:{$highestColumn}1");
@@ -99,12 +81,12 @@ class TableExporter implements FromQuery, Responsable, ShouldAutoSize, WithColum
         return $this->columns()->mapWithKeys(function (Column $column, $key) use ($sheet, $highestRow) {
             $exportStyling = $column->exportStyling;
 
-            if (!$exportStyling) {
+            if (! $exportStyling) {
                 return [];
             }
 
             $sheetColumn = Coordinate::stringFromColumnIndex($key + 1);
-            $coordinate  = "{$sheetColumn}2:{$sheetColumn}{$highestRow}";
+            $coordinate = "{$sheetColumn}2:{$sheetColumn}{$highestRow}";
 
             if (is_array($exportStyling)) {
                 return [$coordinate => $exportStyling];
@@ -116,11 +98,6 @@ class TableExporter implements FromQuery, Responsable, ShouldAutoSize, WithColum
         })->all();
     }
 
-    /**
-     * Maps an item into cells for a row.
-     *
-     * @param  mixed  $item
-     */
     public function map($item): array
     {
         return $this->columns()->map(function (Column $column) use ($item) {
@@ -138,10 +115,6 @@ class TableExporter implements FromQuery, Responsable, ShouldAutoSize, WithColum
         })->all();
     }
 
-    /**
-     * An array with Events that should be registered.
-     * https://docs.laravel-excel.com/3.1/exports/extending.html#events
-     */
     public function registerEvents(): array
     {
         return $this->events;
