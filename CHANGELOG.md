@@ -2,6 +2,9 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 0.7 - 2026-04-03
+* Base sorting on table name when not using default name to allow multiple tables on one page
+
 ## 0.6 - 2026-03-25
 * Apply defaultSort to query when no sort param is present
 
