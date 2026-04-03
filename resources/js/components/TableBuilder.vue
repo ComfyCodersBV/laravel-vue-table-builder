@@ -19,7 +19,7 @@ import {
 } from '@/Components/ui/dropdown-menu';
 import { Input } from '@/Components/ui/input';
 import { Button } from '@/Components/ui/button';
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Funnel, Search } from 'lucide-vue-next'
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Funnel, Search } from 'lucide-vue-next'
 import type { TableData, Column } from '@/types/table-builder'
 import { trans } from 'laravel-vue-i18n'
 import { openModal } from '@/useModal';
@@ -97,19 +97,34 @@ watch(searchValue, (newValue) => {
   handleSearch(newValue)
 })
 
+function getEffectiveSort(column: Column): 'asc' | 'desc' | false {
+    if (column.sorted) return column.sorted as 'asc' | 'desc'
+
+    const sortKey = tableName.value !== 'default' ? `${tableName.value}_sort` : 'sort'
+    if (new URLSearchParams(window.location.search).has(sortKey)) return false
+
+    if (!props.table.defaultSort) return false
+    const defaultKey = (props.table.defaultSort as string).replace(/^-/, '')
+    const defaultDir = (props.table.defaultSort as string).startsWith('-') ? 'desc' : 'asc'
+    return column.key === defaultKey ? defaultDir as 'asc' | 'desc' : false
+}
+
 function handleSort(column: Column) {
   if (!column.sortable) return
 
-  const currentSort = column.sorted
+  const currentSort = column.sorted as 'asc' | 'desc' | false
   const newSort = currentSort === 'asc' ? 'desc' : currentSort === 'desc' ? false : 'asc'
 
-  const sortParam = newSort ? (newSort === 'desc' ? `-${column.key}` : column.key) : undefined
   const sortKey = tableName.value && tableName.value !== 'default' ? `${tableName.value}_sort` : 'sort'
 
-  router.get(window.location.pathname, {
-    ...Object.fromEntries(new URLSearchParams(window.location.search)),
-    [sortKey]: sortParam,
-  }, {
+  const params = Object.fromEntries(new URLSearchParams(window.location.search)) as Record<string, string>
+  if (newSort) {
+    params[sortKey] = newSort === 'desc' ? `-${column.key}` : column.key
+  } else {
+    delete params[sortKey]
+  }
+
+  router.get(window.location.pathname, params, {
     preserveState: true,
     preserveScroll: true,
   })
@@ -249,11 +264,14 @@ function handleRowClick(index: number, e: MouseEvent) {
               <button
                 v-if="column.sortable"
                 @click="handleSort(column)"
-                class="flex items-center gap-2 hover:text-foreground"
+                class="flex items-center gap-1.5 hover:text-foreground"
+                :class="{ 'font-semibold text-foreground': getEffectiveSort(column) }"
                 type="button"
               >
                 {{ column.label }}
-                <ArrowUpDown class="h-4 w-4" />
+                <ArrowUp v-if="getEffectiveSort(column) === 'asc'" class="h-4 w-4" />
+                <ArrowDown v-else-if="getEffectiveSort(column) === 'desc'" class="h-4 w-4" />
+                <ArrowUpDown v-else class="h-4 w-4 opacity-40" />
               </button>
               <span v-else>{{ column.label }}</span>
             </TableHead>
