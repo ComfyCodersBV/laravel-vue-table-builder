@@ -26,8 +26,7 @@ trait HasExports
         ?string $filename = null,
         ?string $type = null,
         array $events = [],
-    ): self
-    {
+    ): self {
         if (! class_exists(Excel::class)) {
             throw new LaravelExcelException(
                 "To generate exports from a Splade Table, please install the 'maatwebsite/excel' package."
