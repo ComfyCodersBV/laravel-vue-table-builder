@@ -10,8 +10,6 @@ use TranquilTools\TableBuilder\Components\Filter;
 
 trait HasFilters
 {
-    protected Collection $filters;
-
     public function selectFilter(
         string $key,
         array $options,
@@ -19,7 +17,8 @@ trait HasFilters
         ?string $defaultValue = null,
         bool $noFilterOption = true,
         ?string $noFilterOptionLabel = null
-    ): self {
+    ): self
+    {
         $this->filters = $this->filters->reject(function (Filter $filter) use ($key) {
             return $filter->key === $key;
         })->push(new Filter(
@@ -43,7 +42,8 @@ trait HasFilters
         ?string $defaultValue = null,
         bool $noFilterOption = true,
         ?string $noFilterOptionLabel = null
-    ): self {
+    ): self
+    {
         $this->filters = $this->filters->reject(function (Filter $filter) use ($key) {
             return $filter->key === $key;
         })->push(new Filter(
@@ -66,7 +66,7 @@ trait HasFilters
 
         $filters = $this->filters->map->clone()->keyBy->key;
 
-        if (!empty($filters)) {
+        if (! empty($filters)) {
             $filters->each(function (Filter $filter) use ($queryFilters) {
                 if (array_key_exists($filter->key, $queryFilters)) {
                     $filter->value = $queryFilters[$filter->key];
@@ -84,6 +84,6 @@ trait HasFilters
 
     public function hasFiltersEnabled(): bool
     {
-        return $this->filters()->reject(fn (Filter $filter) => is_null($filter->value))->isNotEmpty();
+        return $this->filters()->reject(fn(Filter $filter) => is_null($filter->value))->isNotEmpty();
     }
 }

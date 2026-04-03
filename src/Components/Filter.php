@@ -9,9 +9,6 @@ use Illuminate\Support\Arr;
 
 class Filter implements Arrayable
 {
-    /**
-     * This class represents a filter in a Splade Table.
-     */
     public function __construct(
         public string $key,
         public string $label,
@@ -23,9 +20,6 @@ class Filter implements Arrayable
         public mixed $callback = null,
     ) {}
 
-    /**
-     * Returns a clone of the instance.
-     */
     public function clone(): static
     {
         return new static(
@@ -40,18 +34,11 @@ class Filter implements Arrayable
         );
     }
 
-    /**
-     * Returns a boolean whether the value is not null.
-     */
     public function hasValue(): bool
     {
-        return !is_null($this->value);
+        return ! is_null($this->value);
     }
 
-    /**
-     * Returns the options array, and if set, prepends
-     * a 'no filter' option to the options array.
-     */
     public function options(): array
     {
         $options = $this->options;
@@ -63,19 +50,14 @@ class Filter implements Arrayable
         return $options;
     }
 
-    /**
-     * Returns an array with all properties.
-     *
-     * @return array
-     */
-    public function toArray()
+    public function toArray(): array
     {
         return [
-            'key'     => $this->key,
-            'label'   => $this->label,
+            'key' => $this->key,
+            'label' => $this->label,
             'options' => $this->options(),
-            'value'   => $this->value,
-            'type'    => $this->type,
+            'value' => $this->value,
+            'type' => $this->type,
         ];
     }
 }

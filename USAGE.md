@@ -5,7 +5,7 @@
 ### 1. Install the package
 
 ```bash
-composer require comfycodersbv/laravel-vue-table-builder
+composer require tranquil-tools/laravel-vue-table-builder
 ```
 
 ### 2. Install NPM dependencies
