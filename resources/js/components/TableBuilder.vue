@@ -141,13 +141,10 @@ const allResultsSelected = ref(false)
 const selectedCount = computed(() => rowSelection.value.size)
 const selectedRows = computed(() => Array.from(rowSelection.value))
 const bulkActions = computed(() => props.table.bulkActions ?? [])
-const allVisibleItemsAreSelected = computed(() => {
-  if (allResultsSelected.value) return true
-  if (props.table.data.length === 0) return false
-  if (selectedCount.value === props.table.data.length) return true
-  if (selectedCount.value > 0) return 'indeterminate'
-  return false
-})
+const allVisibleItemsAreSelected = computed(() =>
+  allResultsSelected.value ||
+  (props.table.data.length > 0 && selectedCount.value > 0)
+)
 
 function isRowSelected(index: number): boolean {
   return rowSelection.value.has(index)
