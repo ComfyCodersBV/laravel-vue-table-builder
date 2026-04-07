@@ -11,24 +11,12 @@ use Illuminate\Support\Collection;
 
 trait HasResource
 {
-    protected $resource;
-
     public $rowLinkCallable;
-
-    protected Collection $rowLinks;
 
     public string $rowLinkType = '';
 
     protected string $primaryKey = '';
 
-    /**
-     * Setter for the row-link callable that will be called for
-     * every row in the data set to determine the target URL.
-     *
-     * @param  callable  $callback
-     * @param  bool  $modal  Whether to open the link in a modal
-     * @return $this
-     */
     public function rowLink(callable $callback, bool $modal = false): self
     {
         $this->rowLinkCallable = $callback;
@@ -40,7 +28,7 @@ trait HasResource
 
     protected function resolveRowLinks(): self
     {
-        if (!$this->rowLinkCallable) {
+        if (! $this->rowLinkCallable) {
             return $this;
         }
 
@@ -55,17 +43,11 @@ trait HasResource
         return $this;
     }
 
-    /**
-     * Same as rowLink() but it opens in a Modal.
-     */
     public function rowModal(callable $callback): self
     {
         return $this->rowLink($callback, modal: true);
     }
 
-    /**
-     * Same as rowLink() but it open in a Slideover.
-     */
     public function rowSlideover(callable $callback): self
     {
         return tap($this->rowLink($callback), function () {
@@ -73,9 +55,6 @@ trait HasResource
         });
     }
 
-    /**
-     * Determine how many items are being shown per page.
-     */
     public function perPage(): int
     {
         $this->loadResource();
@@ -87,11 +66,6 @@ trait HasResource
         return count($this->resource);
     }
 
-    /**
-     * Determine how many items there are on the current page.
-     *
-     * @return int
-     */
     public function totalOnThisPage()
     {
         $this->loadResource();
@@ -103,11 +77,6 @@ trait HasResource
         return count($this->resource);
     }
 
-    /**
-     * Determine how many items there all on all pages.
-     *
-     * @return int
-     */
     public function totalOnAllPages()
     {
         $this->loadResource();
@@ -119,9 +88,6 @@ trait HasResource
         return count($this->resource);
     }
 
-    /**
-     * Determine if the resource is empty or not.
-     */
     public function isEmpty(): bool
     {
         $this->loadResource();
@@ -129,17 +95,11 @@ trait HasResource
         return count($this->resource) === 0;
     }
 
-    /**
-     * Determine if the resource is not empty.
-     */
     public function isNotEmpty(): bool
     {
-        return !$this->isEmpty();
+        return ! $this->isEmpty();
     }
 
-    /**
-     * Setter for the primary key of the resource.
-     */
     public function primaryKey(string $key): self
     {
         $this->primaryKey = $key;
@@ -147,12 +107,6 @@ trait HasResource
         return $this;
     }
 
-    /**
-     * Returns the primary key of the given item.
-     *
-     * @param  mixed  $item
-     * @return mixed
-     */
     public function findPrimaryKey($item)
     {
         if ($this->primaryKey) {
@@ -166,9 +120,6 @@ trait HasResource
         throw new Exception('No primary key configured');
     }
 
-    /**
-     * Returns array with all primary keys.
-     */
     public function getPrimaryKeys(): array
     {
         $this->loadResource();

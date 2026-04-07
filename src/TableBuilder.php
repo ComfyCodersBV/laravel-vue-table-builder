@@ -91,11 +91,6 @@ class TableBuilder implements Arrayable, JsonSerializable
         $this->perPageOptions(static::$defaultPerPageOptions);
     }
 
-    /**
-     * Helper method to create a new instance.
-     *
-     * @param mixed $resource
-     */
     public static function for($resource): QueryBuilder|static
     {
         if (is_string($resource)) {
@@ -122,11 +117,6 @@ class TableBuilder implements Arrayable, JsonSerializable
         return new static($resource);
     }
 
-    /**
-     * Sets the class that configurates this table.
-     *
-     * @return $this
-     */
     public function setConfigurator(AbstractTable $configurator): self
     {
         $this->configurator = $configurator;
@@ -134,12 +124,6 @@ class TableBuilder implements Arrayable, JsonSerializable
         return $this;
     }
 
-    /**
-     * Retrieve a query string item from the request.
-     *
-     * @param mixed|null $default
-     * @return mixed
-     */
     protected function query(string $key, $default = null)
     {
         return $this->request->query(
@@ -148,11 +132,6 @@ class TableBuilder implements Arrayable, JsonSerializable
         );
     }
 
-    /**
-     * Name for this table.
-     *
-     * @return $this
-     */
     public function name(string $name): self
     {
         $this->name = $name;
@@ -160,11 +139,6 @@ class TableBuilder implements Arrayable, JsonSerializable
         return $this;
     }
 
-    /**
-     * Per Page options for this table.
-     *
-     * @return $this
-     */
     public function perPageOptions(array $perPageOptions): self
     {
         $this->perPageOptions = $perPageOptions;
@@ -172,103 +146,61 @@ class TableBuilder implements Arrayable, JsonSerializable
         return $this;
     }
 
-    /**
-     * Set a default for the per page options.
-     *
-     * @return void
-     */
     public static function defaultPerPageOptions(array $perPageOptions)
     {
         static::$defaultPerPageOptions = $perPageOptions;
     }
 
-    /**
-     * Get the default debounce value.
-     */
     public static function getDefaultSearchDebounce(): int
     {
         return static::$defaultSearchDebounce;
     }
 
-    /**
-     * Set a default debounce value.
-     *
-     * @return void
-     */
     public static function defaultSearchDebounce(int $milliseconds)
     {
         static::$defaultSearchDebounce = max(0, $milliseconds);
     }
 
-    /**
-     * Getter for the default reset button.
-     */
     public static function getDefaultResetButton(): bool
     {
         return static::$defaultResetButton;
     }
 
-    /**
-     * Set a default reset button.
-     */
     public static function defaultResetButton(bool $value = true)
     {
         static::$defaultResetButton = $value;
     }
 
-    /**
-     * Getter for the default pagination scroll type.
-     */
     public static function getDefaultPaginationScroll(): string
     {
         return static::$defaultPaginationScroll;
     }
 
-    /**
-     * Set a default pagination scroll type.
-     */
     public static function defaultPaginationScroll(string $value)
     {
         static::$defaultPaginationScroll = $value;
     }
 
-    /**
-     * Getter for the 'hidePaginationWhenResourceContainsOnePage' setting.
-     */
     public static function hidesPaginationWhenResourceContainsOnePage(): bool
     {
         return static::$hidePaginationWhenResourceContainsOnePage;
     }
 
-    /**
-     * Hides the pagination component when the resource contains one page.
-     *
-     * @return void
-     */
     public static function hidePaginationWhenResourceContainsOnePage(bool $value = true)
     {
         static::$hidePaginationWhenResourceContainsOnePage = $value;
     }
 
-    /**
-     * Returns a boolean whether the data set should be sorted.
-     */
     public function isSorted(): bool
     {
         return (bool) $this->query('sort');
     }
 
-    /**
-     * Resolves the current page from the request.
-     */
     public function page(): int
     {
         return Paginator::resolveCurrentPage();
     }
 
-    /**
-     * Returns an array with all 'per page' amount options.
-     */
     public function allPerPageOptions(): array
     {
         return collect($this->perPageOptions)
@@ -278,19 +210,11 @@ class TableBuilder implements Arrayable, JsonSerializable
             ->all();
     }
 
-    /**
-     * Returns the per page value.
-     */
     public function perPage(): int
     {
         return $this->perPageOptions[0] ?? 15;
     }
 
-    /**
-     * Add a column to the table.
-     *
-     * @return $this
-     */
     public function column(
         string $key,
         string $label = '',
@@ -369,17 +293,11 @@ class TableBuilder implements Arrayable, JsonSerializable
         return $itemArray;
     }
 
-    /**
-     * Convert the table to JSON (called by Inertia).
-     */
     public function jsonSerialize(): array
     {
         return $this->toArray();
     }
 
-    /**
-     * Convert the table to an array for Inertia.
-     */
     public function toArray(): array
     {
         // Ensure the resource is loaded before converting to array
@@ -414,7 +332,7 @@ class TableBuilder implements Arrayable, JsonSerializable
         $items = $data instanceof Collection ? $data : (is_array($data) ? collect($data) : null);
 
         if ($items !== null) {
-            $data = $items->map(fn ($item) => $this->transformItem($item))->all();
+            $data = $items->map(fn($item) => $this->transformItem($item))->all();
         }
 
         return [
@@ -431,11 +349,6 @@ class TableBuilder implements Arrayable, JsonSerializable
         ];
     }
 
-    /**
-     * Setter for the default sort key.
-     *
-     * @return $this
-     */
     public function defaultSort(string $sort, string $direction = ''): self
     {
         if ($direction && ! in_array($direction, ['asc', 'desc'], true)) {
@@ -452,43 +365,26 @@ class TableBuilder implements Arrayable, JsonSerializable
         return $this;
     }
 
-    /**
-     * Sets a descending default sort key
-     *
-     * @return $this
-     */
     public function defaultSortDesc(string $sort): self
     {
         return $this->defaultSort($sort, 'desc');
     }
 
-    /**
-     * Returns the default sort key.
-     */
     public function getDefaultSort(): string
     {
         return $this->defaultSort;
     }
 
-    /**
-     * Returns a boolean whether the request query has a 'perPage' item.
-     */
     public function hasPerPageQuery(): bool
     {
         return $this->query('perPage') !== null;
     }
 
-    /**
-     * Any action that should be performed before rendering the Table component.
-     */
     public function beforeRender(): self
     {
         return $this->loadResource()->resolveRowLinks();
     }
 
-    /**
-     * Any action that should be performed interacting with the resource.
-     */
     public function loadResource(): self
     {
         if (! $this->resourceLoaded) {
@@ -499,9 +395,6 @@ class TableBuilder implements Arrayable, JsonSerializable
         return $this;
     }
 
-    /**
-     * Applies active search inputs as case-insensitive filters on Collection resources.
-     */
     private function filterCollectionResource(): void
     {
         if (! $this->resource instanceof Collection) {

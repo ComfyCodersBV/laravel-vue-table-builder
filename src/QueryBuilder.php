@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace TranquilTools\TableBuilder;
 
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
@@ -11,11 +13,11 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Kirschbaum\PowerJoins\EloquentJoins;
-use TranquilTools\TableBuilder\Table\PowerJoinsException;
 use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
 use TranquilTools\TableBuilder\Components\Column;
 use TranquilTools\TableBuilder\Components\Filter;
 use TranquilTools\TableBuilder\Components\SearchInput;
+use TranquilTools\TableBuilder\Table\PowerJoinsException;
 
 class QueryBuilder extends TableBuilder
 {
@@ -23,14 +25,8 @@ class QueryBuilder extends TableBuilder
 
     private $perPage;
 
-    /**
-     * Ignore case on searches.
-     */
     private bool $ignoreCase = true;
 
-    /**
-     * Parse the search term into multiple terms.
-     */
     protected bool $parseTerms = true;
 
     /**
@@ -42,11 +38,6 @@ class QueryBuilder extends TableBuilder
         parent::__construct([], $request);
     }
 
-    /**
-     * Setter whether terms should be parsed.
-     *
-     * @return $this
-     */
     public function parseTerms(bool $state = true): self
     {
         $this->parseTerms = $state;
@@ -54,11 +45,6 @@ class QueryBuilder extends TableBuilder
         return $this;
     }
 
-    /**
-     * Setter for ignoring case.
-     *
-     * @return $this
-     */
     public function ignoreCase(bool $state = true): self
     {
         $this->ignoreCase = $state;
@@ -71,11 +57,6 @@ class QueryBuilder extends TableBuilder
         return $this->setPagination('', null);
     }
 
-    /**
-     * Helper method to set the pagination method and per page value.
-     *
-     * @return $this
-     */
     private function setPagination(string $method, ?int $perPage = null): self
     {
         $this->paginateMethod = $method;
@@ -85,42 +66,21 @@ class QueryBuilder extends TableBuilder
         return $this;
     }
 
-    /**
-     * Use 'regular' length-aware pagination.
-     *
-     * @param  int  $perPage
-     * @return $this
-     */
     public function paginate($perPage = null): self
     {
         return $this->setPagination('paginate', $perPage);
     }
 
-    /**
-     * Use simple non-length-aware pagination.
-     *
-     * @param  int  $perPage
-     * @return $this
-     */
     public function simplePaginate($perPage = null): self
     {
         return $this->setPagination('simplePaginate', $perPage);
     }
 
-    /**
-     * Use cursor pagination.
-     *
-     * @param  int  $perPage
-     * @return $this
-     */
     public function cursorPaginate($perPage = null): self
     {
         return $this->setPagination('cursorPaginate', $perPage);
     }
 
-    /**
-     * Parse the terms and loop through them with the optional callable.
-     */
     public function parseTermsIntoCollection(string $terms): Collection
     {
         return Collection::make(str_getcsv($terms, ' ', '"', '\\'))
@@ -130,9 +90,6 @@ class QueryBuilder extends TableBuilder
             ->values();
     }
 
-    /**
-     * Formats the terms and returns the right where operator for the given search method.
-     */
     private function getTermAndWhereOperator(EloquentBuilder $builder, string $term, ?string $searchMethod = null): array
     {
         $like = 'LIKE';
@@ -148,9 +105,9 @@ class QueryBuilder extends TableBuilder
         $searchMethod = $searchMethod ?: SearchInput::WILDCARD;
 
         return match ($searchMethod) {
-            SearchInput::EXACT          => [$term, '='],
-            SearchInput::WILDCARD       => ["%{$term}%", $like],
-            SearchInput::WILDCARD_LEFT  => ["%{$term}", $like],
+            SearchInput::EXACT => [$term, '='],
+            SearchInput::WILDCARD => ["%{$term}%", $like],
+            SearchInput::WILDCARD_LEFT => ["%{$term}", $like],
             SearchInput::WILDCARD_RIGHT => ["{$term}%", $like],
         };
     }
@@ -168,14 +125,14 @@ class QueryBuilder extends TableBuilder
                 Collection::wrap($columns)->each(function (?string $searchMethod, string $column) use ($builder, $term) {
                     [$term, $whereOperator] = $this->getTermAndWhereOperator($builder, $term, $searchMethod);
 
-                    if (!Str::contains($column, '.')) {
+                    if (! Str::contains($column, '.')) {
                         // Not a relationship, but a column on the table.
                         return $builder->orWhere($builder->qualifyColumn($column), $whereOperator, $term);
                     }
 
                     // Split the column into the relationship name and the key on the relationship.
                     $relation = Str::beforeLast($column, '.');
-                    $key      = Str::afterLast($column, '.');
+                    $key = Str::afterLast($column, '.');
 
                     $builder->orWhereHas($relation, function (EloquentBuilder $relation) use ($key, $whereOperator, $term) {
                         return $relation->where($relation->qualifyColumn($key), $whereOperator, $term);
@@ -198,7 +155,7 @@ class QueryBuilder extends TableBuilder
             return ($column->sortable)($this->builder, $column->sorted);
         }
 
-        if (!$column->isNested()) {
+        if (! $column->isNested()) {
             // Not a relationship, just a column on the table.
             return $this->builder->orderBy($column->key, $column->sorted);
         }
@@ -211,12 +168,6 @@ class QueryBuilder extends TableBuilder
         return $this->builder->orderByLeftPowerJoins($column->key, $column->sorted);
     }
 
-    /**
-     * Loops through the active select filters and applies
-     * them on the query builder.
-     *
-     * @return void
-     */
     private function applyFilters()
     {
         $ignoreCaseSetting = $this->ignoreCase;
@@ -239,25 +190,13 @@ class QueryBuilder extends TableBuilder
         $this->parseTerms($parseTermsSetting);
     }
 
-    /**
-     * Loops through the active search inputs and applies
-     * them on the query builder.
-     *
-     * @return void
-     */
     private function applySearchInputs()
     {
         $this->searchInputs()->filter->value->each(
-            fn (SearchInput $searchInput) => $this->applyConstraint($searchInput->columns, $searchInput->value)
+            fn(SearchInput $searchInput) => $this->applyConstraint($searchInput->columns, $searchInput->value)
         );
     }
 
-    /**
-     * Loops through the columns and checks whether the column is
-     * the one to sort by.
-     *
-     * @return void
-     */
     private function applySortingAndEagerLoading(): void
     {
         $anySorted = false;
@@ -281,14 +220,9 @@ class QueryBuilder extends TableBuilder
         }
     }
 
-    /**
-     * Loads the results based on the pagination settings.
-     *
-     * @return void
-     */
     private function loadResults()
     {
-        if (!$this->paginateMethod) {
+        if (! $this->paginateMethod) {
             // No pagination, so get all results.
             return $this->resource = $this->builder->get();
         }
@@ -300,7 +234,7 @@ class QueryBuilder extends TableBuilder
 
         $perPage = $this->query('perPage', $defaultPerPage);
 
-        if (!in_array($perPage, $this->perPageOptions)) {
+        if (! in_array($perPage, $this->perPageOptions)) {
             // The 'perPage' value is not in the allowed options.
             // So we'll use the first option.
             $perPage = $defaultPerPage;
@@ -309,30 +243,20 @@ class QueryBuilder extends TableBuilder
         $this->resource = $this->builder->{$this->paginateMethod}($perPage)->withQueryString();
     }
 
-    /**
-     * Adds the given 'perPage' value to the 'perPageOptions' array.
-     *
-     * @return void
-     */
-    public function addCurrentPerPageValueToOptions()
+    public function addCurrentPerPageValueToOptions(): void
     {
-        if ($this->perPage && !in_array($this->perPage, $this->perPageOptions)) {
+        if ($this->perPage && ! in_array($this->perPage, $this->perPageOptions)) {
             $this->perPageOptions[] = $this->perPage;
         }
     }
 
-    /**
-     * Prepares the query and loads the results.
-     *
-     * @return $this
-     */
     public function loadResource(): self
     {
         if ($this->resourceLoaded) {
             return $this;
         }
 
-        if (!$this->builder instanceof SpatieQueryBuilder) {
+        if (! $this->builder instanceof SpatieQueryBuilder) {
             $this->applyFilters();
             $this->applySearchInputs();
             $this->applySortingAndEagerLoading();
@@ -344,12 +268,9 @@ class QueryBuilder extends TableBuilder
         return parent::loadResource();
     }
 
-    /**
-     * Prepares the query for an export and returns the Builder.
-     */
     public function getBuilderForExport(): BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder
     {
-        if (!$this->builder instanceof SpatieQueryBuilder) {
+        if (! $this->builder instanceof SpatieQueryBuilder) {
             $this->applyFilters();
             $this->applySearchInputs();
             $this->applySortingAndEagerLoading();
@@ -362,7 +283,7 @@ class QueryBuilder extends TableBuilder
     {
         $shouldApplyFiltersAndSearchInputs = false;
 
-        if (!$this->builder instanceof SpatieQueryBuilder) {
+        if (! $this->builder instanceof SpatieQueryBuilder) {
             $shouldApplyFiltersAndSearchInputs = true;
 
             $this->applySortingAndEagerLoading();

@@ -36,9 +36,6 @@ class Column implements Arrayable
         $this->classes = Arr::toCssClasses($classes);
     }
 
-    /**
-     * Returns a clone of the instance.
-     */
     public function clone(): static
     {
         return new static(
@@ -59,12 +56,7 @@ class Column implements Arrayable
         );
     }
 
-    /**
-     * Returns an array with all properties.
-     *
-     * @return array
-     */
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'key' => $this->key,
@@ -79,14 +71,6 @@ class Column implements Arrayable
         ];
     }
 
-    /**
-     * It gets thet data from the given item, based on the column
-     * and whether that column is based on a relationship
-     * Supports returning multiple items as well.
-     *
-     * @param mixed $item
-     * @return mixed
-     */
     public function getDataFromItem($item)
     {
         if ($this->isNested()) {
@@ -108,31 +92,22 @@ class Column implements Arrayable
         });
     }
 
-    /**
-     * Returns a boolean whether to columns refers to a relationship.
-     */
     public function isNested(): bool
     {
         return Str::contains($this->key, '.');
     }
 
-    /**
-     * Returns the name of the relationship.
-     */
     public function relationshipName(): string
     {
         return Str::beforeLast($this->key, '.');
     }
 
-    /**
-     * Returns the target column on the relationship.
-     */
     public function relationshipColumn(): string
     {
         return Str::afterLast($this->key, '.');
     }
 
-    public static function hashKey(string $name)
+    public static function hashKey(string $name): string
     {
         return md5($name);
     }
