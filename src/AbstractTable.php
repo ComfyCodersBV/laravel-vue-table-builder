@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace TranquilTools\TableBuilder;
 
 use Illuminate\Http\Request;
-use ProtoneMedia\Splade\Table\BulkAction;
 use ProtoneMedia\Splade\Table\Export;
+use TranquilTools\TableBuilder\Components\BulkAction;
 
 abstract class AbstractTable
 {

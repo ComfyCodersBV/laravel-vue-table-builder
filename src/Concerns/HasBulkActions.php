@@ -4,31 +4,22 @@ declare(strict_types=1);
 
 namespace TranquilTools\TableBuilder\Concerns;
 
+use TranquilTools\TableBuilder\Components\BulkAction;
+
 trait HasBulkActions
 {
     protected array $bulkActions = [];
 
-    /**
-     * Retuns all bul actions.
-     */
     public function getBulkActions(): array
     {
         return $this->bulkActions;
     }
 
-    /**
-     * Returns a boolean whether this table has bulk actions.
-     */
     public function hasBulkActions(): bool
     {
         return !empty($this->bulkActions);
     }
 
-    /**
-     * Adds a new bulk action.
-     *
-     * @return $this
-     */
     public function bulkAction(
         string $label,
         ?callable $each = null,
@@ -43,7 +34,7 @@ trait HasBulkActions
         $key = count($this->bulkActions);
 
         $this->bulkActions[$key] = new BulkAction(
-            key: $key,
+            key: (string) $key,
             label: $label,
             tableClass: get_class($this->configurator),
             eachCallback: $each,
