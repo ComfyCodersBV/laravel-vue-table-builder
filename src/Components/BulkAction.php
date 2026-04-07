@@ -5,24 +5,16 @@ declare(strict_types=1);
 namespace TranquilTools\TableBuilder\Components;
 
 use Closure;
-use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
-use ProtoneMedia\Splade\Http\TableBulkActionController;
+use TranquilTools\TableBuilder\Http\Controllers\TableBulkActionController;
 
 class BulkAction
 {
     public bool|string $requirePassword = false;
 
-    /**
-     * This class represents a bulk action within a Splade Table.
-     *
-     * @param  bool|string  $confirm  = '',
-     * @param  string  $confirmText  = '',
-     * @param  string  $confirmButton  = '',
-     * @param  string  $cancelButton  = '',
-     * @param  bool  $requirePassword  = '',
-     */
+    public string $url = '';
+
     public function __construct(
         public string $key,
         public string $label,
@@ -39,31 +31,43 @@ class BulkAction
         if ($requirePassword === true) {
             $this->requirePassword = 'password';
         }
+
+        $this->url = $this->getUrl();
     }
 
-    /**
-     * Generates a slug based on the label.
-     */
     public function getSlug(): string
     {
         return Str::slug($this->label);
     }
 
-    /**
-     * Generates a Signed URL to the bulk action URL.
-     */
     public function getUrl(): string
     {
         /** @var Route */
         $route = app('router')->getRoutes()->getByAction(TableBulkActionController::class);
 
         /** @var array */
-        $currentQuery = app()->bound('request') ? request()->query() : [];
+        $currentQuery = app()->bound('request') ? collect(request()->query())
+            ->except(['signature', 'expires'])
+            ->toArray() : [];
 
         return URL::signedRoute($route->getName(), array_merge($currentQuery, [
             'table'  => base64_encode($this->tableClass),
             'action' => base64_encode($this->key),
             'slug'   => $this->getSlug(),
         ]));
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'key' => $this->key,
+            'label' => $this->label,
+            'url' => $this->getUrl(),
+            'confirm' => $this->confirm,
+            'confirmText' => $this->confirmText,
+            'confirmButton' => $this->confirmButton,
+            'cancelButton' => $this->cancelButton,
+            'requirePassword' => $this->requirePassword,
+        ];
     }
 }

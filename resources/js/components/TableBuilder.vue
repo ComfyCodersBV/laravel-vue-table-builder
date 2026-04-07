@@ -18,6 +18,7 @@ import {
     DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import { Input } from '@/Components/ui/input';
+import { Checkbox } from '@/Components/ui/checkbox';
 import { Button } from '@/Components/ui/button';
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Funnel, Search } from 'lucide-vue-next'
 import type { TableData, Column } from '@/types/table-builder'
@@ -134,6 +135,47 @@ function getCellValue(row: any, key: string) {
   return key.split('.').reduce((obj, k) => obj?.[k], row)
 }
 
+// Row selection
+const rowSelection = ref<Set<number>>(new Set())
+const allResultsSelected = ref(false)
+const selectedCount = computed(() => rowSelection.value.size)
+const selectedRows = computed(() => Array.from(rowSelection.value))
+const bulkActions = computed(() => props.table.bulkActions ?? [])
+const allVisibleItemsAreSelected = computed(() =>
+  allResultsSelected.value ||
+  (props.table.data.length > 0 && selectedCount.value > 0)
+)
+
+function isRowSelected(index: number): boolean {
+  return rowSelection.value.has(index)
+}
+
+function toggleRowSelection(index: number) {
+  allResultsSelected.value = false
+  const next = new Set(rowSelection.value)
+  if (next.has(index)) {
+    next.delete(index)
+  } else {
+    next.add(index)
+  }
+  rowSelection.value = next
+}
+
+function selectCurrentPage() {
+  allResultsSelected.value = false
+  rowSelection.value = new Set(props.table.data.map((_, i) => i))
+}
+
+function selectAllResults() {
+  allResultsSelected.value = true
+  rowSelection.value = new Set(props.table.data.map((_, i) => i))
+}
+
+function resetRowSelection() {
+  allResultsSelected.value = false
+  rowSelection.value = new Set()
+}
+
 function handleRowClick(index: number, e: MouseEvent) {
   if (!props.table.rowLinks || !props.table.rowLinks[index]) return
 
@@ -153,6 +195,23 @@ function handleRowClick(index: number, e: MouseEvent) {
   } else {
     router.visit(url)
   }
+}
+
+const actionError = ref<string | null>(null)
+
+function performBulkAction(action: any) {
+  const ids = Array.from(rowSelection.value).map(i => (props.table.data[i] as any)?.id).filter(Boolean)
+  if (ids.length === 0) return
+
+  actionError.value = null
+
+  router.post(action.url, { ids }, {
+    preserveScroll: true,
+    onSuccess: () => resetRowSelection(),
+    onError: (errors) => {
+      actionError.value = Object.values(errors)[0] ?? trans('table.bulk_actions.error')
+    },
+  })
 }
 </script>
 
@@ -216,6 +275,11 @@ function handleRowClick(index: number, e: MouseEvent) {
       </div>
   </div>
 
+  <!-- Bulk Action Error -->
+  <div v-if="actionError" class="mb-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+      {{ actionError }}
+  </div>
+
   <!-- Bulk Actions Bar -->
   <div
       v-if="table.bulkActions && table.bulkActions.length > 0 && selectedCount > 0"
@@ -223,29 +287,29 @@ function handleRowClick(index: number, e: MouseEvent) {
   >
       <div class="flex items-center space-x-2">
           <span class="text-sm font-medium">
-              {{
-                  trans('messages.bulk_actions.selected_simple', {
-                      count: selectedCount,
-                      type: selectedCount === 1 ? trans('messages.table.row') : trans('messages.table.rows'),
-                  })
-              }}
+            {{
+                trans('table.bulk_actions.selected_simple', {
+                    count: selectedCount,
+                    type: selectedCount === 1 ? trans('messages.table.row') : trans('messages.table.rows'),
+                })
+            }}
           </span>
       </div>
       <div class="flex items-center space-x-2">
           <DropdownMenu>
               <DropdownMenuTrigger as-child>
                   <Button variant="outline" size="sm">
-                      {{ trans('messages.bulk_actions.title') }}
+                      {{ trans('table.bulk_actions.title') }}
                       <ChevronDown class="ml-2 h-4 w-4" />
                   </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                  <DropdownMenuItem v-for="action in bulkActions" :key="action.label" @click="() => action.onClick(selectedRows)">
+                  <DropdownMenuItem v-for="action in bulkActions" :key="action.label" @click="() => performBulkAction(action)">
                       {{ action.label }}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator v-if="bulkActions.length > 0" />
-                  <DropdownMenuItem @click="() => table.resetRowSelection()">
-                      {{ trans('messages.bulk_actions.clear_selection') }}
+                  <DropdownMenuItem @click="resetRowSelection">
+                      {{ trans('table.bulk_actions.clear_selection') }}
                   </DropdownMenuItem>
               </DropdownMenuContent>
           </DropdownMenu>
@@ -256,6 +320,26 @@ function handleRowClick(index: number, e: MouseEvent) {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead v-if="bulkActions.length > 0" class="w-10">
+              <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                  <div class="cursor-pointer">
+                    <Checkbox
+                      :model-value="allVisibleItemsAreSelected"
+                      class="h-4 w-4 pointer-events-none"
+                    />
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem @click="selectedCount > 0 ? resetRowSelection() : selectCurrentPage()">
+                    {{ selectedCount > 0 ? trans('table.bulk_actions.clear_selection') : trans('table.bulk_actions.select_this_page', { count: String(table.data.length) }) }}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem v-if="table.pagination" @click="selectAllResults">
+                    {{ trans('table.bulk_actions.select_all_results', { total: String(table.pagination.total) }) }}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableHead>
             <TableHead
               v-for="column in visibleColumns"
               :key="column.key"
@@ -292,6 +376,13 @@ function handleRowClick(index: number, e: MouseEvent) {
             @click="table.rowLinks && table.rowLinks[index] ? handleRowClick(index, $event) : undefined"
             :class="table.rowLinks && table.rowLinks[index] ? 'cursor-pointer hover:bg-muted/50' : ''"
           >
+            <TableCell v-if="bulkActions.length > 0" @click.stop>
+              <Checkbox
+                :model-value="isRowSelected(index)"
+                @update:model-value="() => toggleRowSelection(index)"
+                class="h-4 w-4"
+              />
+            </TableCell>
             <TableCell
               v-for="column in visibleColumns"
               :key="column.key"

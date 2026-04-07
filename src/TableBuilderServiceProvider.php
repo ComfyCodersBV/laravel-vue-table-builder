@@ -16,6 +16,7 @@ class TableBuilderServiceProvider extends PackageServiceProvider
             ->name('laravel-vue-table-builder')
             ->hasConfigFile()
             ->hasViews()
+            ->hasRoute('web')
             ->hasMigration('create_laravel_vue_table_builder_table')
             ->hasCommand(TableMakeCommand::class);
     }
