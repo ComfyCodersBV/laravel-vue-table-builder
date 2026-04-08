@@ -343,7 +343,6 @@ function performBulkAction(action: any) {
             <TableHead
               v-for="column in visibleColumns"
               :key="column.key"
-              :class="column.headerClass"
             >
               <button
                 v-if="column.sortable"
