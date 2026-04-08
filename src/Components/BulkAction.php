@@ -51,9 +51,9 @@ class BulkAction
             ->toArray() : [];
 
         return URL::signedRoute($route->getName(), array_merge($currentQuery, [
-            'table'  => base64_encode($this->tableClass),
+            'table' => base64_encode($this->tableClass),
             'action' => base64_encode($this->key),
-            'slug'   => $this->getSlug(),
+            'slug' => $this->getSlug(),
         ]));
     }
 

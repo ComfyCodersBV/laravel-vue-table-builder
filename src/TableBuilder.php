@@ -19,7 +19,6 @@ use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
 use TranquilTools\TableBuilder\Components\Column;
 use TranquilTools\TableBuilder\Concerns\HasBulkActions;
 use TranquilTools\TableBuilder\Concerns\HasColumns;
-use TranquilTools\TableBuilder\Concerns\HasExports;
 use TranquilTools\TableBuilder\Concerns\HasFilters;
 use TranquilTools\TableBuilder\Concerns\HasResource;
 use TranquilTools\TableBuilder\Concerns\HasSearchInputs;
@@ -30,7 +29,6 @@ class TableBuilder implements Arrayable, JsonSerializable
     use Conditionable;
     use HasBulkActions;
     use HasColumns;
-    use HasExports;
     use HasFilters;
     use HasResource;
     use HasSearchInputs;
@@ -246,10 +244,6 @@ class TableBuilder implements Arrayable, JsonSerializable
             sortable: $sortable,
             sorted: $sorted,
             highlight: false,
-            exportAs: false,
-            exportFormat: null,
-            exportStyling: null,
-            classes: null,
             as: $as,
             alignment: $alignment,
             clickable: $clickable,

@@ -8,10 +8,10 @@ use Illuminate\Console\GeneratorCommand;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputOption;
 
-#[AsCommand(name: 'make:table-new')]
+#[AsCommand(name: 'make:table')]
 class TableMakeCommand extends GeneratorCommand
 {
-    protected $name = 'make:table-new';
+    protected $name = 'make:table';
 
     protected $type = 'Table';
 

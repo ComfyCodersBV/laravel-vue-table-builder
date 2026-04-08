@@ -48,13 +48,6 @@ trait HasResource
         return $this->rowLink($callback, modal: true);
     }
 
-    public function rowSlideover(callable $callback): self
-    {
-        return tap($this->rowLink($callback), function () {
-            $this->rowLinkType = 'slideover';
-        });
-    }
-
     public function perPage(): int
     {
         $this->loadResource();

@@ -1,12 +1,14 @@
 export interface Column {
     key: string
     label: string
-    sortable?: boolean
-    sorted?: 'asc' | 'desc' | false
-    hidden?: boolean
-    class?: string
-    headerClass?: string
-    clickable?: boolean
+    can_be_hidden: boolean
+    hidden: boolean
+    sortable: boolean
+    sorted: 'asc' | 'desc' | false
+    highlight: boolean
+    class: string
+    alignment: string
+    clickable: boolean
 }
 
 export interface PaginationLink {
@@ -32,29 +34,37 @@ export interface PaginationData {
 export interface Filter {
     key: string
     label: string
-    options: Array<{ label: string; value: string | number }>
-    value?: string | number
-    type?: 'select' | 'text'
+    options: Record<string, string>
+    value?: string | null
+    type: 'select' | 'text'
 }
 
 export interface SearchInput {
     key: string
     label: string
-    value?: string
+    value?: string | null
+}
+
+export interface BulkAction {
+    key: string
+    label: string
+    url: string
+    confirm: boolean | string
+    confirmText: string
+    confirmButton: string
+    cancelButton: string
+    requirePassword: boolean | string
 }
 
 export interface TableData {
     data: any[]
     columns: Column[]
     pagination?: PaginationData
-    filters?: Filter[]
-    searchInputs?: SearchInput[]
-    perPageOptions?: number[]
-    defaultSort?: string
-}
-
-export interface TableSchema {
-    id?: string
-    name: string
-    resource: TableData
+    filters: Filter[]
+    searchInputs: Record<string, SearchInput>
+    perPageOptions: number[]
+    defaultSort: string
+    bulkActions: BulkAction[]
+    rowLinks: (string | null)[]
+    rowLinkType: 'modal' | 'link' | ''
 }

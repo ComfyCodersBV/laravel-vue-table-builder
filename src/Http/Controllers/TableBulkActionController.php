@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace TranquilTools\TableBuilder\Http\Controllers;
 
-use TranquilTools\TableBuilder\Http\Requests\BulkActionRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\UnauthorizedException;
 use TranquilTools\TableBuilder\AbstractTable;
+use TranquilTools\TableBuilder\Http\Requests\BulkActionRequest;
 
 class TableBulkActionController extends Controller
 {
