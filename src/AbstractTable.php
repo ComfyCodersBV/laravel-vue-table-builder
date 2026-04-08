@@ -5,39 +5,22 @@ declare(strict_types=1);
 namespace TranquilTools\TableBuilder;
 
 use Illuminate\Http\Request;
-use ProtoneMedia\Splade\Table\Export;
 use TranquilTools\TableBuilder\Components\BulkAction;
 
 abstract class AbstractTable
 {
-    /**
-     * The TableBuilder instance.
-     */
     private ?TableBuilder $table = null;
 
-    /**
-     * Determine if the user is authorized to perform bulk actions and exports.
-     *
-     * @return bool
-     */
     public function authorize(Request $request)
     {
         return true;
     }
 
-    /**
-     * The resource or query builder.
-     *
-     * @return mixed
-     */
     public function for()
     {
         return [];
     }
 
-    /**
-     * Helper method to create a new TableBuilder instance.
-     */
     public static function build(...$arguments): TableBuilder
     {
         $table = new static(...$arguments);
@@ -45,10 +28,6 @@ abstract class AbstractTable
         return $table->make()->beforeRender();
     }
 
-    /**
-     * Creates a new TableBuilder instance with the resource or
-     * query builder from the 'for()' method of this class.
-     */
     public function make(): TableBuilder
     {
         if ($this->table) {
@@ -64,43 +43,11 @@ abstract class AbstractTable
         );
     }
 
-    /**
-     * Configure the given TableBuilder.
-     *
-     * @return void
-     */
     public function configure(TableBuilder $table)
     {
         //
     }
 
-    /**
-     * Returns a TableExporter instance.
-     */
-    public function makeExporter(int $key): ?TableExporter
-    {
-        $table = $this->make();
-
-        if (! $table instanceof QueryBuilder) {
-            return null;
-        }
-
-        /** @var Export $export */
-        $export = $table->getExports()[$key];
-
-        return new TableExporter(
-            $table,
-            $export->filename,
-            $export->type,
-            $export->events
-        );
-    }
-
-    /**
-     * Performs the bulk action on the given ids.
-     *
-     * @return void
-     */
     public function performBulkAction(int $key, array $ids)
     {
         $table = $this->make();

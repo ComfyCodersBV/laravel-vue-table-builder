@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tables;
 
-use App\TableBuilder\AbstractTable;
-use App\TableBuilder\TableConfig;
-use App\TableBuilder\Fields\Submit;
-use App\TableBuilder\Fields\Text;
+use App\Models\{{ model }};
+use TranquilTools\TableBuilder\AbstractTable;
+use TranquilTools\TableBuilder\TableBuilder;
 
 class {{ class }} extends AbstractTable
 {
@@ -16,13 +15,7 @@ class {{ class }} extends AbstractTable
         return {{ model }}::query();
     }
 
-    /**
-     * Configure the given SpladeTable.
-     *
-     * @param \ProtoneMedia\Splade\SpladeTable $table
-     * @return void
-     */
-    public function configure(SpladeTable $table)
+    public function configure(TableBuilder $table)
     {
         $table
             ->withGlobalSearch(columns: ['id'])
@@ -33,6 +26,5 @@ class {{ class }} extends AbstractTable
             // ->withGlobalSearch()
 
             // ->bulkAction()
-            // ->export()
     }
 }

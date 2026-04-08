@@ -17,7 +17,7 @@ trait HasBulkActions
 
     public function hasBulkActions(): bool
     {
-        return !empty($this->bulkActions);
+        return ! empty($this->bulkActions);
     }
 
     public function bulkAction(

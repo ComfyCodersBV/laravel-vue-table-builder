@@ -20,9 +20,6 @@ class Column implements Arrayable
         public bool|Closure $sortable,
         public bool|string $sorted,
         public bool $highlight,
-        public bool|Closure $exportAs,
-        public Closure|string|null $exportFormat = null,
-        public Closure|array|null $exportStyling = null,
         public array|string|null $classes = null,
         public ?Closure $as = null,
         public string $alignment = 'left',
@@ -46,9 +43,6 @@ class Column implements Arrayable
             $this->sortable,
             $this->sorted,
             $this->highlight,
-            $this->exportAs,
-            $this->exportFormat,
-            $this->exportStyling,
             $this->classes,
             $this->as,
             $this->alignment,
@@ -66,6 +60,7 @@ class Column implements Arrayable
             'sortable' => $this->sortable !== false,
             'sorted' => $this->sorted,
             'highlight' => $this->highlight,
+            'class' => $this->classes,
             'alignment' => $this->alignment,
             'clickable' => $this->clickable,
         ];
@@ -107,13 +102,4 @@ class Column implements Arrayable
         return Str::afterLast($this->key, '.');
     }
 
-    public static function hashKey(string $name): string
-    {
-        return md5($name);
-    }
-
-    public function keyHash(): string
-    {
-        return static::hashKey($this->key);
-    }
 }

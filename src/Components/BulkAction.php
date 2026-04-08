@@ -27,7 +27,8 @@ class BulkAction
         public string $confirmButton = '',
         public string $cancelButton = '',
         bool $requirePassword = false,
-    ) {
+    )
+    {
         if ($requirePassword === true) {
             $this->requirePassword = 'password';
         }
@@ -51,9 +52,9 @@ class BulkAction
             ->toArray() : [];
 
         return URL::signedRoute($route->getName(), array_merge($currentQuery, [
-            'table'  => base64_encode($this->tableClass),
+            'table' => base64_encode($this->tableClass),
             'action' => base64_encode($this->key),
-            'slug'   => $this->getSlug(),
+            'slug' => $this->getSlug(),
         ]));
     }
 

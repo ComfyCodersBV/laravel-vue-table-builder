@@ -97,7 +97,7 @@ trait HasSearchInputs
     {
         return $this->searchInput(
             key: TableBuilder::GLOBAL_SEARCH_KEY,
-            label: $label ?: trans('Search') . '...',
+            label: $label ?: trans('vue-table-builder::table.search') . '...',
             columns: $columns
         );
     }

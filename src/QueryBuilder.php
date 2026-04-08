@@ -17,7 +17,7 @@ use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
 use TranquilTools\TableBuilder\Components\Column;
 use TranquilTools\TableBuilder\Components\Filter;
 use TranquilTools\TableBuilder\Components\SearchInput;
-use TranquilTools\TableBuilder\Table\PowerJoinsException;
+use TranquilTools\TableBuilder\Exceptions\PowerJoinsException;
 
 class QueryBuilder extends TableBuilder
 {
@@ -29,10 +29,6 @@ class QueryBuilder extends TableBuilder
 
     protected bool $parseTerms = true;
 
-    /**
-     * Initializes this instance with an empty resource. The results will be
-     * loaded when the Table components calls the beforeRender() method.
-     */
     public function __construct(private BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder $builder, ?Request $request = null)
     {
         parent::__construct([], $request);
@@ -142,13 +138,6 @@ class QueryBuilder extends TableBuilder
         });
     }
 
-    /**
-     * Adds an "order by" clause to the query. If the query needs
-     * to be sorted by a (nested) relationship, it will
-     * verify the PowerJoins package is installed.
-     *
-     * @return void
-     */
     private function applySorting(Column $column)
     {
         if (is_callable($column->sortable)) {
@@ -266,17 +255,6 @@ class QueryBuilder extends TableBuilder
         $this->loadResults();
 
         return parent::loadResource();
-    }
-
-    public function getBuilderForExport(): BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder
-    {
-        if (! $this->builder instanceof SpatieQueryBuilder) {
-            $this->applyFilters();
-            $this->applySearchInputs();
-            $this->applySortingAndEagerLoading();
-        }
-
-        return $this->builder;
     }
 
     public function performBulkAction(callable $action, array $ids)

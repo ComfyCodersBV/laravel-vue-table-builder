@@ -22,9 +22,11 @@ import { Checkbox } from '@/Components/ui/checkbox';
 import { Button } from '@/Components/ui/button';
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Funnel, Search } from 'lucide-vue-next'
 import type { TableData, Column } from '@/types/table-builder'
-import { trans } from 'laravel-vue-i18n'
 import { openModal } from '@/useModal';
 import { debounce } from 'lodash-es'
+import { useTranslations } from '../composables/useTranslations'
+
+const { t } = useTranslations('vue_table_builder_table_translations')
 
 const props = defineProps<{
   table: TableData
@@ -44,7 +46,6 @@ const visibleColumns = computed(() =>
 )
 
 function toggleColumn(columnKey: string, visible: boolean) {
-    console.log(columnKey, visible, hiddenColumns)
   if (visible) {
     hiddenColumns.value.delete(columnKey)
   } else {
@@ -139,7 +140,6 @@ function getCellValue(row: any, key: string) {
 const rowSelection = ref<Set<number>>(new Set())
 const allResultsSelected = ref(false)
 const selectedCount = computed(() => rowSelection.value.size)
-const selectedRows = computed(() => Array.from(rowSelection.value))
 const bulkActions = computed(() => props.table.bulkActions ?? [])
 const allVisibleItemsAreSelected = computed(() =>
   allResultsSelected.value ||
@@ -209,7 +209,7 @@ function performBulkAction(action: any) {
     preserveScroll: true,
     onSuccess: () => resetRowSelection(),
     onError: (errors) => {
-      actionError.value = Object.values(errors)[0] ?? trans('table.bulk_actions.error')
+      actionError.value = Object.values(errors)[0] ?? t('vue-table-builder::table.bulk_actions.error')
     },
   })
 }
@@ -256,7 +256,7 @@ function performBulkAction(action: any) {
           <DropdownMenu v-if="columnSelector">
               <DropdownMenuTrigger as-child>
                   <Button variant="outline" class="ml-auto">
-                      {{ trans('table.columns') }}
+                      {{ t('vue-table-builder::table.columns') }}
                       <ChevronDown class="ml-2 h-4 w-4" />
                   </Button>
               </DropdownMenuTrigger>
@@ -288,9 +288,9 @@ function performBulkAction(action: any) {
       <div class="flex items-center space-x-2">
           <span class="text-sm font-medium">
             {{
-                trans('table.bulk_actions.selected_simple', {
-                    count: selectedCount,
-                    type: selectedCount === 1 ? trans('messages.table.row') : trans('messages.table.rows'),
+                t('vue-table-builder::table.bulk_actions.selected_simple', {
+                    'count': selectedCount,
+                    'type': selectedCount === 1 ? t('vue-table-builder::table.row') : t('vue-table-builder::table.rows'),
                 })
             }}
           </span>
@@ -299,7 +299,7 @@ function performBulkAction(action: any) {
           <DropdownMenu>
               <DropdownMenuTrigger as-child>
                   <Button variant="outline" size="sm">
-                      {{ trans('table.bulk_actions.title') }}
+                      {{ t('vue-table-builder::table.bulk_actions.title') }}
                       <ChevronDown class="ml-2 h-4 w-4" />
                   </Button>
               </DropdownMenuTrigger>
@@ -309,7 +309,7 @@ function performBulkAction(action: any) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator v-if="bulkActions.length > 0" />
                   <DropdownMenuItem @click="resetRowSelection">
-                      {{ trans('table.bulk_actions.clear_selection') }}
+                      {{ t('vue-table-builder::table.bulk_actions.clear_selection') }}
                   </DropdownMenuItem>
               </DropdownMenuContent>
           </DropdownMenu>
@@ -332,10 +332,10 @@ function performBulkAction(action: any) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem @click="selectedCount > 0 ? resetRowSelection() : selectCurrentPage()">
-                    {{ selectedCount > 0 ? trans('table.bulk_actions.clear_selection') : trans('table.bulk_actions.select_this_page', { count: String(table.data.length) }) }}
+                    {{ selectedCount > 0 ? t('vue-table-builder::table.bulk_actions.clear_selection') : t('vue-table-builder::table.bulk_actions.select_this_page', { count: String(table.data.length) }) }}
                   </DropdownMenuItem>
                   <DropdownMenuItem v-if="table.pagination" @click="selectAllResults">
-                    {{ trans('table.bulk_actions.select_all_results', { total: String(table.pagination.total) }) }}
+                    {{ t('vue-table-builder::table.bulk_actions.select_all_results', { total: String(table.pagination.total) }) }}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -367,7 +367,7 @@ function performBulkAction(action: any) {
               :colspan="visibleColumns.length"
               class="text-center text-muted-foreground"
             >
-              No results found.
+                {{ t('vue-table-builder::table.no_results') }}
             </TableCell>
           </TableRow>
           <TableRow
@@ -401,8 +401,11 @@ function performBulkAction(action: any) {
       class="flex items-center justify-between mt-3"
     >
       <div class="text-sm text-muted-foreground">
-        Showing {{ table.pagination.from ?? 0 }} to {{ table.pagination.to ?? 0 }} of
-        {{ table.pagination.total }} results
+          {{ t('vue-table-builder::table.pagination.showing', {
+            'from': table.pagination.from ?? 0,
+            'to': table.pagination.to ?? 0,
+            'total': table.pagination.total
+          }) }}
       </div>
       <div class="flex items-center gap-2">
         <Link
@@ -413,18 +416,18 @@ function performBulkAction(action: any) {
           class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
         >
           <ChevronLeft class="h-4 w-4" />
-          Previous
+          {{ t('vue-table-builder::table.pagination.previous') }}
         </Link>
         <span
           v-else
           class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background h-9 px-3 opacity-50 cursor-not-allowed"
         >
           <ChevronLeft class="h-4 w-4" />
-          Previous
+          {{ t('vue-table-builder::table.pagination.previous') }}
         </span>
 
         <div class="text-sm">
-          Page {{ table.pagination.current_page }} of {{ table.pagination.last_page }}
+          {{ t('vue-table-builder::table.pagination.page_of', { 'current': table.pagination.current_page, 'last': table.pagination.last_page }) }}
         </div>
 
         <Link
@@ -434,14 +437,14 @@ function performBulkAction(action: any) {
           preserve-scroll
           class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
         >
-          Next
+          {{ t('vue-table-builder::table.pagination.next') }}
           <ChevronRight class="h-4 w-4" />
         </Link>
         <span
           v-else
           class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background h-9 px-3 opacity-50 cursor-not-allowed"
         >
-          Next
+          {{ t('vue-table-builder::table.pagination.next') }}
           <ChevronRight class="h-4 w-4" />
         </span>
       </div>
