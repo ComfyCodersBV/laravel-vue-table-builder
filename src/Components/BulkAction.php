@@ -27,8 +27,7 @@ class BulkAction
         public string $confirmButton = '',
         public string $cancelButton = '',
         bool $requirePassword = false,
-    )
-    {
+    ) {
         if ($requirePassword === true) {
             $this->requirePassword = 'password';
         }
