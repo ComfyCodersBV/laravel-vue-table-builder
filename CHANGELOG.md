@@ -2,6 +2,9 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.0.1 - 2026-04-17
+* Add Laravel 13 support
+
 ## 1.0.0 - 2026-04-08
 * Cleanup and refactor for 1.0 release
 * Added translations for global search, pagination and bulk actions
