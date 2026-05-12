@@ -320,7 +320,7 @@ function performBulkAction(action: any) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead v-if="bulkActions.length > 0" class="w-10">
+            <TableHead v-if="bulkActions.length > 0" :class="[table.headClass, 'w-10']">
               <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                   <div class="cursor-pointer">
@@ -343,6 +343,7 @@ function performBulkAction(action: any) {
             <TableHead
               v-for="column in visibleColumns"
               :key="column.key"
+              :class="table.headClass"
             >
               <button
                 v-if="column.sortable"
@@ -375,7 +376,7 @@ function performBulkAction(action: any) {
             @click="table.rowLinks && table.rowLinks[index] ? handleRowClick(index, $event) : undefined"
             :class="table.rowLinks && table.rowLinks[index] ? 'cursor-pointer hover:bg-muted/50' : ''"
           >
-            <TableCell v-if="bulkActions.length > 0" @click.stop>
+            <TableCell v-if="bulkActions.length > 0" :class="table.cellClass" @click.stop>
               <Checkbox
                 :model-value="isRowSelected(index)"
                 @update:model-value="() => toggleRowSelection(index)"
@@ -385,7 +386,7 @@ function performBulkAction(action: any) {
             <TableCell
               v-for="column in visibleColumns"
               :key="column.key"
-              :class="column.class"
+              :class="[table.cellClass, column.class]"
               v-html="getCellValue(row, column.key)"
             >
             </TableCell>

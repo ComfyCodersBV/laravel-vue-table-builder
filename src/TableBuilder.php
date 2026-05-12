@@ -43,6 +43,10 @@ class TableBuilder implements Arrayable, JsonSerializable
 
     protected string $defaultSort = '';
 
+    protected string $cellClass = '';
+
+    protected string $headClass = '';
+
     protected Request $request;
 
     protected $resource;
@@ -340,7 +344,17 @@ class TableBuilder implements Arrayable, JsonSerializable
             'bulkActions' => $this->bulkActions,
             'rowLinks' => $this->rowLinks->toArray(),
             'rowLinkType' => $this->rowLinkType,
+            'cellClass' => $this->cellClass,
+            'headClass' => $this->headClass,
         ];
+    }
+
+    public function class(string $cell = '', string $head = ''): self
+    {
+        $this->cellClass = $cell;
+        $this->headClass = $head;
+
+        return $this;
     }
 
     public function defaultSort(string $sort, string $direction = ''): self

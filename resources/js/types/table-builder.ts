@@ -67,4 +67,6 @@ export interface TableData {
     bulkActions: BulkAction[]
     rowLinks: (string | null)[]
     rowLinkType: 'modal' | 'link' | ''
+    cellClass?: string
+    headClass?: string
 }
