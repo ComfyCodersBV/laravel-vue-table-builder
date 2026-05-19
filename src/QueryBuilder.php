@@ -14,6 +14,7 @@ use Kirschbaum\PowerJoins\EloquentJoins;
 use TranquilTools\TableBuilder\Table\PowerJoinsException;
 use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
 use TranquilTools\TableBuilder\Components\Column;
+use TranquilTools\TableBuilder\Components\Filter;
 use TranquilTools\TableBuilder\Components\SearchInput;
 
 class QueryBuilder extends TableBuilder

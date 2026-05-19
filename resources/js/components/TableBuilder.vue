@@ -97,6 +97,26 @@ function getCellValue(row: any, key: string) {
   return key.split('.').reduce((obj, k) => obj?.[k], row)
 }
 
+function getActiveFilterValue(key: string): string {
+  const params = new URLSearchParams(window.location.search)
+  return params.get(`filter[${key}]`) || ''
+}
+
+function handleFilterChange(key: string, value: string) {
+  const params = new URLSearchParams(window.location.search)
+
+  if (value) {
+    params.set(`filter[${key}]`, value)
+  } else {
+    params.delete(`filter[${key}]`)
+  }
+
+  router.get(window.location.pathname + '?' + params.toString(), {}, {
+    preserveState: true,
+    preserveScroll: true,
+  })
+}
+
 function handleRowClick(index: number) {
   if (!props.table.rowLinks || !props.table.rowLinks[index]) return
 
@@ -130,11 +150,10 @@ function handleRowClick(index: number) {
                       <label class="mb-2 block text-sm font-medium capitalize">{{ filter.label }}</label>
                       <select
                           class="w-full rounded-md border bg-white px-3 py-2 dark:bg-gray-800"
-                          :value="activeFilters?.[label.toLowerCase().replace(/\s+/g, '_')] || ''"
-                          @change="(e) => onFilterChange?.(label.toLowerCase().replace(/\s+/g, '_'), (e.target as HTMLSelectElement).value)"
+                          :value="getActiveFilterValue(filter.key)"
+                          @change="(e) => handleFilterChange(filter.key, (e.target as HTMLSelectElement).value)"
                       >
-                          <option value="">{{ trans('table.all') }}</option>
-                          <option v-for="(label, value) in filter.options" :key="filter.key" :value="filter.key">
+                          <option v-for="(label, value) in filter.options" :key="value" :value="value">
                               {{ label }}
                           </option>
                       </select>
