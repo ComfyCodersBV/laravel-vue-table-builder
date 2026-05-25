@@ -14,7 +14,15 @@ You can install the package via composer:
 ```bash
 composer require tranquil-tools/laravel-vue-table-builder
 ```
-Alter you vite.config.ts to add an `@table-builder` alias:
+
+Install the required npm packages:
+
+```bash
+npm install reka-ui lucide-vue-next
+```
+
+Alter your `vite.config.ts` to add an `@table-builder` alias:
+
 ```ts
 import { defineConfig } from 'vite';
 import path from 'path';
@@ -25,9 +33,6 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-
-            // Add this:
-
             '@table-builder': path.resolve(__dirname, 'vendor/tranquil-tools/laravel-vue-table-builder/resources/js'),
         },
     },
