@@ -33,6 +33,9 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
+
+            // Add this:
+
             '@table-builder': path.resolve(__dirname, 'vendor/tranquil-tools/laravel-vue-table-builder/resources/js'),
         },
     },
