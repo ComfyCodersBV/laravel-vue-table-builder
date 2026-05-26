@@ -8,7 +8,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/Components/ui/table'
+} from './ui/table'
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -16,13 +16,13 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from '@/Components/ui/dropdown-menu';
-import { Input } from '@/Components/ui/input';
-import { Checkbox } from '@/Components/ui/checkbox';
-import { Button } from '@/Components/ui/button';
+} from './ui/dropdown-menu';
+import { Input } from './ui/input';
+import { Checkbox } from './ui/checkbox';
+import { Button } from './ui/button';
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Funnel, Search } from 'lucide-vue-next'
-import type { TableData, Column } from '@/types/table-builder'
-import { openModal } from '@/useModal';
+import type { TableData, Column } from '../types/table-builder'
+import { openModal } from '../useModal';
 import { debounce } from 'lodash-es'
 import { useTranslations } from '../composables/useTranslations'
 
