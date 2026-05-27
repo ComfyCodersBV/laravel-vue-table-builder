@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use TranquilTools\TableBuilder\Components\BulkAction;
 
@@ -21,9 +22,9 @@ abstract class AbstractTable
     }
 
     /**
-     * @return Builder|Relation|Model|Collection|array|string
+     * @return Builder|Relation|Model|Collection|array|string|LengthAwarePaginator
      */
-    public function for(): mixed
+    public function for()
     {
         return [];
     }

@@ -2,6 +2,9 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.0.5 - 2026-05-27
+* Drop return type 'mixed' from `AbstractTable::for()` to allow for more specific return types in implementations without causing type errors
+
 ## 1.0.4 - 2026-05-27
 * Add documentation
 * Add return types to `AbstractTable::for()`
