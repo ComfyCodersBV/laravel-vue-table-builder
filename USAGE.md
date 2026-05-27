@@ -1,4 +1,4 @@
-# Laravel Vue Table Builder - Usage Guide
+# Laravel Vue TableBuilder - Usage Guide
 
 ## Installation
 
