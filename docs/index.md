@@ -21,7 +21,7 @@ table once in PHP — columns, filters, search, sorting, pagination, and bulk ac
 ```php
 class UsersTable extends AbstractTable
 {
-    public function for()
+    public function for(): Builder
     {
         return User::query();
     }

@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Tables;
 
 use App\Models\{{ model }};
+use Illuminate\Database\Eloquent\Builder;
 use TranquilTools\TableBuilder\AbstractTable;
 use TranquilTools\TableBuilder\TableBuilder;
 
 class {{ class }} extends AbstractTable
 {
-    public function for()
+    public function for(): Builder
     {
         return {{ model }}::query();
     }

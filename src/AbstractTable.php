@@ -4,19 +4,26 @@ declare(strict_types=1);
 
 namespace TranquilTools\TableBuilder;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use TranquilTools\TableBuilder\Components\BulkAction;
 
 abstract class AbstractTable
 {
     private ?TableBuilder $table = null;
 
-    public function authorize(Request $request)
+    public function authorize(Request $request): bool
     {
         return true;
     }
 
-    public function for()
+    /**
+     * @return Builder|Relation|Model|Collection|array|string
+     */
+    public function for(): mixed
     {
         return [];
     }

@@ -56,13 +56,14 @@ Create a table class extending `AbstractTable`:
 
 namespace App\Tables;
 
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use TranquilTools\TableBuilder\AbstractTable;
 use TranquilTools\TableBuilder\TableBuilder;
-use App\Models\User;
 
 class UsersTable extends AbstractTable
 {
-    public function for()
+    public function for(): Builder
     {
         return User::query();
     }

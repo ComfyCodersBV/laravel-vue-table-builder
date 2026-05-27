@@ -5,7 +5,7 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/comfycoders/laravel-vue-table-builder/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/comfycoders/laravel-vue-table-builder/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/comfycoders/laravel-vue-table-builder.svg?style=flat-square)](https://packagist.org/packages/comfycoders/laravel-vue-table-builder)
 
-A powerful and flexible table builder package for Laravel with Vue 3, Inertia.js, and shadcn-vue components. Similar to Laravel Splade tables but built for modern Vue 3 applications with beautiful UI components.
+A powerful and flexible table builder package for Laravel with Vue 3, Inertia.js, and shadcn-vue components.
 
 ## Installation
 
@@ -57,13 +57,14 @@ The content of the published config can be viewed [here](./config/vue-table-buil
 Create a table class:
 
 ```php
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use TranquilTools\TableBuilder\AbstractTable;
 use TranquilTools\TableBuilder\TableBuilder;
-use App\Models\User;
 
 class UsersTable extends AbstractTable
 {
-    public function for()
+    public function for(): Builder
     {
         return User::query();
     }

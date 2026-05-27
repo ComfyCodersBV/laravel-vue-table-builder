@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.0.4 - 2026-05-27
+* Add documentation
+* Add return types to `AbstractTable::for()`
+
 ## 1.0.3 - 2026-05-26
 * Internalize all UI components to drop shadcn/ui requirement
 * Add `button`, `input`, `checkbox`, `dropdown-menu` components under `resources/js/components/ui/`

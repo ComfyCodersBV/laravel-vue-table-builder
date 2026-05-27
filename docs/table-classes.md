@@ -17,13 +17,14 @@ Or create manually in `app/Tables/`:
 namespace App\Tables;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use TranquilTools\TableBuilder\AbstractTable;
 use TranquilTools\TableBuilder\TableBuilder;
 
 class UsersTable extends AbstractTable
 {
-    public function for()
+    public function for(): Builder|array
     {
         return User::query();
     }
@@ -48,13 +49,80 @@ class UsersTable extends AbstractTable
 
 ### `for()`
 
-Returns the data source. Can be an Eloquent query builder, a relation, a collection, or an array.
+Returns the data source. Can be an Eloquent query builder, the classname of the model, a model instance, a relation, a collection or an array.
 
+#### Eloquent query builder:
 ```php
-public function for()
+public function for(): Builder
 {
     return User::query()->with('company');
 }
+```
+
+#### Model class name (returns all records, can be filtered/sorted/searched like a query builder):
+```php
+public function for(): string
+{
+    return User::class;
+}
+```
+
+#### A relation is unwrapped to its underlying query builder, so sorting, filtering and searching still work:
+
+```php
+public function for(): HasMany
+{
+    return $this->user->posts();
+}
+```
+
+#### A model instance is converted to a query builder scoped to that model:
+
+```php
+public function for(): User
+{
+    return User::find($this->userId);
+}
+```
+
+#### Plain arrays work too, though filtering and sorting happen in-memory:
+
+```php
+public function for(): array
+{
+    return [
+        ['id' => 1, 'name' => 'Alice'],
+        ['id' => 2, 'name' => 'Bob'],
+    ];
+}
+```
+
+#### Even complex data sources can be supported by returning a collection or array:
+```php
+
+    public function for(): Collection
+    {
+        $reactions = Reaction::query()
+            ->where([
+                // ...
+            ])
+            ->get()
+            ->transform(function (Reaction $reaction) {
+                // ...
+
+                return $reaction;
+            });
+
+        $tickets = Ticket::query()
+            ->where([
+                // ...
+            ])
+            ->get();
+
+        return $tickets
+            ->merge($reactions)
+            ->sortBy('created_at');
+    }
 ```
 
 When returning a query builder, the package wraps it in `QueryBuilder` which handles filtering, sorting, searching, and
@@ -88,9 +156,9 @@ class OrdersTable extends AbstractTable
 {
     public function __construct(private readonly Customer $customer) {}
 
-    public function for()
+    public function for(): HasMany
     {
-        return $this->customer->orders()->getQuery();
+        return $this->customer->orders();
     }
 }
 
