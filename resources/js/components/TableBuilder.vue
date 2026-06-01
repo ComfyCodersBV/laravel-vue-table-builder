@@ -67,6 +67,7 @@ function handleFilterChange(key: string, value: string) {
     params.delete(`filter[${key}]`)
   }
 
+  params.delete('page')
   filterDropdownOpen.value = false
 
   router.get(window.location.pathname + '?' + params.toString(), {}, {
@@ -87,6 +88,8 @@ const handleSearch = debounce((value: string) => {
   } else {
     params.delete('filter[global]')
   }
+
+  params.delete('page')
 
   router.get(window.location.pathname + '?' + params.toString(), {}, {
     preserveState: true,
