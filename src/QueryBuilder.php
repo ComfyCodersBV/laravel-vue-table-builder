@@ -227,6 +227,12 @@ class QueryBuilder extends TableBuilder
             $perPage = $defaultPerPage;
         }
 
+        if (! in_array($perPage, $this->perPageOptions, true)) {
+            $this->perPageOptions[] = $perPage;
+        }
+
+        sort($this->perPageOptions);
+
         $this->resource = $this->builder->{$this->paginateMethod}($perPage)->withQueryString();
     }
 

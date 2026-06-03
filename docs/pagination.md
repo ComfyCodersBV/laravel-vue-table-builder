@@ -10,7 +10,7 @@ Shows total results count and page links. Requires a `COUNT(*)` query.
 
 ```php
 $table->paginate(15); // 15 per page
-$table->paginate();   // uses first perPageOptions value
+$table->paginate();   // uses default_per_page from config (25)
 ```
 
 ### Simple Pagination
@@ -39,19 +39,35 @@ $table->noPagination();
 
 ## Per Page Options
 
-The user can select how many rows to display. Configure the available options:
+A per-page size dropdown is shown automatically in the pagination footer. Configure the available options per table:
 
 ```php
 $table->perPageOptions([10, 25, 50, 100]);
 ```
 
-The first value is the default. The current `perPage` value from the query string (`?perPage=25`) is applied
-automatically — values not in the options list are ignored.
+The current `perPage` value from the query string (`?perPage=25`) is applied automatically — values not in the options
+list are ignored.
 
-Set the global default across all tables in a service provider:
+The default per-page size and available options can be set globally via the config file (
+`config/vue-table-builder.php`):
 
 ```php
-TableBuilder::defaultPerPageOptions([15, 30, 50]);
+return [
+    'default_per_page' => 25,
+    'per_page_options' => [
+        10,
+        25,
+        50,
+        100,
+    ],
+];
+```
+
+Or in a service provider:
+
+```php
+TableBuilder::defaultPerPageOptions([10, 25, 50, 100]);
+TableBuilder::defaultPerPage(25);
 ```
 
 ## Query Parameters

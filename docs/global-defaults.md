@@ -11,7 +11,8 @@ use TranquilTools\TableBuilder\TableBuilder;
 
 public function boot(): void
 {
-    TableBuilder::defaultPerPageOptions([15, 30, 50, 100]);
+    TableBuilder::defaultPerPageOptions([10, 25, 50, 100]);
+    TableBuilder::defaultPerPage(25);
     TableBuilder::defaultSearchDebounce(350);
     TableBuilder::defaultResetButton(true);
     TableBuilder::defaultPaginationScroll('top');
@@ -28,7 +29,8 @@ public function boot(): void
 
 | Method                                                          | Default             | Description                                               |
 |-----------------------------------------------------------------|---------------------|-----------------------------------------------------------|
-| `TableBuilder::defaultPerPageOptions(array)`                    | `[15, 30, 50, 100]` | Available per-page options for every table                |
+| `TableBuilder::defaultPerPageOptions(array)`                    | `[10, 25, 50, 100]` | Available per-page options for every table                |
+| `TableBuilder::defaultPerPage(int)`                             | `25`                | Default items per page when no `?perPage` query param is set |
 | `TableBuilder::hidePaginationWhenResourceContainsOnePage(bool)` | `false`             | Hide pagination controls when all results fit on one page |
 | `TableBuilder::defaultPaginationScroll(string)`                 | `'top'`             | Scroll to `'top'` on page change, or `''` for no scroll   |
 
@@ -69,6 +71,7 @@ public function configure(TableBuilder $table): void
 ## Reading Defaults
 
 ```php
+TableBuilder::getDefaultPerPage();          // int
 TableBuilder::getDefaultSearchDebounce();   // int
 TableBuilder::getDefaultResetButton();      // bool
 TableBuilder::getDefaultPaginationScroll(); // string
