@@ -27,12 +27,12 @@ public function boot(): void
 
 ### Pagination
 
-| Method                                                          | Default             | Description                                               |
-|-----------------------------------------------------------------|---------------------|-----------------------------------------------------------|
-| `TableBuilder::defaultPerPageOptions(array)`                    | `[10, 25, 50, 100]` | Available per-page options for every table                |
+| Method                                                          | Default             | Description                                                  |
+|-----------------------------------------------------------------|---------------------|--------------------------------------------------------------|
+| `TableBuilder::defaultPerPageOptions(array)`                    | `[10, 25, 50, 100]` | Available per-page options for every table                   |
 | `TableBuilder::defaultPerPage(int)`                             | `25`                | Default items per page when no `?perPage` query param is set |
-| `TableBuilder::hidePaginationWhenResourceContainsOnePage(bool)` | `false`             | Hide pagination controls when all results fit on one page |
-| `TableBuilder::defaultPaginationScroll(string)`                 | `'top'`             | Scroll to `'top'` on page change, or `''` for no scroll   |
+| `TableBuilder::hidePaginationWhenResourceContainsOnePage(bool)` | `false`             | Hide pagination controls when all results fit on one page    |
+| `TableBuilder::defaultPaginationScroll(string)`                 | `'top'`             | Scroll to `'top'` on page change, or `''` for no scroll      |
 
 ### Search
 
