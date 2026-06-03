@@ -21,6 +21,7 @@ return [
     'pagination' => [
         'next' => 'Next',
         'page_of' => 'Page :current of :last',
+        'per_page' => 'Per page',
         'previous' => 'Previous',
         'showing' => 'Showing :from to :to of :total results',
     ],

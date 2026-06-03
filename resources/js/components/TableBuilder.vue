@@ -200,6 +200,17 @@ function handleRowClick(index: number, e: MouseEvent) {
   }
 }
 
+function handlePerPageChange(value: string) {
+  const perPageKey = tableName.value !== 'default' ? `${tableName.value}_perPage` : 'perPage'
+  const params = new URLSearchParams(window.location.search)
+  params.set(perPageKey, value)
+  params.delete('page')
+  router.get(window.location.pathname + '?' + params.toString(), {}, {
+    preserveState: true,
+    preserveScroll: true,
+  })
+}
+
 const actionError = ref<string | null>(null)
 
 function performBulkAction(action: any) {
@@ -403,12 +414,34 @@ function performBulkAction(action: any) {
       v-if="table.pagination && table.pagination.last_page > 1"
       class="flex items-center justify-between mt-3"
     >
-      <div class="text-sm text-muted-foreground">
-          {{ t('vue-table-builder::table.pagination.showing', {
-            'from': table.pagination.from ?? 0,
-            'to': table.pagination.to ?? 0,
-            'total': table.pagination.total
-          }) }}
+      <div class="flex items-center gap-3">
+          <div v-if="table.perPageOptions && table.perPageOptions.length > 1" class="flex items-center gap-1.5">
+              <span class="text-sm text-muted-foreground">{{ t('vue-table-builder::table.pagination.per_page') }}</span>
+              <DropdownMenu>
+                  <DropdownMenuTrigger as-child>
+                      <Button variant="outline" size="sm">
+                          {{ table.pagination.per_page }}
+                          <ChevronDown class="ml-1 h-3.5 w-3.5" />
+                      </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                      <DropdownMenuItem
+                          v-for="option in table.perPageOptions"
+                          :key="option"
+                          @click="handlePerPageChange(String(option))"
+                      >
+                          {{ option }}
+                      </DropdownMenuItem>
+                  </DropdownMenuContent>
+              </DropdownMenu>
+          </div>
+          <span class="text-sm text-muted-foreground">
+              {{ t('vue-table-builder::table.pagination.showing', {
+                'from': table.pagination.from ?? 0,
+                'to': table.pagination.to ?? 0,
+                'total': table.pagination.total
+              }) }}
+          </span>
       </div>
       <div class="flex items-center gap-2">
         <Link

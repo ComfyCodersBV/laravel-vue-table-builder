@@ -59,7 +59,9 @@ class TableBuilder implements Arrayable, JsonSerializable
 
     protected Collection $rowLinks;
 
-    protected static array $defaultPerPageOptions = [15, 30, 50, 100];
+    protected static array $defaultPerPageOptions = [10, 25, 50, 100];
+
+    protected static int $defaultPerPage = 25;
 
     protected static int $defaultSearchDebounce = 350;
 
@@ -148,9 +150,19 @@ class TableBuilder implements Arrayable, JsonSerializable
         return $this;
     }
 
-    public static function defaultPerPageOptions(array $perPageOptions)
+    public static function defaultPerPageOptions(array $perPageOptions): void
     {
         static::$defaultPerPageOptions = $perPageOptions;
+    }
+
+    public static function defaultPerPage(int $perPage): void
+    {
+        static::$defaultPerPage = $perPage;
+    }
+
+    public static function getDefaultPerPage(): int
+    {
+        return static::$defaultPerPage;
     }
 
     public static function getDefaultSearchDebounce(): int

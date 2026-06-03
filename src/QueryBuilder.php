@@ -219,13 +219,11 @@ class QueryBuilder extends TableBuilder
         // The 'perPage' value is taken from the request query
         // string, or from the configured parameter, or it's
         // the first from the 'perPage' selector options.
-        $defaultPerPage = $this->perPage ?: Arr::first($this->perPageOptions);
+        $defaultPerPage = $this->perPage ?: static::getDefaultPerPage();
 
-        $perPage = $this->query('perPage', $defaultPerPage);
+        $perPage = (int) $this->query('perPage', $defaultPerPage);
 
-        if (! in_array($perPage, $this->perPageOptions)) {
-            // The 'perPage' value is not in the allowed options.
-            // So we'll use the first option.
+        if (! in_array($perPage, $this->perPageOptions, true)) {
             $perPage = $defaultPerPage;
         }
 
