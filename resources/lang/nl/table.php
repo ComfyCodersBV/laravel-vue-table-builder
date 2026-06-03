@@ -21,6 +21,7 @@ return [
     'pagination' => [
         'next' => 'Volgende',
         'page_of' => 'Pagina :current van :last',
+        'per_page' => 'Per pagina',
         'previous' => 'Vorige',
         'showing' => ':from tot :to van :total resultaten',
     ],

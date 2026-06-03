@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.0.7 - 2026-06-03
+* Add configurable table size dropdown in the pagination footer
+
+## 1.0.6 - 2026-06-02
+* Added pagination reset after filter changes
+
 ## 1.0.5 - 2026-05-27
 * Drop return type 'mixed' from `AbstractTable::for()` to allow for more specific return types in implementations without causing type errors
 
