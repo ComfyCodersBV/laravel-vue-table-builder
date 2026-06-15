@@ -80,6 +80,25 @@ Use `as` to transform a value before it reaches the frontend:
 
 The second argument to the closure is the full row item.
 
+### Plain text vs. HTML output
+
+By default, string values returned from an `as` callback are escaped as plain text. This prevents XSS when displaying
+user-controlled data.
+
+To render raw HTML, return an `HtmlString` instance:
+
+```php
+use Illuminate\Support\HtmlString;
+
+->column('ticket', 'Ticket', as: fn($ticket) => $ticket
+    ? new HtmlString('<a href="' . route('tickets.show', $ticket) . '">' . e($ticket->title) . '</a>')
+    : '-'
+)
+```
+
+> **Note:** Always escape user-controlled values inside `HtmlString` using `e()`. The `HtmlString` wrapper signals
+> intent, it does not escape for you.
+
 ## Custom Sort Logic
 
 Pass a closure to `sortable` to implement custom ordering:

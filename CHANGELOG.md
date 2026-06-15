@@ -2,6 +2,9 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.0.8 - 2026-06-15
+* `as:` callback return values are now escaped as plain text by default. Return an `HtmlString` instance to render raw HTML.
+
 ## 1.0.7 - 2026-06-03
 * Add configurable table size dropdown in the pagination footer
 

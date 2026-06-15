@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Conditionable;
 use InvalidArgumentException;
@@ -297,6 +298,17 @@ class TableBuilder implements Arrayable, JsonSerializable
 
             $value = $column->getDataFromItem($itemArray);
             $transformed = call_user_func($column->as, $value, $item);
+
+            if ($transformed instanceof HtmlString) {
+                data_set($itemArray, $column->key, $transformed->toHtml());
+
+                return;
+            }
+
+            if (is_string($transformed)) {
+                $transformed = e($transformed);
+            }
+
             data_set($itemArray, $column->key, $transformed);
         });
 
