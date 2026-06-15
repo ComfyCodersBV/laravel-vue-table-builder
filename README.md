@@ -14,7 +14,7 @@ of this TableBuilder **and** the FormBuilder to give you full create, read, upda
 boilerplate.
 
 - **Docs:** [docs.comfycoders.nl/laravel-vue-crud-builder](https://docs.comfycoders.nl/laravel-vue-crud-builder)
-- **GitHub: ** [github.com/ComfyCodersBV/laravel-vue-crud-builder](https://github.com/ComfyCodersBV/laravel-vue-crud-builder)
+- **GitHub:** [github.com/ComfyCodersBV/laravel-vue-crud-builder](https://github.com/ComfyCodersBV/laravel-vue-crud-builder)
 
 Installing the CrudBuilder pulls in this package automatically as a Composer dependency.
 
