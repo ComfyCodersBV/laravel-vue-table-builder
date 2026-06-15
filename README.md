@@ -7,6 +7,18 @@
 
 A powerful and flexible table builder package for Laravel with Vue 3, Inertia.js, and shadcn-vue components.
 
+## CrudBuilder
+
+Want a complete CRUD solution? Our **[CrudBuilder](https://docs.comfycoders.nl/laravel-vue-crud-builder)** builds on top
+of this TableBuilder **and** the FormBuilder to give you full create, read, update, and delete flows without repetitive
+boilerplate.
+
+- **Docs:** [docs.comfycoders.nl/laravel-vue-crud-builder](https://docs.comfycoders.nl/laravel-vue-crud-builder)
+- **GitHub:
+  ** [github.com/ComfyCodersBV/laravel-vue-crud-builder](https://github.com/ComfyCodersBV/laravel-vue-crud-builder)
+
+Installing the CrudBuilder pulls in this package automatically as a Composer dependency.
+
 ## Installation
 
 You can install the package via composer:
@@ -24,7 +36,7 @@ npm install reka-ui lucide-vue-next
 Alter your `vite.config.ts` to add an `@table-builder` alias:
 
 ```ts
-import { defineConfig } from 'vite';
+import {defineConfig} from 'vite';
 import path from 'path';
 
 export default defineConfig({
@@ -101,20 +113,21 @@ public function index()
 Import the TableBuilder component:
 
 ```vue
-<script setup lang="ts">
-import { TableBuilder } from '@/components'
-import type { TableData } from '@/types/table-builder'
 
-defineProps<{
-  table: TableData
-}>()
+<script setup lang="ts">
+    import {TableBuilder} from '@/components'
+    import type {TableData} from '@/types/table-builder'
+
+    defineProps<{
+        table: TableData
+    }>()
 </script>
 
 <template>
-  <div>
-    <h1>Users</h1>
-    <TableBuilder :table="table" />
-  </div>
+    <div>
+        <h1>Users</h1>
+        <TableBuilder :table="table"/>
+    </div>
 </template>
 ```
 

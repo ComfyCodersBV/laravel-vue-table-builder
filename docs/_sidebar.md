@@ -20,4 +20,4 @@
 
 - **Reference**
     - [Global Defaults](global-defaults.md)
-    - [CRUD Builder](crud-builder.md)
+    - [CrudBuilder](crud-builder.md)
