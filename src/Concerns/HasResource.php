@@ -17,11 +17,11 @@ trait HasResource
 
     protected string $primaryKey = '';
 
-    public function rowLink(callable $callback, bool $modal = false): self
+    public function rowLink(callable $callback, bool $modal = false, bool $href = false): self
     {
         $this->rowLinkCallable = $callback;
 
-        $this->rowLinkType = $modal ? 'modal' : 'link';
+        $this->rowLinkType = $modal ? 'modal' : ($href ? 'href' : 'link');
 
         return $this;
     }

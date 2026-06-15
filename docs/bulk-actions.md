@@ -32,7 +32,7 @@ bulkAction(
 
 | Parameter         | Type             | Default | Description                                                         |
 |-------------------|------------------|---------|---------------------------------------------------------------------|
-| `label`           | `string`         | —       | Button label shown in the UI                                        |
+| `label`           | `string`         | -       | Button label shown in the UI                                        |
 | `each`            | `callable\|null` | `null`  | Called once per selected row; receives the model instance           |
 | `before`          | `callable\|null` | `null`  | Called once before processing starts; receives the array of IDs     |
 | `after`           | `callable\|null` | `null`  | Called once after all rows are processed; receives the array of IDs |
@@ -44,7 +44,7 @@ bulkAction(
 
 ## Callbacks
 
-### `each` — per-row processing
+### `each` - per-row processing
 
 ```php
 ->bulkAction('Activate', each: fn($user) => $user->update(['active' => true]))
@@ -52,7 +52,7 @@ bulkAction(
 
 Rows are processed in chunks of 1,000 to avoid memory issues.
 
-### `before` and `after` — hooks
+### `before` and `after` - hooks
 
 ```php
 ->bulkAction(

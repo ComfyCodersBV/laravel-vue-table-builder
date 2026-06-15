@@ -34,8 +34,8 @@ selectFilter(
 
 | Parameter             | Type           | Default       | Description                                                        |
 |-----------------------|----------------|---------------|--------------------------------------------------------------------|
-| `key`                 | `string`       | —             | Column name to filter on; also the query param key (`filter[key]`) |
-| `options`             | `array`        | —             | Associative array of `value => label`                              |
+| `key`                 | `string`       | -             | Column name to filter on; also the query param key (`filter[key]`) |
+| `options`             | `array`        | -             | Associative array of `value => label`                              |
 | `label`               | `string\|null` | auto from key | Label shown above the dropdown                                     |
 | `defaultValue`        | `string\|null` | `null`        | Pre-selected value                                                 |
 | `noFilterOption`      | `bool`         | `true`        | Show a "show all" option at the top                                |
@@ -74,8 +74,8 @@ callbackFilter(
 
 The `$callback` receives:
 
-1. `$query` — the Eloquent query builder
-2. `$value` — the selected option value
+1. `$query` - the Eloquent query builder
+2. `$value` - the selected option value
 
 ## Query Parameter
 

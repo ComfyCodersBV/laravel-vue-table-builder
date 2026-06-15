@@ -22,7 +22,7 @@ The component is exported from the package's `resources/js/components/` director
 | Prop    | Type        | Required | Description                                                                 |
 |---------|-------------|----------|-----------------------------------------------------------------------------|
 | `table` | `TableData` | Yes      | The serialized table data from the PHP `TableBuilder`                       |
-| `name`  | `string`    | No       | Table name — must match the `name()` set in PHP for query param namespacing |
+| `name`  | `string`    | No       | Table name - must match the `name()` set in PHP for query param namespacing |
 
 ## Features Rendered
 

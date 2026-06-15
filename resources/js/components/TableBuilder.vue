@@ -22,7 +22,6 @@ import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Funnel, Search } from 'lucide-vue-next'
 import type { TableData, Column } from '../types/table-builder'
-import { openModal } from '../useModal';
 import { debounce } from 'lodash-es'
 import { useTranslations } from '../composables/useTranslations'
 
@@ -194,10 +193,18 @@ function handleRowClick(index: number, e: MouseEvent) {
   if (props.table.rowLinkType === 'modal') {
     fetch(url, { headers: { Accept: 'application/json' } })
       .then((r) => r.json())
-      .then(openModal)
-  } else {
-    router.visit(url)
+      .then((data) => window.dispatchEvent(new CustomEvent('table-builder:open-modal', { detail: data })))
+
+    return
   }
+
+  if (props.table.rowLinkType === 'href') {
+    window.location.href = url
+
+    return
+  }
+
+  router.visit(url)
 }
 
 function handlePerPageChange(value: string) {

@@ -1,18 +1,18 @@
 # Laravel Vue TableBuilder
 
 A Laravel package for building server-driven, interactive data tables with an Inertia.js + Vue 3 frontend. Define your
-table once in PHP — columns, filters, search, sorting, pagination, and bulk actions are all handled automatically.
+table once in PHP - columns, filters, search, sorting, pagination, and bulk actions are all handled automatically.
 
 ## Key Features
 
-- **Server-driven** — all filtering, sorting, and pagination handled in PHP
-- **Inertia.js integration** — seamless SPA experience without custom AJAX code
-- **Column visibility** — users can show/hide columns via a dropdown
-- **Filters** — select-based and callback-based filters
-- **Global & per-column search** — with configurable wildcard modes
-- **Bulk actions** — with optional confirmation dialogs and password prompts
-- **Row links & modals** — make any row clickable
-- **TypeScript support** — full type definitions included
+- **Server-driven** - all filtering, sorting, and pagination handled in PHP
+- **Inertia.js integration** - seamless SPA experience without custom AJAX code
+- **Column visibility** - users can show/hide columns via a dropdown
+- **Filters** - select-based and callback-based filters
+- **Global & per-column search** - with configurable wildcard modes
+- **Bulk actions** - with optional confirmation dialogs and password prompts
+- **Row links & modals** - make any row clickable
+- **TypeScript support** - full type definitions included
 
 ## Quick Example
 
@@ -74,7 +74,7 @@ defineProps<{ table: TableData }>()
 1. Define a table class extending `AbstractTable`
 2. Pass its output to Inertia via `TableBuilder::build()` or `UsersTable::build()`
 3. Render `<TableBuilder :table="table" />` in your Vue page
-4. All user interactions (sort, filter, search, page) use Inertia visits — no manual AJAX
+4. All user interactions (sort, filter, search, page) use Inertia visits - no manual AJAX
 
 ## Next Steps
 

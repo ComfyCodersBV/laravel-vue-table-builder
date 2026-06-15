@@ -65,7 +65,7 @@ searchInput(
 
 | Parameter      | Type            | Default       | Description                                                                  |
 |----------------|-----------------|---------------|------------------------------------------------------------------------------|
-| `key`          | `string\|array` | —             | Query param key, or array of column names                                    |
+| `key`          | `string\|array` | -             | Query param key, or array of column names                                    |
 | `label`        | `string\|null`  | auto from key | Label shown on the input                                                     |
 | `defaultValue` | `string\|null`  | `null`        | Pre-filled search term                                                       |
 | `columns`      | `array`         | `[]`          | Override which columns are searched (with optional search method per column) |

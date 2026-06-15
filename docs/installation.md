@@ -37,39 +37,6 @@ The package ships its Vue component and UI primitives. Install peer dependencies
 npm install lucide-vue-next
 ```
 
-## Vite Configuration
-
-Ensure your `vite.config.js` has the `@` alias pointing to `resources/js`:
-
-```js
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
-
-export default defineConfig({
-    plugins: [vue()],
-    resolve: {
-        alias: {
-            '@': resolve(__dirname, 'resources/js'),
-        },
-    },
-})
-```
-
-## TypeScript Path Alias
-
-Add to `tsconfig.json`:
-
-```json
-{
-    "compilerOptions": {
-        "paths": {
-            "@/*": ["./resources/js/*"]
-        }
-    }
-}
-```
-
 ## Import CSS
 
 Import the package stylesheet in your app entry point (`resources/js/app.js` or `resources/js/app.ts`):
@@ -85,6 +52,18 @@ Dark mode is supported out of the box. Add the `dark` class to your `<html>` ele
 ```html
 <html class="dark">
 ```
+
+## Modal Support (optional)
+
+If you use `->rowModal()`, the package dispatches a `table-builder:open-modal` DOM event on `window`. Listen for it wherever your modal system lives:
+
+```ts
+window.addEventListener('table-builder:open-modal', (e) => {
+    openModal((e as CustomEvent).detail);
+});
+```
+
+See [Row Links & Modals](row-links.md) for the full payload shape and contract.
 
 ## Generate a Table Class
 

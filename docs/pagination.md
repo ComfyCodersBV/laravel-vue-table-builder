@@ -45,7 +45,7 @@ A per-page size dropdown is shown automatically in the pagination footer. Config
 $table->perPageOptions([10, 25, 50, 100]);
 ```
 
-The current `perPage` value from the query string (`?perPage=25`) is applied automatically — values not in the options
+The current `perPage` value from the query string (`?perPage=25`) is applied automatically - values not in the options
 list are ignored.
 
 The default per-page size and available options can be set globally via the config file (

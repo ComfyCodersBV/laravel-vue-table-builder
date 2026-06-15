@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.0.9 - 2026-06-15
+* Add `href: true` parameter to `rowLink()` for plain browser navigation
+* Fixed opening `rowModal`
+
 ## 1.0.8 - 2026-06-15
 * `as:` callback return values are now escaped as plain text by default. Return an `HtmlString` instance to render raw HTML.
 

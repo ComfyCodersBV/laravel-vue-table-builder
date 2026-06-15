@@ -111,7 +111,7 @@ Pass a closure to `sortable` to implement custom ordering:
 
 ## Column Visibility
 
-Columns with `canBeHidden: true` (the default) appear in a visibility dropdown. Users can show/hide them — the selection
+Columns with `canBeHidden: true` (the default) appear in a visibility dropdown. Users can show/hide them - the selection
 is persisted in the URL via the `columns[]` query parameter.
 
 Prevent a column from being hidden:

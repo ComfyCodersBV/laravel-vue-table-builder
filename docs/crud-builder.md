@@ -1,6 +1,6 @@
 # CrudBuilder
 
-Laravel Vue TableBuilder is a dependency of the **ComfyCoders CrudBuilder** package — a full CRUD solution built on
+Laravel Vue TableBuilder is a dependency of the **ComfyCoders CrudBuilder** package - a full CRUD solution built on
 top of our TableBuilder and FormBuilder packages.
 
 The CrudBuilder adds create, read, update and delete flows around the same table you define here, so you get a complete

@@ -15,9 +15,9 @@ Sortable columns show a sort indicator in the header. Clicking cycles through: a
 
 The active sort is stored in the `sort` query parameter:
 
-- `?sort=name` — ascending by `name`
-- `?sort=-name` — descending by `name`
-- (no param) — no sort applied
+- `?sort=name` - ascending by `name`
+- `?sort=-name` - descending by `name`
+- (no param) - no sort applied
 
 For named tables, the param is prefixed: `?users_sort=name`.
 
@@ -50,8 +50,8 @@ Pass a closure to `sortable` for full control over the ORDER BY:
 
 The closure receives:
 
-1. `$query` — the Eloquent query builder
-2. `$direction` — `'asc'` or `'desc'`
+1. `$query` - the Eloquent query builder
+2. `$direction` - `'asc'` or `'desc'`
 
 ## Sorting on Relationship Columns
 

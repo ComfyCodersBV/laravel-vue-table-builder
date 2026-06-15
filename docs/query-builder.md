@@ -18,9 +18,9 @@ TableBuilder::for(new User)
 Must call one of these to execute the query:
 
 ```php
-->paginate(15)         // LengthAwarePaginator — shows total count
-->simplePaginate(15)   // SimplePaginator — Previous/Next only
-->cursorPaginate(15)   // CursorPaginator — efficient for huge tables
+->paginate(15)         // LengthAwarePaginator - shows total count
+->simplePaginate(15)   // SimplePaginator - Previous/Next only
+->cursorPaginate(15)   // CursorPaginator - efficient for huge tables
 ->noPagination()       // Fetch all results with get()
 ```
 
