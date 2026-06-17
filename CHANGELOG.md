@@ -2,6 +2,9 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.0.10 - 2026-06-17
+* Add `only` prop + client-side URL computation for prev/next to enable Inertia partial reloads per table while preserving other tables' page params in the URL
+
 ## 1.0.9 - 2026-06-15
 * Add `href: true` parameter to `rowLink()` for plain browser navigation
 * Fixed opening `rowModal`

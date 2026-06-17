@@ -3,15 +3,16 @@
 ## Import
 
 ```vue
-<script setup lang="ts">
-import { TableBuilder } from '@/components'
-import type { TableData } from '@/types/table-builder'
 
-defineProps<{ table: TableData }>()
+<script setup lang="ts">
+    import {TableBuilder} from '@/components'
+    import type {TableData} from '@/types/table-builder'
+
+    defineProps<{ table: TableData }>()
 </script>
 
 <template>
-  <TableBuilder :table="table" />
+    <TableBuilder :table="table"/>
 </template>
 ```
 
@@ -19,10 +20,11 @@ The component is exported from the package's `resources/js/components/` director
 
 ## Props
 
-| Prop    | Type        | Required | Description                                                                 |
-|---------|-------------|----------|-----------------------------------------------------------------------------|
-| `table` | `TableData` | Yes      | The serialized table data from the PHP `TableBuilder`                       |
-| `name`  | `string`    | No       | Table name - must match the `name()` set in PHP for query param namespacing |
+| Prop    | Type        | Required | Description                                                                                                                 |
+|---------|-------------|----------|-----------------------------------------------------------------------------------------------------------------------------|
+| `table` | `TableData` | Yes      | The serialized table data from the PHP `TableBuilder`                                                                       |
+| `name`  | `string`    | No       | Table name, used to namespace query params (`{name}_page`, `{name}_perPage`) so multiple tables on one page don't conflict  |
+| `only`  | `string[]`  | No       | Inertia prop name(s) to reload on pagination/per-page changes, enables partial reloads so only this table's data is fetched |
 
 ## Features Rendered
 
@@ -46,15 +48,15 @@ The component renders all of the following automatically based on what the PHP b
 All interactions make an Inertia visit with `preserveState: true` and `preserveScroll: true` so the page does not fully
 reload.
 
-| Interaction                   | Query Param Changed             |
-|-------------------------------|---------------------------------|
-| Click sortable column header  | `sort=column` or `sort=-column` |
-| Toggle column visibility      | `columns[]=key` list            |
-| Change filter dropdown        | `filter[key]=value`             |
-| Type in search input          | `filter[key]=term` (debounced)  |
-| Change page                   | `page=N`                        |
-| Change per-page               | `perPage=N`                     |
-| Select rows + run bulk action | POST to signed URL              |
+| Interaction                   | Query Param Changed                 |
+|-------------------------------|-------------------------------------|
+| Click sortable column header  | `sort=column` or `sort=-column`     |
+| Toggle column visibility      | `columns[]=key` list                |
+| Change filter dropdown        | `filter[key]=value`                 |
+| Type in search input          | `filter[key]=term` (debounced)      |
+| Change page                   | `{name}_page=N` (or `page=N`)       |
+| Change per-page               | `{name}_perPage=N` (or `perPage=N`) |
+| Select rows + run bulk action | POST to signed URL                  |
 
 ## Search Debounce
 
