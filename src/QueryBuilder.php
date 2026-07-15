@@ -34,6 +34,11 @@ class QueryBuilder extends TableBuilder
         parent::__construct([], $request);
     }
 
+    protected function shouldDeriveName(): bool
+    {
+        return ! $this->builder instanceof SpatieQueryBuilder;
+    }
+
     public function parseTerms(bool $state = true): self
     {
         $this->parseTerms = $state;
@@ -233,7 +238,9 @@ class QueryBuilder extends TableBuilder
 
         sort($this->perPageOptions);
 
-        $this->resource = $this->builder->{$this->paginateMethod}($perPage)->withQueryString();
+        $pageName = $this->name === static::DEFAULT_NAME ? 'page' : "{$this->name}_page";
+
+        $this->resource = $this->builder->{$this->paginateMethod}($perPage, ['*'], $pageName)->withQueryString();
     }
 
     public function addCurrentPerPageValueToOptions(): void

@@ -126,7 +126,7 @@ class TableBuilder implements Arrayable, JsonSerializable
     {
         $this->configurator = $configurator;
 
-        if ($this->name === static::DEFAULT_NAME) {
+        if ($this->name === static::DEFAULT_NAME && $this->shouldDeriveName()) {
             $this->name = Str::of(class_basename($configurator))
                 ->beforeLast('Table')
                 ->snake()
@@ -135,6 +135,11 @@ class TableBuilder implements Arrayable, JsonSerializable
         }
 
         return $this;
+    }
+
+    protected function shouldDeriveName(): bool
+    {
+        return true;
     }
 
     protected function query(string $key, $default = null)

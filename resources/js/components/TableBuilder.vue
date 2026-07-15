@@ -27,6 +27,8 @@ const props = defineProps<{
 }>()
 
 const tableName = computed(() => props.name || props.table?.name || 'default')
+const nsKey = (key: string) => (tableName.value !== 'default' ? `${tableName.value}_${key}` : key)
+const filterParam = (key: string) => (tableName.value !== 'default' ? `${tableName.value}_filter[${key}]` : `filter[${key}]`)
 const columnSelector = computed(() => props.table.columns.some((column) => column.can_be_hidden))
 
 // Column visibility state
@@ -55,12 +57,12 @@ function handleFilterChange(key: string, value: string) {
     const params = new URLSearchParams(window.location.search)
 
     if (value) {
-        params.set(`filter[${key}]`, value)
+        params.set(filterParam(key), value)
     } else {
-        params.delete(`filter[${key}]`)
+        params.delete(filterParam(key))
     }
 
-    params.delete('page')
+    params.delete(nsKey('page'))
     filterDropdownOpen.value = false
 
     router.get(window.location.pathname + '?' + params.toString(), {}, {
@@ -77,12 +79,12 @@ const handleSearch = debounce((value: string) => {
     const params = new URLSearchParams(window.location.search)
 
     if (value) {
-        params.set('filter[global]', value)
+        params.set(filterParam('global'), value)
     } else {
-        params.delete('filter[global]')
+        params.delete(filterParam('global'))
     }
 
-    params.delete('page')
+    params.delete(nsKey('page'))
 
     router.get(window.location.pathname + '?' + params.toString(), {}, {
         preserveState: true,
@@ -202,10 +204,10 @@ function handleRowClick(index: number, e: MouseEvent) {
 }
 
 function handlePerPageChange(value: string) {
-    const perPageKey = tableName.value !== 'default' ? `${tableName.value}_perPage` : 'perPage'
+    const perPageKey = nsKey('perPage')
     const params = new URLSearchParams(window.location.search)
     params.set(perPageKey, value)
-    params.delete('page')
+    params.delete(nsKey('page'))
     router.get(window.location.pathname + '?' + params.toString(), {}, {
         preserveState: true,
         preserveScroll: true,

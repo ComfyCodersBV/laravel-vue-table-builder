@@ -248,6 +248,8 @@ The resolved name is included in the serialized table, so the Vue component pick
 <TableBuilder :table="roles" />
 ```
 
+> **Spatie QueryBuilder tables:** when `for()` returns a Spatie `QueryBuilder` (which reads its own global `sort`/`filter` parameters), name derivation is skipped and the table keeps the unprefixed parameters. These tables are meant to stand alone on a page; call `->name()` explicitly if you really need to namespace one.
+
 ### Overriding the name
 
 Call `->name()` in `configure()` (or on an inline `TableBuilder`) to override the derived name, e.g. when two tables share a class or when building tables inline without a class:

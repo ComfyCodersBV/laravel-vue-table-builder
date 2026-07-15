@@ -2,6 +2,9 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.0.12 - 2026-07-15
+* Auto-derive per-table name from the configurator class and namespace page/perPage/filter params so multiple tables work without manual names
+
 ## 1.0.11 - 2026-07-15
 * Automatically namespace pagination and query parameters per table by deriving the table `name` from the configurator class name (e.g. `LatestErrorsTable` → `latest_errors`). Multiple tables on one page no longer share the same `perPage`/`page`/search parameters. An explicit `name()` call still overrides the derived name.
 
