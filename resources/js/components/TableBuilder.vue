@@ -26,7 +26,7 @@ const props = defineProps<{
     only?: string[]
 }>()
 
-const tableName = computed(() => props.name || 'default')
+const tableName = computed(() => props.name || props.table?.name || 'default')
 const columnSelector = computed(() => props.table.columns.some((column) => column.can_be_hidden))
 
 // Column visibility state

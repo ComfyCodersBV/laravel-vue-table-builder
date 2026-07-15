@@ -57,6 +57,7 @@ export interface BulkAction {
 }
 
 export interface TableData {
+    name?: string
     data: any[]
     columns: Column[]
     pagination?: PaginationData
