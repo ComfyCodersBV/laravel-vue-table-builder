@@ -23,7 +23,7 @@ The component is exported from the package's `resources/js/components/` director
 | Prop    | Type        | Required | Description                                                                                                                 |
 |---------|-------------|----------|-----------------------------------------------------------------------------------------------------------------------------|
 | `table` | `TableData` | Yes      | The serialized table data from the PHP `TableBuilder`                                                                       |
-| `name`  | `string`    | No       | Table name, used to namespace query params (`{name}_page`, `{name}_perPage`) so multiple tables on one page don't conflict  |
+| `name`  | `string`    | No       | Overrides the table name used to namespace query params (`{name}_page`, `{name}_perPage`). Usually unnecessary: the name is read from the serialized `table` payload (derived from the table class), so it only needs setting for inline tables where you called `->name()` manually |
 | `only`  | `string[]`  | No       | Inertia prop name(s) to reload on pagination/per-page changes, enables partial reloads so only this table's data is fetched |
 
 ## Features Rendered

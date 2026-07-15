@@ -77,7 +77,8 @@ TableBuilder::defaultPerPage(25);
 | `page`    | Current page number                                       |
 | `perPage` | Items per page (must match one of the configured options) |
 
-For named tables: `?users_page=2&users_perPage=30`.
+Every table is namespaced by its `name`, so its parameters are prefixed: `?users_page=2&users_perPage=30`. 
+When using a table class the name is derived automatically from the class name (see [Table Classes](table-classes.md#multiple-tables-on-one-page)), so multiple tables on one page never share `page`/`perPage`.
 
 ## Hide Pagination on Single Page
 

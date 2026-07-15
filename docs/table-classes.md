@@ -225,30 +225,42 @@ public function index()
 
 ## Multiple Tables on One Page
 
-Give each table a unique name to namespace its query parameters:
+Each table needs a unique `name` so its query parameters (`page`, `perPage`, search, …) don't clash with other tables on the same page.
+
+When you use a table class, the name is **derived automatically from the class name** — no configuration needed. `UsersTable` becomes `users`, `MostReportedErrorsTable` becomes `most_reported_errors` (the `Table` suffix is dropped and the rest is snake-cased).
+
+```php
+class UsersTable extends AbstractTable { /* ... */ }   // name: "users"
+class RolesTable extends AbstractTable { /* ... */ }   // name: "roles"
+
+return Inertia::render('Admin/Dashboard', [
+    'users' => UsersTable::build(),
+    'roles' => RolesTable::build(),
+]);
+```
+
+Each table then prefixes its query params: `users_sort`, `users_page`, `roles_sort`, etc.
+
+The resolved name is included in the serialized table, so the Vue component picks it up automatically — no `name` prop required:
+
+```vue
+<TableBuilder :table="users" />
+<TableBuilder :table="roles" />
+```
+
+### Overriding the name
+
+Call `->name()` in `configure()` (or on an inline `TableBuilder`) to override the derived name, e.g. when two tables share a class or when building tables inline without a class:
 
 ```php
 $usersTable = TableBuilder::for(User::query())
     ->name('users')
     ->column('name', 'Name')
     ->paginate(15);
-
-$rolesTable = TableBuilder::for(Role::query())
-    ->name('roles')
-    ->column('name', 'Name')
-    ->paginate(10);
-
-return Inertia::render('Admin/Dashboard', [
-    'users' => $usersTable,
-    'roles' => $rolesTable,
-]);
 ```
 
-Named tables prefix their query params: `users_sort`, `users_page`, `roles_sort`, etc.
-
-In Vue, pass the name prop:
+When overriding an inline table, still pass a matching `name` prop in Vue so both sides agree:
 
 ```vue
 <TableBuilder :table="users" name="users" />
-<TableBuilder :table="roles" name="roles" />
 ```

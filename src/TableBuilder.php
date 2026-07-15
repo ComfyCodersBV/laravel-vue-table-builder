@@ -126,10 +126,6 @@ class TableBuilder implements Arrayable, JsonSerializable
     {
         $this->configurator = $configurator;
 
-        // Namespace pagination/query parameters per table by deriving a name
-        // from the configurator class, so multiple tables on one page don't
-        // share the same 'perPage'/'page' parameters. An explicit name() call
-        // in configure() still overrides this.
         if ($this->name === static::DEFAULT_NAME) {
             $this->name = Str::of(class_basename($configurator))
                 ->beforeLast('Table')
