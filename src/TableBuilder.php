@@ -306,6 +306,12 @@ class TableBuilder implements Arrayable, JsonSerializable
 
         $this->columns->each(function (Column $column) use (&$itemArray, $item) {
             if (! is_callable($column->as)) {
+                $rawValue = data_get($itemArray, $column->key);
+
+                if (is_string($rawValue)) {
+                    data_set($itemArray, $column->key, e($rawValue));
+                }
+
                 return;
             }
 
