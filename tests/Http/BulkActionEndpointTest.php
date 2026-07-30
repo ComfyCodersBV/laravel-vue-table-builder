@@ -69,7 +69,46 @@ it('rejects an unsigned request', function () {
     ]), ['ids' => [1]])->assertForbidden();
 
     expect(Product::count())->toBe(2);
-})->skip('The route is not protected by the signed middleware and BulkActionRequest does not check the signature, so an unsigned request is executed.');
+});
+
+it('rejects a tampered signature', function () {
+    $this->post(bulkActionUrl(EndpointProductsTable::class).'x', ['ids' => [1]])
+        ->assertForbidden();
+
+    expect(Product::count())->toBe(2);
+});
+
+it('rejects a request whose query was changed after signing', function () {
+    $url = bulkActionUrl(EndpointProductsTable::class);
+
+    $this->post($url.'&extra=1', ['ids' => [1]])->assertForbidden();
+
+    expect(Product::count())->toBe(2);
+});
+
+it('rejects another table smuggled into a signed url', function () {
+    $url = str_replace(
+        base64_encode(EndpointProductsTable::class),
+        base64_encode(ForbiddenProductsTable::class),
+        bulkActionUrl(EndpointProductsTable::class),
+    );
+
+    $this->post($url, ['ids' => [1]])->assertForbidden();
+
+    expect(Product::count())->toBe(2);
+});
+
+it('rejects an expired temporary signature', function () {
+    $url = URL::temporarySignedRoute('table.bulk-action', now()->subMinute(), [
+        'table' => base64_encode(EndpointProductsTable::class),
+        'action' => base64_encode('0'),
+        'slug' => 'delete-selected',
+    ]);
+
+    $this->post($url, ['ids' => [1]])->assertForbidden();
+
+    expect(Product::count())->toBe(2);
+});
 
 it('requires an ids array', function () {
     $this->post(bulkActionUrl(EndpointProductsTable::class), ['ids' => []])
