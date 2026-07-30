@@ -174,7 +174,8 @@ it('sorts the per page options and includes the current value', function () {
     $table = TableBuilder::for([]);
     $table->perPageOptions([25, 10]);
 
-    expect(array_values($table->allPerPageOptions()))->toBe([10, 25]);
+    expect($table->allPerPageOptions())->toBe([10, 25])
+        ->and(json_encode($table->allPerPageOptions()))->toBe('[10,25]');
 });
 
 it('filters a collection resource with a search input value', function () {

@@ -26,10 +26,14 @@ class BulkAction
         public string $confirmText = '',
         public string $confirmButton = '',
         public string $cancelButton = '',
-        bool $requirePassword = false,
+        bool|string $requirePassword = false,
     ) {
         if ($requirePassword === true) {
             $this->requirePassword = 'password';
+        }
+
+        if (is_string($requirePassword) && $requirePassword !== '') {
+            $this->requirePassword = $requirePassword;
         }
 
         $this->url = $this->getUrl();

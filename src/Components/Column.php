@@ -27,10 +27,33 @@ class Column implements Arrayable
     )
     {
         if (is_array($classes)) {
-            $classes = Arr::flatten($classes);
+            $classes = self::flattenClasses($classes);
         }
 
         $this->classes = Arr::toCssClasses($classes);
+    }
+
+    private static function flattenClasses(array $classes): array
+    {
+        $flattened = [];
+
+        foreach ($classes as $key => $value) {
+            if (is_array($value)) {
+                $flattened = array_merge($flattened, self::flattenClasses($value));
+
+                continue;
+            }
+
+            if (is_string($key)) {
+                $flattened[$key] = $value;
+
+                continue;
+            }
+
+            $flattened[] = $value;
+        }
+
+        return $flattened;
     }
 
     public function clone(): static

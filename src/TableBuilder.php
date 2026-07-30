@@ -235,6 +235,7 @@ class TableBuilder implements Arrayable, JsonSerializable
             ->push($this->perPage())
             ->unique()
             ->sort()
+            ->values()
             ->all();
     }
 

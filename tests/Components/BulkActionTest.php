@@ -24,8 +24,13 @@ it('turns a required password into a field name', function () {
 });
 
 it('keeps a custom password field name', function () {
-    expect(bulkAction(['requirePassword' => 'current_password'])->requirePassword)->toBe('current_password');
-})->skip('The $requirePassword constructor argument is typed bool, so a custom field name cannot be passed.');
+    expect(bulkAction(['requirePassword' => 'current_password'])->requirePassword)->toBe('current_password')
+        ->and(bulkAction(['requirePassword' => 'current_password'])->toArray()['requirePassword'])->toBe('current_password');
+});
+
+it('ignores an empty password field name', function () {
+    expect(bulkAction(['requirePassword' => ''])->requirePassword)->toBeFalse();
+});
 
 it('signs the url and encodes the table and action', function () {
     $url = bulkAction()->getUrl();

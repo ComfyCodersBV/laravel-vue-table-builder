@@ -32,7 +32,15 @@ it('keeps a class string as given', function () {
 
 it('resolves conditional classes', function () {
     expect(column('name', ['px-2' => true, 'hidden' => false])->classes)->toBe('px-2');
-})->skip('Arr::flatten() drops the class names of a conditional array before Arr::toCssClasses() sees them, so the value becomes "1 ".');
+});
+
+it('mixes conditional and plain classes', function () {
+    expect(column('name', ['w-16', 'text-right' => true, 'hidden' => false])->classes)->toBe('w-16 text-right');
+});
+
+it('resolves conditional classes inside a nested array', function () {
+    expect(column('name', [['px-2' => true, 'hidden' => false], 'font-bold'])->classes)->toBe('px-2 font-bold');
+});
 
 it('has an empty class string without classes', function () {
     expect(column('name')->classes)->toBe('');
