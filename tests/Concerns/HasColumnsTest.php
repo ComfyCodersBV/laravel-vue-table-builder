@@ -5,6 +5,11 @@ declare(strict_types=1);
 use Illuminate\Http\Request;
 use TranquilTools\TableBuilder\TableBuilder;
 
+afterEach(function () {
+    TableBuilder::defaultHighlightFirstColumn(false);
+    TableBuilder::defaultColumnCanBeHidden(true);
+});
+
 it('labels a column from its key when no label is given', function () {
     $table = TableBuilder::for([]);
     $table->column('first_name');
@@ -64,19 +69,20 @@ it('exposes sortable and alignment in the column payload', function () {
         ]);
 });
 
-it('registers a column twice when the same key is added again', function () {
+it('replaces a column when the same key is added again', function () {
     $table = TableBuilder::for([]);
     $table->column('name')->column('name', 'Second');
 
-    expect($table->columns())->toHaveCount(2);
-})->skip('TableBuilder::column() shadows HasColumns::column(), so the dedupe by key never runs.');
+    expect($table->columns())->toHaveCount(1)
+        ->and($table->columns()->first()->label)->toBe('Second');
+});
 
 it('registers a search input for a searchable column', function () {
     $table = TableBuilder::for([]);
     $table->column('name', searchable: true);
 
     expect($table->searchInputs()->has('name'))->toBeTrue();
-})->skip('TableBuilder::column() shadows HasColumns::column() and ignores the $searchable argument.');
+});
 
 it('hides columns that are not present in the columns query parameter', function () {
     $request = Request::create('/?columns[]=name');
@@ -84,5 +90,73 @@ it('hides columns that are not present in the columns query parameter', function
     $table = new TableBuilder([], $request);
     $table->column('name')->column('sku');
 
-    expect($table->columns()->keyBy('key')['sku']->hidden)->toBeTrue();
-})->skip('TableBuilder::columns() shadows HasColumns::columns(), so the columns query parameter is never applied.');
+    expect($table->columns()->keyBy('key')['sku']->hidden)->toBeTrue()
+        ->and($table->columns()->keyBy('key')['name']->hidden)->toBeFalse();
+});
+
+it('ignores the columns query parameter for a column that cannot be hidden', function () {
+    $request = Request::create('/?columns[]=name');
+
+    $table = new TableBuilder([], $request);
+    $table->column('name')->column('sku', canBeHidden: false);
+
+    expect($table->columns()->keyBy('key')['sku']->hidden)->toBeFalse();
+});
+
+it('derives a column key from its label', function () {
+    $table = TableBuilder::for([]);
+    $table->column(label: 'First Name');
+
+    expect($table->columns()->first()->key)->toBe('first-name');
+});
+
+it('labels a nested column key as a readable headline', function () {
+    $table = TableBuilder::for([]);
+    $table->column('category.name');
+
+    expect($table->columns()->first()->label)->toBe('Category Name');
+});
+
+it('carries column classes into the payload', function () {
+    $table = TableBuilder::for([]);
+    $table->column('name', classes: ['w-16', 'text-right']);
+
+    expect($table->columns()->first()->toArray()['class'])->toBe('w-16 text-right');
+});
+
+it('highlights the first column when that default is enabled', function () {
+    TableBuilder::defaultHighlightFirstColumn(true);
+
+    $table = TableBuilder::for([]);
+    $table->column('name')->column('sku');
+
+    $columns = $table->columns()->keyBy('key');
+
+    expect($columns['name']->highlight)->toBeTrue()
+        ->and($columns['sku']->highlight)->toBeFalse();
+});
+
+it('applies the default for hideable columns', function () {
+    TableBuilder::defaultColumnCanBeHidden(false);
+
+    $table = TableBuilder::for([]);
+    $table->column('name');
+
+    expect($table->hasToggleableColumns())->toBeFalse();
+});
+
+it('lets an explicit highlight win over the default', function () {
+    TableBuilder::defaultHighlightFirstColumn(true);
+
+    $table = TableBuilder::for([]);
+    $table->column('name', highlight: false);
+
+    expect($table->columns()->first()->highlight)->toBeFalse();
+});
+
+it('marks the default sorted column as sorted in the payload', function () {
+    $table = TableBuilder::for([]);
+    $table->column('price', sortable: true)->defaultSortDesc('price');
+
+    expect($table->columns()->first()->sorted)->toBe('desc');
+});

@@ -243,50 +243,6 @@ class TableBuilder implements Arrayable, JsonSerializable
         return $this->perPageOptions[0] ?? 15;
     }
 
-    public function column(
-        string $key,
-        string $label = '',
-        bool $canBeHidden = true,
-        bool $hidden = false,
-        bool $sortable = false,
-        bool $searchable = false,
-        string $alignment = 'left',
-        ?callable $as = null,
-        bool $clickable = true,
-    ): self
-    {
-        $sorted = false;
-
-        // Check if this column is currently being sorted
-        $sortQuery = $this->query('sort');
-        if ($sortQuery) {
-            $sortKey = ltrim($sortQuery, '-');
-            if ($sortKey === $key) {
-                $sorted = Str::startsWith($sortQuery, '-') ? 'desc' : 'asc';
-            }
-        }
-
-        $this->columns->push(new Column(
-            key: $key,
-            label: $label ?: Str::headline($key),
-            canBeHidden: $canBeHidden,
-            hidden: $hidden,
-            sortable: $sortable,
-            sorted: $sorted,
-            highlight: false,
-            as: $as,
-            alignment: $alignment,
-            clickable: $clickable,
-        ));
-
-        return $this;
-    }
-
-    public function columns(): Collection
-    {
-        return $this->columns;
-    }
-
     private function toItemArray($item): array
     {
         if (is_array($item)) {
@@ -379,7 +335,7 @@ class TableBuilder implements Arrayable, JsonSerializable
         return [
             'name' => $this->name,
             'data' => $data ?? [],
-            'columns' => $this->columns->map->toArray()->toArray(),
+            'columns' => $this->columns()->map->toArray()->toArray(),
             'pagination' => $pagination,
             'filters' => $this->filters()->values(),
             'searchInputs' => $this->searchInputs()->map->toArray()->toArray(),

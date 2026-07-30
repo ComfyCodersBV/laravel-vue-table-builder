@@ -70,7 +70,14 @@ it('sorts with a custom sortable callback', function () {
     $table->column('label', sortable: fn ($builder, $direction) => $builder->orderBy('sku', $direction));
 
     expect(tableColumn($table->toArray()['data'], 'sku'))->toBe(['AAA-1', 'BBB-2', 'CCC-3']);
-})->skip('TableBuilder::column() types $sortable as bool, so the callable branch of QueryBuilder::applySorting() cannot be reached.');
+});
+
+it('passes the sort direction to a sortable callback', function () {
+    $table = productTable('/?sort=-label');
+    $table->column('label', sortable: fn ($builder, $direction) => $builder->orderBy('sku', $direction));
+
+    expect(tableColumn($table->toArray()['data'], 'sku'))->toBe(['CCC-3', 'BBB-2', 'AAA-1']);
+});
 
 it('requires the power joins package to sort on a relationship column', function () {
     $table = productTable('/?sort=category.name');
