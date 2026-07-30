@@ -45,11 +45,11 @@ public function boot(): void
 
 | Method                                            | Default | Description                                                         |
 |---------------------------------------------------|---------|---------------------------------------------------------------------|
-| `TableBuilder::defaultColumnCanBeHidden(bool)`    | `true`  | Whether columns are toggleable by default - no effect at the moment |
-| `TableBuilder::defaultHighlightFirstColumn(bool)` | `false` | Highlight the first column on all tables - no effect at the moment  |
+| `TableBuilder::defaultColumnCanBeHidden(bool)`    | `true`  | Whether columns are toggleable by default                           |
+| `TableBuilder::defaultHighlightFirstColumn(bool)` | `false` | Highlight the first column on all tables                            |
 
-Both column defaults are read by `HasColumns::column()`, which is currently shadowed by `TableBuilder::column()`. See
-[Columns](columns.md#current-limitations).
+Both are read when a column is registered, so set them before any table is built. An explicit `canBeHidden:` or
+`highlight:` on a column always wins.
 
 ### UI
 

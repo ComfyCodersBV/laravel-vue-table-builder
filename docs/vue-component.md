@@ -82,10 +82,10 @@ $table->class(cell: 'py-3 text-sm', head: 'bg-muted font-semibold');
 
 ```php
 ->column('id', 'ID', classes: 'w-16 tabular-nums')
+->column('id', 'ID', classes: ['w-16' => true, 'hidden' => $compact])
 ```
 
-> **Note:** `classes:` cannot be passed through `TableBuilder::column()` yet. See
-> [Columns](columns.md#current-limitations).
+The resolved classes arrive in the `class` key of the column payload.
 
 ### CSS Variables
 

@@ -66,8 +66,8 @@ When `loadResource()` is called:
 4. Default sort applied if no sort query param
 5. Pagination executed
 
-> **Note:** without pagination the fetched `Collection` is then passed through the in-memory collection filter as well,
-> which re-applies the raw search term. See [Search](search.md#collection-resources).
+Query builder resources are filtered by the query only, paginated or not. The in-memory collection filter applies to
+array and `Collection` resources. See [Search](search.md#collection-resources).
 
 ## Spatie QueryBuilder Support
 

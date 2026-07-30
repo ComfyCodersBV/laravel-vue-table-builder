@@ -70,8 +70,13 @@ searchInput(
 
 ### Searchable Shorthand
 
-`searchable: true` on a column is currently ignored (see [Columns](columns.md#current-limitations)). Register the input
-explicitly:
+`searchable: true` on a column registers a search input for that column, with the column key and label:
+
+```php
+->column('name', 'Name', searchable: true)
+```
+
+That is the same as:
 
 ```php
 ->column('name', 'Name')
@@ -165,8 +170,8 @@ $table->hasSearchFiltersEnabled(); // true if any search input has a value
 On a `Collection` resource the search runs in memory: the raw search term is lowercased and matched as a substring
 against each configured column, without term splitting or search methods.
 
-> **Note:** an unpaginated `QueryBuilder` result also passes through this in-memory filter after the SQL query has run,
-> which discards rows whenever the term contains more than one word. Paginate the table to avoid this.
+A `QueryBuilder` resource never passes through this filter: its rows are already filtered by the SQL query, paginated or
+not, so term splitting and search methods keep working.
 
 ## Global Default
 

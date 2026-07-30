@@ -51,8 +51,7 @@ $table->defaultSort('-created_at'); // descending
 })
 ```
 
-> **Note:** `TableBuilder::column()` types `sortable` as `bool`, so passing a closure currently raises a `TypeError`.
-> See [Columns](columns.md#current-limitations).
+The closure only runs while its column is the active sort, so `$direction` is always `'asc'` or `'desc'`.
 
 ## Sorting on Relationship Columns
 

@@ -12,54 +12,45 @@ $table->column('name', 'Name');
 
 ```php
 column(
-    string $key,
-    string $label = '',
-    bool $canBeHidden = true,
+    ?string $key = null,
+    ?string $label = null,
+    ?bool $canBeHidden = null,
     bool $hidden = false,
-    bool $sortable = false,
-    bool $searchable = false,
-    string $alignment = 'left',
+    bool|Closure $sortable = false,
+    bool|string $searchable = false,
+    ?bool $highlight = null,
+    array|string|null $classes = null,
     ?callable $as = null,
+    string $alignment = 'left',
     bool $clickable = true,
 ): self
 ```
 
 ## Parameters
 
-| Parameter     | Type             | Default         | Description                                          |
-|---------------|------------------|-----------------|------------------------------------------------------|
-| `key`         | `string`         | -               | Column key matching the data field name              |
-| `label`       | `string`         | auto from key   | Column header label                                  |
-| `canBeHidden` | `bool`           | `true`          | Whether the user can toggle this column's visibility |
-| `hidden`      | `bool`           | `false`         | Hidden by default                                    |
-| `sortable`    | `bool`           | `false`         | Enable sorting                                       |
-| `searchable`  | `bool`           | `false`         | Accepted but currently ignored (see below)           |
-| `alignment`   | `string`         | `'left'`        | Text alignment: `'left'`, `'center'`, `'right'`      |
-| `as`          | `callable\|null` | `null`          | Transform the cell value before display              |
-| `clickable`   | `bool`           | `true`          | Whether clicking this cell follows the row link      |
+| Parameter     | Type                    | Default                          | Description                                                        |
+|---------------|-------------------------|----------------------------------|--------------------------------------------------------------------|
+| `key`         | `string\|null`          | derived from `label`             | Column key matching the data field name                            |
+| `label`       | `string\|null`          | derived from `key`               | Column header label                                                |
+| `canBeHidden` | `bool\|null`            | `defaultColumnCanBeHidden()`     | Whether the user can toggle this column's visibility               |
+| `hidden`      | `bool`                  | `false`                          | Hidden by default                                                  |
+| `sortable`    | `bool\|Closure`         | `false`                          | Enable sorting, or a closure that applies the ordering itself      |
+| `searchable`  | `bool\|string`          | `false`                          | Register a search input for this column                            |
+| `highlight`   | `bool\|null`            | `defaultHighlightFirstColumn()`  | Emphasize the column; the default only applies to the first column |
+| `classes`     | `array\|string\|null`   | `null`                           | Per-column CSS classes                                             |
+| `as`          | `callable\|null`        | `null`                           | Transform the cell value before display                            |
+| `alignment`   | `string`                | `'left'`                         | Text alignment: `'left'`, `'center'`, `'right'`                    |
+| `clickable`   | `bool`                  | `true`                           | Whether clicking this cell follows the row link                    |
 
-## Current Limitations
+Only `key` and `label` are safe to pass positionally; use named arguments for the rest.
 
-`TableBuilder` defines its own `column()` and `columns()` methods, which take precedence over the richer versions in the
-`HasColumns` trait. Until that duplication is resolved, the following are **not** available through
-`TableBuilder::column()`:
+## Redefining a Column
 
-| Feature                                     | Behaviour                                                       |
-|---------------------------------------------|-----------------------------------------------------------------|
-| `classes:` and `highlight:`                 | Unknown named argument - passing them raises an error           |
-| `sortable:` with a closure                  | `TypeError`: the parameter is typed `bool`                      |
-| `searchable: true`                          | Accepted, but no search input is registered                     |
-| `key` omitted (derived from `label`)        | `key` is required                                               |
-| Repeating a key to redefine a column        | The column is added twice instead of replacing the first        |
-| `?columns[]=` visibility in the query param | Not applied server-side; `hidden` only reflects the PHP config  |
-| `defaultColumnCanBeHidden()`                | No effect                                                       |
-| `defaultHighlightFirstColumn()`             | No effect                                                       |
-
-Register a search input explicitly instead of using `searchable:`:
+Registering the same key twice replaces the first definition instead of adding a second column:
 
 ```php
 ->column('name', 'Name')
-->searchInput('name', 'Name')
+->column('name', 'Full name') // one column, labeled "Full name"
 ```
 
 ## Auto-labeling
@@ -69,6 +60,12 @@ If `label` is omitted, it is generated from `key` using `Str::headline()`:
 ```php
 ->column('created_at') // label: "Created At"
 ->column('company.name') // label: "Company Name"
+```
+
+If `key` is omitted, it is derived from `label` using `Str::kebab()`:
+
+```php
+->column(label: 'First Name') // key: "first-name"
 ```
 
 ## Nested Relationships
@@ -123,8 +120,7 @@ use Illuminate\Support\HtmlString;
 
 ## Custom Sort Logic
 
-`QueryBuilder` supports a closure for custom ordering, but `TableBuilder::column()` types `sortable` as `bool`, so a
-closure cannot be passed yet (see [Current Limitations](#current-limitations)). The intended usage is:
+`QueryBuilder` accepts a closure for custom ordering. It receives the query and the direction of the active sort:
 
 ```php
 ->column('full_name', 'Name', sortable: function ($query, string $direction) {
@@ -134,8 +130,18 @@ closure cannot be passed yet (see [Current Limitations](#current-limitations)). 
 
 ## Column Visibility
 
-Columns with `canBeHidden: true` (the default) appear in a visibility dropdown. Users can show/hide them - the selection
-is persisted in the URL via the `columns[]` query parameter and applied by the Vue component.
+Columns with `canBeHidden: true` (the default) appear in a visibility dropdown. The Vue component keeps that choice in
+component state for the current page view; it is not written to the URL.
+
+A `columns[]` query parameter is applied server-side: when it is present, every hideable column that is **not** listed
+comes back as `hidden`. Use it to link to a table with a specific set of columns:
+
+```
+/products?columns[]=name&columns[]=sku
+```
+
+For a named table the parameter is namespaced, like every other table parameter: `?products_columns[]=name`. Columns
+with `canBeHidden: false` are never hidden by it.
 
 Prevent a column from being hidden:
 
@@ -151,15 +157,15 @@ Hide a column by default (user can reveal it):
 
 ## CSS Classes
 
-Per-column classes are carried by the `Column` component, but `classes:` cannot be passed through
-`TableBuilder::column()` yet (see [Current Limitations](#current-limitations)):
+Per-column classes accept a string, a (nested) array of strings, or a conditional array:
 
 ```php
 ->column('id', 'ID', classes: 'w-16 text-muted-foreground')
+->column('id', 'ID', classes: ['w-16', 'text-muted-foreground'])
+->column('id', 'ID', classes: ['w-16' => true, 'hidden' => $compact])
 ```
 
-Note that a conditional array (`['w-16' => true]`) is flattened before it is turned into a class string, so only plain
-strings and plain arrays of strings produce the expected result.
+The classes end up in the `class` key of the column payload.
 
 For global cell/header classes across all columns, use [`class()`](global-defaults.md):
 
@@ -184,23 +190,31 @@ By default, clicking a cell follows the row link. Disable this for action column
 
 ## Searchable Shorthand
 
-`searchable: true` is intended to register a search input for the column, but the argument is currently ignored (see
-[Current Limitations](#current-limitations)). Register the input explicitly:
+`searchable: true` registers a search input for the column, using the column key and label:
+
+```php
+->column('name', 'Name', searchable: true)
+```
+
+That is shorthand for:
 
 ```php
 ->column('name', 'Name')
 ->searchInput('name', 'Name')
 ```
 
+Any non-empty string is treated the same as `true`. Use [`searchInput()`](search.md) directly when you need multiple
+columns in one input or a specific search method.
+
 ## Global Column Defaults
 
-These defaults only apply to `HasColumns::column()`, which is currently shadowed by `TableBuilder::column()`, so they
-have no effect yet:
-
 ```php
-// All columns hidden by default (user must opt-in)
+// Let the user toggle every column's visibility (default: true)
 TableBuilder::defaultColumnCanBeHidden(true);
 
 // Highlight the first column in every table
 TableBuilder::defaultHighlightFirstColumn(true);
 ```
+
+Both are read when a column is registered, so set them in a service provider before any table is built. Passing
+`canBeHidden:` or `highlight:` explicitly on a column always wins.
