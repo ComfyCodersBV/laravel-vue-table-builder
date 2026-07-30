@@ -43,10 +43,13 @@ public function boot(): void
 
 ### Columns
 
-| Method                                            | Default | Description                                       |
-|---------------------------------------------------|---------|---------------------------------------------------|
-| `TableBuilder::defaultColumnCanBeHidden(bool)`    | `true`  | Whether columns are toggleable by default         |
-| `TableBuilder::defaultHighlightFirstColumn(bool)` | `false` | Visually highlight the first column on all tables |
+| Method                                            | Default | Description                                                         |
+|---------------------------------------------------|---------|---------------------------------------------------------------------|
+| `TableBuilder::defaultColumnCanBeHidden(bool)`    | `true`  | Whether columns are toggleable by default - no effect at the moment |
+| `TableBuilder::defaultHighlightFirstColumn(bool)` | `false` | Highlight the first column on all tables - no effect at the moment  |
+
+Both column defaults are read by `HasColumns::column()`, which is currently shadowed by `TableBuilder::column()`. See
+[Columns](columns.md#current-limitations).
 
 ### UI
 

@@ -39,7 +39,10 @@ $table->defaultSort('-created_at'); // descending
 
 ## Custom Sort Logic
 
-Pass a closure to `sortable` for full control over the ORDER BY:
+`QueryBuilder` runs a closure instead of its own `ORDER BY` when `sortable` holds one, and the closure receives:
+
+1. `$query` - the Eloquent query builder
+2. `$direction` - `'asc'` or `'desc'`
 
 ```php
 ->column('full_name', 'Name', sortable: function ($query, string $direction) {
@@ -48,10 +51,8 @@ Pass a closure to `sortable` for full control over the ORDER BY:
 })
 ```
 
-The closure receives:
-
-1. `$query` - the Eloquent query builder
-2. `$direction` - `'asc'` or `'desc'`
+> **Note:** `TableBuilder::column()` types `sortable` as `bool`, so passing a closure currently raises a `TypeError`.
+> See [Columns](columns.md#current-limitations).
 
 ## Sorting on Relationship Columns
 
@@ -65,13 +66,15 @@ composer require kirschbaum-development/eloquent-power-joins
 ->column('company.name', 'Company', sortable: true)
 ```
 
-Without the package, use a custom sort closure instead:
+Without the package, sorting a nested column throws a `PowerJoinsException`. Join the relationship yourself on the
+query you hand to the table instead:
 
 ```php
-->column('company', 'Company', sortable: function ($query, string $direction) {
-    $query->join('companies', 'users.company_id', '=', 'companies.id')
-          ->orderBy('companies.name', $direction);
-})
+TableBuilder::for(
+    User::query()
+        ->join('companies', 'users.company_id', '=', 'companies.id')
+        ->select('users.*', 'companies.name as company_name')
+)->column('company_name', 'Company', sortable: true);
 ```
 
 ## Checking Sort State

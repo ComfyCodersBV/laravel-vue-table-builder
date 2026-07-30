@@ -10,13 +10,11 @@ Add a search bar that searches across multiple columns at once:
 $table->withGlobalSearch(columns: ['name', 'email']);
 ```
 
-Without specifying columns, the global search uses all columns marked as `searchable`:
+Always pass `columns`. Without them the search input falls back to its own key and looks for a column literally named
+`global`:
 
 ```php
-$table
-    ->column('name', 'Name', searchable: true)
-    ->column('email', 'Email', searchable: true)
-    ->withGlobalSearch();
+$table->withGlobalSearch(); // searches a column named "global"
 ```
 
 The global search stores its value in `filter[global]`.
@@ -30,7 +28,7 @@ withGlobalSearch(?string $label = null, array $columns = []): self
 | Parameter | Description                                            |
 |-----------|--------------------------------------------------------|
 | `label`   | Placeholder text (defaults to translated "Search...")  |
-| `columns` | Columns to search; if empty, uses `searchable` columns |
+| `columns` | Columns to search; if empty, falls back to the input's key |
 
 ### Remove Global Search
 
@@ -72,9 +70,10 @@ searchInput(
 
 ### Searchable Shorthand
 
+`searchable: true` on a column is currently ignored (see [Columns](columns.md#current-limitations)). Register the input
+explicitly:
+
 ```php
-->column('name', 'Name', searchable: true)
-// Equivalent to:
 ->column('name', 'Name')
 ->searchInput('name', 'Name')
 ```
@@ -115,20 +114,22 @@ To enable case-sensitive search:
 ```php
 TableBuilder::for(User::query())
     ->ignoreCase(false)
-    ->column('code', 'Code', searchable: true);
+    ->column('code', 'Code')
+    ->searchInput('code');
 ```
 
 ## Term Parsing
 
-By default, search terms are split on spaces so that `"john doe"` searches for rows matching both `john` AND `doe`.
-Quoted phrases are treated as a single term.
+By default, search terms are split on spaces, and a row matches when **any** term matches **any** of the input's
+columns. So `john doe` returns rows matching `john` OR `doe`. Quoted phrases are treated as a single term.
 
 Disable this to treat the entire input as one search term:
 
 ```php
 TableBuilder::for(User::query())
     ->parseTerms(false)
-    ->column('name', 'Name', searchable: true);
+    ->column('name', 'Name')
+    ->searchInput('name');
 ```
 
 ## Searching Relationships
@@ -158,6 +159,14 @@ Search values are stored as `filter[key]=term`:
 ```php
 $table->hasSearchFiltersEnabled(); // true if any search input has a value
 ```
+
+## Collection Resources
+
+On a `Collection` resource the search runs in memory: the raw search term is lowercased and matched as a substring
+against each configured column, without term splitting or search methods.
+
+> **Note:** an unpaginated `QueryBuilder` result also passes through this in-memory filter after the SQL query has run,
+> which discards rows whenever the term contains more than one word. Paginate the table to avoid this.
 
 ## Global Default
 

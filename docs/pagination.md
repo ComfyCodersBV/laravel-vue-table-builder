@@ -102,13 +102,16 @@ TableBuilder::defaultPaginationScroll('');     // no scroll
 These can be called after `loadResource()` on the PHP side if needed:
 
 ```php
-$table->perPage();           // items per page (int)
+$table->perPage();           // first configured per-page option (int)
 $table->totalOnThisPage();   // count of items on current page
 $table->totalOnAllPages();   // total result count (paginated) or total items
 $table->page();              // current page number
 $table->isEmpty();           // true if no results
 $table->isNotEmpty();        // true if has results
 ```
+
+> **Note:** `perPage()` returns the first entry of `perPageOptions`, not the page size the paginator actually used. Read
+> `toArray()['pagination']['per_page']` for that.
 
 ## Collection Resources
 

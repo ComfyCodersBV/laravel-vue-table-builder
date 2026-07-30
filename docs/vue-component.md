@@ -20,11 +20,11 @@ The component is exported from the package's `resources/js/components/` director
 
 ## Props
 
-| Prop    | Type        | Required | Description                                                                                                                 |
-|---------|-------------|----------|-----------------------------------------------------------------------------------------------------------------------------|
-| `table` | `TableData` | Yes      | The serialized table data from the PHP `TableBuilder`                                                                       |
+| Prop    | Type        | Required | Description                                                                                                                                                                                                                                                                          |
+|---------|-------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `table` | `TableData` | Yes      | The serialized table data from the PHP `TableBuilder`                                                                                                                                                                                                                                |
 | `name`  | `string`    | No       | Overrides the table name used to namespace query params (`{name}_page`, `{name}_perPage`). Usually unnecessary: the name is read from the serialized `table` payload (derived from the table class), so it only needs setting for inline tables where you called `->name()` manually |
-| `only`  | `string[]`  | No       | Inertia prop name(s) to reload on pagination/per-page changes, enables partial reloads so only this table's data is fetched |
+| `only`  | `string[]`  | No       | Inertia prop name(s) to reload on pagination/per-page changes, enables partial reloads so only this table's data is fetched                                                                                                                                                          |
 
 ## Features Rendered
 
@@ -84,6 +84,9 @@ $table->class(cell: 'py-3 text-sm', head: 'bg-muted font-semibold');
 ->column('id', 'ID', classes: 'w-16 tabular-nums')
 ```
 
+> **Note:** `classes:` cannot be passed through `TableBuilder::column()` yet. See
+> [Columns](columns.md#current-limitations).
+
 ### CSS Variables
 
 The package uses shadcn/ui-style CSS variables. Override in your `app.css`:
@@ -105,7 +108,7 @@ The component has no named slots and emits no events. All interaction is handled
 Import types for use in your pages:
 
 ```ts
-import type { TableData, Column, Filter, BulkAction, PaginationData } from '@/types/table-builder'
+import type {TableData, Column, Filter, BulkAction, PaginationData} from '@/types/table-builder'
 ```
 
 See [TypeScript Types](typescript.md) for the full interface reference.

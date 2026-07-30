@@ -30,11 +30,11 @@ class UsersTable extends AbstractTable
     {
         $table
             ->column('id', 'ID', canBeHidden: false, sortable: true)
-            ->column('name', 'Name', sortable: true, searchable: true)
+            ->column('name', 'Name', sortable: true)
             ->column('email', 'Email', sortable: true)
             ->column('company.name', 'Company')
             ->selectFilter('status', ['active' => 'Active', 'inactive' => 'Inactive'])
-            ->withGlobalSearch()
+            ->withGlobalSearch(columns: ['name', 'email'])
             ->bulkAction('Delete', each: fn($user) => $user->delete(), confirm: 'Delete selected users?')
             ->rowLink(fn($user) => route('users.show', $user))
             ->paginate(15)

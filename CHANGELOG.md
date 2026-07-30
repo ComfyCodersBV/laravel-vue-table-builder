@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.1.0 - 2026-07-30
+* **Breaking:** string values of columns without an `as:` closure are now escaped before they are sent to the frontend. Every cell is rendered with `v-html`, so raw model data previously reached the DOM unescaped. Columns that relied on that implicit HTML must now return an `Illuminate\Support\HtmlString` from an `as:` closure. Non-string values (int, bool, `null`, array) are unaffected.
+* Add a Pest test suite covering the builder, query builder, concerns, components, the `make:table` command and the bulk action endpoint
+* Run the test suite on GitLab CI for merge requests and pushes to `main`
+* Document the escaping rule and correct stale documentation on columns, search, sorting, pagination, global defaults and bulk action security
+
 ## 1.0.12 - 2026-07-15
 * Auto-derive per-table name from the configurator class and namespace page/perPage/filter params so multiple tables work without manual names
 

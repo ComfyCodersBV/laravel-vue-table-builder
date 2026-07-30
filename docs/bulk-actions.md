@@ -40,7 +40,7 @@ bulkAction(
 | `confirmText`     | `string`         | `''`    | Body text inside the dialog                                         |
 | `confirmButton`   | `string`         | `''`    | Confirm button label                                                |
 | `cancelButton`    | `string`         | `''`    | Cancel button label                                                 |
-| `requirePassword` | `bool\|string`   | `false` | Require the user to enter their password before executing           |
+| `requirePassword` | `bool`           | `false` | Require the user's password; `true` becomes the field name `password`. A custom field name raises a `TypeError` |
 
 ## Callbacks
 
@@ -104,8 +104,20 @@ processing.
 
 ## Security
 
-Bulk actions use **signed routes** (Laravel's `URL::signedRoute`). The table class name and action index are
-base64-encoded in the URL and verified on the server. Authorization is checked via `AbstractTable::authorize()`.
+Bulk action URLs are generated with `URL::signedRoute()`, and the table class name and action index are base64-encoded
+into them.
+
+> **Warning:** the package route is **not** protected by the `signed` middleware and `BulkActionRequest` does not check
+> the signature either, so a request with a missing or wrong signature is still executed. The only gate is
+> `AbstractTable::authorize()`, which returns `true` by default. Override `authorize()` on every table class that
+> exposes bulk actions:
+>
+> ```php
+> public function authorize(Request $request): bool
+> {
+>     return $request->user()?->can('update', User::class) ?? false;
+> }
+> ```
 
 ## Handling in AbstractTable
 

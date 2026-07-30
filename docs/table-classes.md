@@ -130,7 +130,11 @@ pagination automatically.
 
 ### `authorize(Request $request)`
 
-Return `true` to allow access, `false` to deny (returns 403). Defaults to `true`.
+Return `true` to allow the action, `false` to deny it. Defaults to `true`.
+
+Only the bulk action endpoint consults this method; rendering a table never calls it. Denying throws
+`Illuminate\Validation\UnauthorizedException`, which surfaces as a 500 unless you map it in your exception handler.
+Guard the page itself with a middleware, policy or gate in the controller.
 
 ```php
 public function authorize(Request $request): bool
@@ -146,8 +150,8 @@ options.
 
 ### `build(...$arguments): TableBuilder`
 
-Static factory that instantiates the table, calls `for()`, `authorize()`, and `configure()`, then returns the
-ready-to-serialize `TableBuilder`.
+Static factory that instantiates the table, calls `for()` and `configure()`, runs `beforeRender()` and returns the
+ready-to-serialize `TableBuilder`. It does not call `authorize()`.
 
 Pass constructor arguments if your table class needs them:
 

@@ -24,7 +24,8 @@ Must call one of these to execute the query:
 ->noPagination()       // Fetch all results with get()
 ```
 
-Omitting `perPage` uses the first value from `perPageOptions`.
+Omitting `perPage` uses `default_per_page` from the config (25 out of the box). A `?perPage=` value from the query
+string wins, but only when it is one of the configured `perPageOptions`.
 
 ## Case Sensitivity
 
@@ -38,8 +39,8 @@ Omitting `perPage` uses the first value from `perPageOptions`.
 
 ## Term Parsing
 
-By default, search terms are split on spaces: `"john doe"` searches for rows matching both `john` AND `doe`. Quoted
-phrases in the input are kept together.
+By default, search terms are split on spaces and combined with OR: `john doe` returns rows matching `john` OR `doe`.
+Quoted phrases in the input are kept together.
 
 ```php
 ->parseTerms(true)   // split on spaces (default)
@@ -64,6 +65,9 @@ When `loadResource()` is called:
 3. Sorting + eager loading applied (`applySortingAndEagerLoading`)
 4. Default sort applied if no sort query param
 5. Pagination executed
+
+> **Note:** without pagination the fetched `Collection` is then passed through the in-memory collection filter as well,
+> which re-applies the raw search term. See [Search](search.md#collection-resources).
 
 ## Spatie QueryBuilder Support
 
