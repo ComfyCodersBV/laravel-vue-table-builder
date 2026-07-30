@@ -156,7 +156,21 @@ it('does not re-filter query builder results in memory', function () {
     $table->column('name')->withGlobalSearch(columns: ['name']);
 
     expect(tableColumn($table->toArray()['data'], 'name'))->toBe(['Chair', 'Bench']);
-})->skip('Unpaginated query builder results are filtered twice: TableBuilder::filterCollectionResource() re-applies the unsplit search term to the fetched Collection.');
+});
+
+it('filters an unpaginated query builder once on a single term', function () {
+    $table = productTable('/?filter[global]=Chair');
+    $table->column('name')->withGlobalSearch(columns: ['name']);
+
+    expect(tableColumn($table->toArray()['data'], 'name'))->toBe(['Chair']);
+});
+
+it('filters a paginated query builder on multiple terms', function () {
+    $table = productTable('/?filter[global]=Chair Bench');
+    $table->column('name')->withGlobalSearch(columns: ['name'])->perPageOptions([10])->paginate(10);
+
+    expect(tableColumn($table->toArray()['data'], 'name'))->toBe(['Chair', 'Bench']);
+});
 
 it('parses terms into a collection without empty values', function () {
     expect(productTable()->parseTermsIntoCollection('  chair   table ')->all())->toBe(['chair', 'table']);

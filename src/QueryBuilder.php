@@ -39,6 +39,11 @@ class QueryBuilder extends TableBuilder
         return ! $this->builder instanceof SpatieQueryBuilder;
     }
 
+    protected function shouldFilterResourceInMemory(): bool
+    {
+        return false;
+    }
+
     public function parseTerms(bool $state = true): self
     {
         $this->parseTerms = $state;

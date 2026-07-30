@@ -397,10 +397,18 @@ class TableBuilder implements Arrayable, JsonSerializable
     {
         if (! $this->resourceLoaded) {
             $this->resourceLoaded = true;
-            $this->filterCollectionResource();
+
+            if ($this->shouldFilterResourceInMemory()) {
+                $this->filterCollectionResource();
+            }
         }
 
         return $this;
+    }
+
+    protected function shouldFilterResourceInMemory(): bool
+    {
+        return true;
     }
 
     private function filterCollectionResource(): void
