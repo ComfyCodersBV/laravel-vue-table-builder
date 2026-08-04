@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@inertiajs/vue3": "^2.2.19",
+    "@vueuse/core": "^12.8.2",
     "laravel-vue-i18n": "^2.8.0",
     "lucide-vue-next": "^0.556.0"
   }
