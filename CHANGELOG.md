@@ -6,17 +6,13 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
 
 Released together with form-builder 1.2.0 and crud-builder 1.2.0.
 
-* Drop the undeclared `lodash-es` import from `TableBuilder.vue`. Search debouncing now uses `useDebounceFn`
-  from `@vueuse/core`, which consumers already have through the Laravel Vue starter kit. Because Vite resolves
-  bare specifiers against the *application's* `node_modules`, the undeclared import broke `npm run build` in any
-  project that had not installed `lodash-es` by chance.
-* `package.json` now declares the package's real import closure as `peerDependencies` with supported
-  ranges — `reka-ui: ^2.9.4`, `vue: ^3.5`, `@inertiajs/vue3: >=2 <4`, `@vueuse/core: >=12 <15`,
-  `lucide-vue-next: >=0.556 <2`, `tailwind-merge: ^3.0`, `clsx: ^2.0` and
-  `class-variance-authority: >=0.7 <1`. The previous `dependencies` block resolved nothing and listed
+* Drop the undeclared `lodash-es` import from `TableBuilder.vue`; search debouncing uses
+  `useDebounceFn` from `@vueuse/core`, which consumers already have. The undeclared import broke
+  `npm run build` in projects that had not installed `lodash-es` by chance.
+* `package.json` declares the real import closure as `peerDependencies` with supported ranges
+  (`reka-ui: ^2.9.4` among them). The old `dependencies` block resolved nothing and listed
   `laravel-vue-i18n`, which no source file imports.
-* The manifest, its lockfile, the CI configuration and the frontend tooling configs
-  (`tsconfig*.json`, `components.json`, `tailwind.config.js`) are `export-ignore`d, so `--prefer-dist`
+* The manifest, lockfile, CI config and frontend tooling configs are `export-ignore`d, so dist
   installs carry only `resources/`, `src/`, `config/` and `routes/`.
 
 ## 1.1.1 - 2026-07-30
