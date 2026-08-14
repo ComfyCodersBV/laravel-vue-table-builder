@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
-## 1.2.0 - unreleased
+## 1.2.0 - 2026-08-14
 
 Released together with form-builder 1.2.0 and crud-builder 1.2.0.
 
