@@ -15,7 +15,7 @@ import {Checkbox} from './ui/checkbox';
 import {Button} from './ui/button';
 import {ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Funnel, Search} from 'lucide-vue-next'
 import type {Column, TableData} from '../types/table-builder'
-import {debounce} from 'lodash-es'
+import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
 
 const {t} = useTranslations('vue_table_builder_table_translations')
@@ -75,7 +75,7 @@ function handleFilterChange(key: string, value: string) {
 const searchValue = ref(props.table.searchInputs?.global?.value || '')
 
 // Debounced search handler
-const handleSearch = debounce((value: string) => {
+const handleSearch = useDebounceFn((value: string) => {
     const params = new URLSearchParams(window.location.search)
 
     if (value) {
