@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.2.1 - 2026-08-24
+
+* `rowLinkTarget('_blank')` opens a row link in a new tab. Without it rows still navigate in the
+  current tab, so existing tables are unaffected. Combines with every row link type; the payload
+  carries the target as `rowLinkTarget`.
+
 ## 1.2.0 - 2026-08-14
 
 Released together with form-builder 1.2.0 and crud-builder 1.2.0.

@@ -15,6 +15,8 @@ trait HasResource
 
     public string $rowLinkType = '';
 
+    public string $rowLinkTarget = '_self';
+
     protected string $primaryKey = '';
 
     public function rowLink(callable $callback, bool $modal = false, bool $href = false): self
@@ -46,6 +48,17 @@ trait HasResource
     public function rowModal(callable $callback): self
     {
         return $this->rowLink($callback, modal: true);
+    }
+
+    public function rowLinkTarget(string $target): self
+    {
+        if (! in_array($target, ['_self', '_blank'], true)) {
+            throw new Exception("Unsupported row link target '{$target}'; use '_self' or '_blank'.");
+        }
+
+        $this->rowLinkTarget = $target;
+
+        return $this;
     }
 
     public function perPage(): int

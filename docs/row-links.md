@@ -24,6 +24,23 @@ $table->rowLink(fn($ticket) => route('tickets.show', $ticket), href: true);
 
 This sets `rowLinkType` to `'href'` and uses `window.location.href` on click.
 
+## Opening a Row Link in a New Tab
+
+Rows navigate in the current tab by default. For links that belong somewhere else - a report,
+an external dashboard - set the target:
+
+```php
+$table->rowLink(fn($environment) => route('accesslogs.show', $environment), href: true)
+    ->rowLinkTarget('_blank');
+```
+
+Only `'_self'` (the default) and `'_blank'` are accepted; anything else throws. The target is
+applied before the row link type, so it works with `'link'`, `'href'` and `'modal'` alike.
+
+A row is a `<tr>`, not an `<a>`. Even with `'_blank'` there is no middle click, no ctrl-click, no
+"copy link address" and no URL in the status bar, and a screen reader does not announce a link.
+When those matter, render an anchor in the column itself with an `as` callback instead.
+
 ## Row Modals
 
 Open a modal instead of navigating:
@@ -68,6 +85,12 @@ rowLink(callable $callback, bool $modal = false, bool $href = false): self
 rowModal(callable $callback): self
 ```
 
+### Signature (rowLinkTarget)
+
+```php
+rowLinkTarget(string $target): self
+```
+
 ## Conditional Links
 
 Return `null` from the callback to make a specific row non-clickable:
@@ -101,5 +124,6 @@ $table->primaryKey('uuid');
 ## How It Works
 
 1. After loading the resource, the table maps `rowLinkCallable` over every row to produce a `rowLinks` array.
-2. This array is passed to the frontend alongside `rowLinkType` (`'link'`, `'modal'`, or `'href'`).
+2. This array is passed to the frontend alongside `rowLinkType` (`'link'`, `'modal'`, or `'href'`)
+   and `rowLinkTarget` (`'_self'` or `'_blank'`).
 3. The Vue component matches each row by index to its link URL and applies the appropriate click handler.

@@ -186,6 +186,12 @@ function handleRowClick(index: number, e: MouseEvent) {
 
     const url = props.table.rowLinks[index]
 
+    if (props.table.rowLinkTarget === '_blank') {
+        window.open(url, '_blank', 'noopener')
+
+        return
+    }
+
     if (props.table.rowLinkType === 'modal') {
         fetch(url, {headers: {Accept: 'application/json'}})
             .then((r) => r.json())

@@ -345,6 +345,7 @@ class TableBuilder implements Arrayable, JsonSerializable
             'bulkActions' => $this->bulkActions,
             'rowLinks' => $this->rowLinks->toArray(),
             'rowLinkType' => $this->rowLinkType,
+            'rowLinkTarget' => $this->rowLinkTarget,
             'cellClass' => $this->cellClass,
             'headClass' => $this->headClass,
         ];
