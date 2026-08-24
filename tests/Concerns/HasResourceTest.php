@@ -20,17 +20,11 @@ it('marks a row link as a plain href', function () {
     expect($table->toArray()['rowLinkType'])->toBe('href');
 });
 
-it('opens row links in a new tab when the target says so', function () {
+it('opens a row link in a new tab', function () {
     $table = TableBuilder::for([['id' => 1]]);
-    $table->rowLink(fn (array $row) => "/products/{$row['id']}", href: true)->rowLinkTarget('_blank');
+    $table->rowLink(fn (array $row) => "/products/{$row['id']}", href: true, newTab: true);
 
     expect($table->toArray()['rowLinkTarget'])->toBe('_blank');
-});
-
-it('refuses an unsupported row link target', function () {
-    $table = TableBuilder::for([['id' => 1]]);
-
-    expect(fn () => $table->rowLinkTarget('_parent'))->toThrow(Exception::class);
 });
 
 it('resolves row links from paginated items', function () {

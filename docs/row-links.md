@@ -27,15 +27,13 @@ This sets `rowLinkType` to `'href'` and uses `window.location.href` on click.
 ## Opening a Row Link in a New Tab
 
 Rows navigate in the current tab by default. For links that belong somewhere else - a report,
-an external dashboard - set the target:
+an external dashboard - pass `newTab: true`:
 
 ```php
-$table->rowLink(fn($environment) => route('accesslogs.show', $environment), href: true)
-    ->rowLinkTarget('_blank');
+$table->rowLink(fn($environment) => route('accesslogs.show', $environment), href: true, newTab: true);
 ```
 
-Only `'_self'` (the default) and `'_blank'` are accepted; anything else throws. The target is
-applied before the row link type, so it works with `'link'`, `'href'` and `'modal'` alike.
+The new tab wins over the row link type, so it works alongside `href` as well as on its own.
 
 A row is a `<tr>`, not an `<a>`. Even with `'_blank'` there is no middle click, no ctrl-click, no
 "copy link address" and no URL in the status bar, and a screen reader does not announce a link.
@@ -76,7 +74,7 @@ The URL must return JSON in this shape:
 ### Signature (rowLink)
 
 ```php
-rowLink(callable $callback, bool $modal = false, bool $href = false): self
+rowLink(callable $callback, bool $modal = false, bool $href = false, bool $newTab = false): self
 ```
 
 ### Signature (rowModal)
@@ -85,11 +83,6 @@ rowLink(callable $callback, bool $modal = false, bool $href = false): self
 rowModal(callable $callback): self
 ```
 
-### Signature (rowLinkTarget)
-
-```php
-rowLinkTarget(string $target): self
-```
 
 ## Conditional Links
 

@@ -2,8 +2,10 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
-## 1.2.1 - 2026-08-24
+## 1.2.2 - 2026-08-24
+* Update rowlink newtab call from `->rowLink($callback, href: true)->rowLinkTarget('_blank')` to `->rowLink($callback, href: true, newTab: true)`.
 
+## 1.2.1 - 2026-08-24
 * `rowLinkTarget('_blank')` opens a row link in a new tab. Without it rows still navigate in the
   current tab, so existing tables are unaffected. Combines with every row link type; the payload
   carries the target as `rowLinkTarget`.
