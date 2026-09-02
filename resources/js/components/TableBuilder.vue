@@ -97,6 +97,12 @@ watch(searchValue, (newValue) => {
     handleSearch(newValue)
 })
 
+function defaultSortKey(): string | null {
+    if (!props.table.defaultSort) return null
+
+    return (props.table.defaultSort as string).replace(/^-/, '')
+}
+
 function getEffectiveSort(column: Column): 'asc' | 'desc' | false {
     if (column.sorted) return column.sorted as 'asc' | 'desc'
 
@@ -104,16 +110,25 @@ function getEffectiveSort(column: Column): 'asc' | 'desc' | false {
     if (new URLSearchParams(window.location.search).has(sortKey)) return false
 
     if (!props.table.defaultSort) return false
-    const defaultKey = (props.table.defaultSort as string).replace(/^-/, '')
     const defaultDir = (props.table.defaultSort as string).startsWith('-') ? 'desc' : 'asc'
-    return column.key === defaultKey ? defaultDir as 'asc' | 'desc' : false
+    return column.key === defaultSortKey() ? defaultDir as 'asc' | 'desc' : false
+}
+
+function nextSort(column: Column): 'asc' | 'desc' | false {
+    const currentSort = getEffectiveSort(column)
+
+    if (currentSort === 'asc') return 'desc'
+    if (currentSort !== 'desc') return 'asc'
+
+    // Dropping the sort parameter on the column the table sorts by default just
+    // re-applies that default, so toggle back to ascending instead.
+    return column.key === defaultSortKey() ? 'asc' : false
 }
 
 function handleSort(column: Column) {
     if (!column.sortable) return
 
-    const currentSort = column.sorted as 'asc' | 'desc' | false
-    const newSort = currentSort === 'asc' ? 'desc' : currentSort === 'desc' ? false : 'asc'
+    const newSort = nextSort(column)
 
     const sortKey = tableName.value && tableName.value !== 'default' ? `${tableName.value}_sort` : 'sort'
 
