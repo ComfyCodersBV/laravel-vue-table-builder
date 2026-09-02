@@ -11,6 +11,9 @@ Columns can be made sortable so users can click column headers to sort the table
 
 Sortable columns show a sort indicator in the header. Clicking cycles through: ascending → descending → no sort.
 
+The column named by `defaultSort` is the exception: clearing its sort would only re-apply the same default, so it
+toggles between ascending and descending.
+
 ## Query Parameter
 
 The active sort is stored in the `sort` query parameter:

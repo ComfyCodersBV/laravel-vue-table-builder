@@ -2,6 +2,11 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.2.3 - 2026-09-02
+* Fix the header of the column named by `defaultSort` doing nothing when clicked. The column arrives sorted in the
+  default direction, so the next step in the cycle cleared the `sort` parameter that was never in the URL, and the
+  server re-applied the same default. That column now toggles between ascending and descending.
+
 ## 1.2.2 - 2026-08-24
 * Update rowlink newtab call from `->rowLink($callback, href: true)->rowLinkTarget('_blank')` to `->rowLink($callback, href: true, newTab: true)`.
 
