@@ -9,6 +9,7 @@ export interface Column {
     class: string
     alignment: string
     clickable: boolean
+    boolean: boolean
 }
 
 export interface PaginationLink {
