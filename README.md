@@ -138,6 +138,8 @@ Import the TableBuilder component:
 - 🎯 Nested relationship support (e.g., `user.company.name`)
 - 🚀 Built with TypeScript for type safety
 - ⚡ Optimized navigation with preserve-state and preserve-scroll
+- 🔌 Optional HTTP transport to drive a table from an API instead of the Inertia page
+- 🧩 Scoped slots for cells, row actions and extra toolbar controls
 - 📱 Fully responsive design
 
 ## Changelog

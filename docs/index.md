@@ -8,10 +8,12 @@ table once in PHP - columns, filters, search, sorting, pagination, and bulk acti
 - **Server-driven** - all filtering, sorting, and pagination handled in PHP
 - **Inertia.js integration** - seamless SPA experience without custom AJAX code
 - **Column visibility** - users can show/hide columns via a dropdown
-- **Filters** - select-based and callback-based filters
+- **Filters** - select, free text and callback-based filters
 - **Global & per-column search** - with configurable wildcard modes
 - **Bulk actions** - with optional confirmation dialogs and password prompts
 - **Row links & modals** - make any row clickable
+- **Slots** - override any cell, add a row action column or extra toolbar controls
+- **HTTP transport** - point a table at an API instead of the current Inertia page
 - **TypeScript support** - full type definitions included
 
 ## Quick Example

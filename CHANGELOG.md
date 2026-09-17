@@ -2,6 +2,30 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.3.0 - 2026-09-17
+
+* `TableBuilder` takes a `transport` prop. The default `inertia` behaves exactly as before. With
+  `transport="http"` and a `source` url the component fetches its own rows over `fetch()` and keeps
+  sort, filter, search, per-page and page state in memory, so a table can be driven by an API that
+  has nothing to do with the current Inertia page. Override the request with `fetcher` and the
+  response shape with `adapter`. The composable is exported as `useTableTransport` for custom
+  components.
+* Pagination moved into its own `TablePagination` component and takes a `paginationPosition` prop
+  (`top`, `bottom` or `both`). The previous/next buttons are now `disabled` instead of swapped for
+  a look-alike `span`.
+* Cells take a `cell-{key}` scoped slot receiving `row`, `value`, `index` and `column`. An `actions`
+  slot adds a trailing column per row, and a `toolbar` slot adds controls next to the column
+  selector.
+* `column(..., boolean: true)` renders a check or cross icon instead of the raw value.
+* `textFilter()` renders a debounced text input instead of a dropdown. It matches with a `LIKE`
+  wildcard and ignores case; `selectFilter()` and `callbackFilter()` keep their exact,
+  case-sensitive matching.
+* Bulk actions posted over the http transport send the `X-XSRF-TOKEN` header and same-origin
+  credentials. Without them Laravel rejected every bulk action on a web route with a `419`.
+* A response that a newer request has overtaken is discarded instead of overwriting fresher rows,
+  and changing `source` or `transport` after mount reloads the table.
+* The Vue test suite runs on GitLab CI next to Pest.
+
 ## 1.2.3 - 2026-09-02
 * Fix the header of the column named by `defaultSort` doing nothing when clicked. The column arrives sorted in the
   default direction, so the next step in the cycle cleared the `sort` parameter that was never in the URL, and the

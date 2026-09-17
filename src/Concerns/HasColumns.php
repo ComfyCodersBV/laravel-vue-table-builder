@@ -39,6 +39,7 @@ trait HasColumns
         ?callable $as = null,
         string $alignment = 'left',
         bool $clickable = true,
+        bool $boolean = false,
     ): self
     {
         $key = $key !== null ? $key : Str::kebab($label);
@@ -66,6 +67,7 @@ trait HasColumns
             as: $as,
             alignment: $alignment,
             clickable: $clickable,
+            boolean: $boolean,
         ))->values();
 
         if (! $searchable) {

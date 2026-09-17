@@ -183,6 +183,20 @@ it('narrows results with a select filter', function () {
     expect(tableColumn($table->toArray()['data'], 'name'))->toBe(['Chair', 'Bench']);
 });
 
+it('matches a text filter on a partial, case insensitive value', function () {
+    $table = productTable('/?filter[name]=ai');
+    $table->column('name')->textFilter('name');
+
+    expect(tableColumn($table->toArray()['data'], 'name'))->toBe(['Chair']);
+});
+
+it('keeps a select filter on an exact value', function () {
+    $table = productTable('/?filter[name]=Chai');
+    $table->column('name')->selectFilter('name', ['Chair' => 'Chair']);
+
+    expect($table->toArray()['data'])->toBeEmpty();
+});
+
 it('applies a callback filter through its callback', function () {
     $table = productTable('/?filter[cheap]=yes');
     $table->column('name')->callbackFilter(

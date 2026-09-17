@@ -34,6 +34,27 @@ trait HasFilters
         return $this;
     }
 
+    public function textFilter(
+        string $key,
+        ?string $label = null,
+        ?string $defaultValue = null
+    ): self
+    {
+        $this->filters = $this->filters->reject(function (Filter $filter) use ($key) {
+            return $filter->key === $key;
+        })->push(new Filter(
+            key: $key,
+            label: $label ?: Str::headline($key),
+            options: [],
+            value: $defaultValue,
+            noFilterOption: false,
+            noFilterOptionLabel: '-',
+            type: 'text'
+        ))->values();
+
+        return $this;
+    }
+
     public function callbackFilter(
         string $key,
         array $options,

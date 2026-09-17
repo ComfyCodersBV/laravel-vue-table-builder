@@ -24,6 +24,7 @@ class Column implements Arrayable
         public ?Closure $as = null,
         public string $alignment = 'left',
         public bool $clickable = true,
+        public bool $boolean = false,
     )
     {
         if (is_array($classes)) {
@@ -70,6 +71,7 @@ class Column implements Arrayable
             $this->as,
             $this->alignment,
             $this->clickable,
+            $this->boolean,
         );
     }
 
@@ -86,6 +88,7 @@ class Column implements Arrayable
             'class' => $this->classes,
             'alignment' => $this->alignment,
             'clickable' => $this->clickable,
+            'boolean' => $this->boolean,
         ];
     }
 

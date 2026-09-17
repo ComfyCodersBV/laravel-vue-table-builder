@@ -25,6 +25,11 @@ The component is exported from the package's `resources/js/components/` director
 | `table` | `TableData` | Yes      | The serialized table data from the PHP `TableBuilder`                                                                                                                                                                                                                                |
 | `name`  | `string`    | No       | Overrides the table name used to namespace query params (`{name}_page`, `{name}_perPage`). Usually unnecessary: the name is read from the serialized `table` payload (derived from the table class), so it only needs setting for inline tables where you called `->name()` manually |
 | `only`  | `string[]`  | No       | Inertia prop name(s) to reload on pagination/per-page changes, enables partial reloads so only this table's data is fetched                                                                                                                                                          |
+| `paginationPosition` | `'top'\|'bottom'\|'both'` | No | Where the pagination controls render. Defaults to `bottom`; `top` puts a compact version next to the column selector                                                                                                                             |
+| `transport` | `'inertia'\|'http'` | No | How the table fetches its rows. Defaults to `inertia`. See [HTTP Transport](http-transport.md)                                                                                                                                                                       |
+| `source` | `string`   | No       | Url the `http` transport fetches from. Required with `transport="http"`                                                                                                                                                                                                             |
+| `fetcher` | `TableFetcher` | No  | Replaces the built-in request of the `http` transport                                                                                                                                                                                                                               |
+| `adapter` | `TableAdapter` | No  | Maps a non-standard response body onto `{data, pagination}`                                                                                                                                                                                                                         |
 
 ## Features Rendered
 
@@ -45,8 +50,9 @@ The component renders all of the following automatically based on what the PHP b
 
 ## User Interactions
 
-All interactions make an Inertia visit with `preserveState: true` and `preserveScroll: true` so the page does not fully
-reload.
+With the default `inertia` transport every interaction makes an Inertia visit with `preserveState: true` and
+`preserveScroll: true` so the page does not fully reload. With the `http` transport the same interactions change the
+in-memory query and refetch from `source` instead; the url is left alone. See [HTTP Transport](http-transport.md).
 
 | Interaction                   | Query Param Changed                 |
 |-------------------------------|-------------------------------------|
@@ -99,9 +105,61 @@ The package uses shadcn/ui-style CSS variables. Override in your `app.css`:
 }
 ```
 
-## No Slots or Emits
+## Slots
 
-The component has no named slots and emits no events. All interaction is handled internally via Inertia router visits.
+The component emits no events. Everything you add lives in a slot.
+
+| Slot          | Scope                          | Renders                                                    |
+|---------------|--------------------------------|------------------------------------------------------------|
+| `cell-{key}`  | `row`, `value`, `index`, `column` | Replaces the cell body of the column named `{key}`      |
+| `actions`     | `row`, `index`                 | A trailing column on every row, right aligned; clicks do not follow the row link |
+| `toolbar`     | -                              | Controls next to the column selector above the table        |
+
+```vue
+
+<TableBuilder :table="table">
+    <template #cell-status="{value}">
+        <Badge :variant="value === 'active' ? 'default' : 'secondary'">{{ value }}</Badge>
+    </template>
+
+    <template #actions="{row}">
+        <Button size="sm" @click="edit(row)">Edit</Button>
+    </template>
+
+    <template #toolbar>
+        <Button variant="outline" @click="exportCsv">Export</Button>
+    </template>
+</TableBuilder>
+```
+
+Without a `cell-{key}` slot the value is rendered with `v-html`. The PHP builder escapes string
+values before they are serialized, so that is safe for tables driven by the builder. It is not safe
+for rows fetched from an API with the `http` transport: escape those yourself, or render them
+through a `cell-{key}` slot.
+
+## Exposed Methods
+
+```vue
+
+<script setup lang="ts">
+    import {useTemplateRef} from 'vue'
+
+    const table = useTemplateRef('table')
+
+    function refresh() {
+        table.value?.reload()
+    }
+</script>
+
+<template>
+    <TableBuilder ref="table" :table="table"/>
+</template>
+```
+
+| Method           | Returns      | Description                                                          |
+|------------------|--------------|----------------------------------------------------------------------|
+| `reload()`       | `void`       | Refetches the rows (`http`) or reloads the Inertia props (`inertia`) |
+| `currentQuery()` | `TableQuery` | The active sort, filters, search, page and per-page                  |
 
 ## TypeScript
 

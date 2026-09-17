@@ -23,6 +23,7 @@ column(
     ?callable $as = null,
     string $alignment = 'left',
     bool $clickable = true,
+    bool $boolean = false,
 ): self
 ```
 
@@ -41,6 +42,7 @@ column(
 | `as`          | `callable\|null`        | `null`                           | Transform the cell value before display                            |
 | `alignment`   | `string`                | `'left'`                         | Text alignment: `'left'`, `'center'`, `'right'`                    |
 | `clickable`   | `bool`                  | `true`                           | Whether clicking this cell follows the row link                    |
+| `boolean`     | `bool`                  | `false`                          | Render a check or cross icon instead of the raw value              |
 
 Only `key` and `label` are safe to pass positionally; use named arguments for the rest.
 
@@ -179,6 +181,16 @@ $table->class(cell: 'py-2', head: 'bg-muted');
 ->column('amount', 'Amount', alignment: 'right')
 ->column('status', 'Status', alignment: 'center')
 ```
+
+## Boolean Columns
+
+```php
+->column('is_active', 'Active', boolean: true)
+```
+
+The cell renders a green check for `true`, `1` or `'1'` and a muted cross for anything else. Every
+other value type is still rendered as text, so use an `as:` closure when you need a label instead of
+an icon.
 
 ## Non-clickable Cells
 

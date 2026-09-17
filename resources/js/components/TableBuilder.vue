@@ -13,31 +13,63 @@ import {
 import {Input} from './ui/input';
 import {Checkbox} from './ui/checkbox';
 import {Button} from './ui/button';
-import {ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Funnel, Search} from 'lucide-vue-next'
+import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Funnel, Search, X} from 'lucide-vue-next'
 import type {Column, TableData} from '../types/table-builder'
 import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
+import {useTableTransport, xsrfHeaders, type TableAdapter, type TableFetcher, type TableTransport} from '../composables/useTableTransport'
+import TablePagination from './TablePagination.vue'
 
 const {t} = useTranslations('vue_table_builder_table_translations')
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     table: TableData
     name?: string
     only?: string[]
-}>()
+    transport?: TableTransport
+    paginationPosition?: 'top' | 'bottom' | 'both'
+    source?: string
+    fetcher?: TableFetcher
+    adapter?: TableAdapter
+}>(), {
+    transport: 'inertia',
+    paginationPosition: 'bottom',
+})
 
 const tableName = computed(() => props.name || props.table?.name || 'default')
-const nsKey = (key: string) => (tableName.value !== 'default' ? `${tableName.value}_${key}` : key)
-const filterParam = (key: string) => (tableName.value !== 'default' ? `${tableName.value}_filter[${key}]` : `filter[${key}]`)
-const columnSelector = computed(() => props.table.columns.some((column) => column.can_be_hidden))
 
-// Column visibility state
+const {
+    table,
+    query,
+    loading,
+    error: transportError,
+    sortFor,
+    applySort,
+    applyFilter,
+    applySearch,
+    applyPerPage,
+    applyPage,
+    reload,
+} = useTableTransport({
+    table: computed(() => props.table),
+    transport: computed(() => props.transport),
+    source: computed(() => props.source),
+    name: tableName,
+    only: props.only,
+    fetcher: props.fetcher,
+    adapter: props.adapter,
+})
+
+defineExpose({reload, currentQuery: () => ({...query.value})})
+
+const columnSelector = computed(() => table.value.columns.some((column) => column.can_be_hidden))
+
 const hiddenColumns = ref<Set<string>>(new Set(
-    props.table.columns.filter(c => c.hidden).map(c => c.key)
+    props.table.columns.filter(column => column.hidden).map(column => column.key)
 ))
 
 const visibleColumns = computed(() =>
-    props.table.columns.filter(column => !hiddenColumns.value.has(column.key))
+    table.value.columns.filter(column => !hiddenColumns.value.has(column.key))
 )
 
 function toggleColumn(columnKey: string, visible: boolean) {
@@ -46,117 +78,62 @@ function toggleColumn(columnKey: string, visible: boolean) {
     } else {
         hiddenColumns.value.add(columnKey)
     }
-    // Trigger reactivity
     hiddenColumns.value = new Set(hiddenColumns.value)
 }
 
-// Filter dropdown open state
 const filterDropdownOpen = ref(false)
 
 function handleFilterChange(key: string, value: string) {
-    const params = new URLSearchParams(window.location.search)
-
-    if (value) {
-        params.set(filterParam(key), value)
-    } else {
-        params.delete(filterParam(key))
-    }
-
-    params.delete(nsKey('page'))
     filterDropdownOpen.value = false
-
-    router.get(window.location.pathname + '?' + params.toString(), {}, {
-        preserveState: true,
-        preserveScroll: true,
-    })
+    applyFilter(key, value)
 }
 
-// Search state
+const textFilterValues = ref<Record<string, string>>(
+    Object.fromEntries(
+        (props.table.filters ?? [])
+            .filter(filter => filter.type === 'text')
+            .map(filter => [filter.key, filter.value ?? ''])
+    )
+)
+
+const handleTextFilterChange = useDebounceFn(
+    (key: string, value: string) => applyFilter(key, value),
+    350
+)
+
+function handleTextFilterInput(key: string, value: string) {
+    textFilterValues.value[key] = value
+
+    handleTextFilterChange(key, value)
+}
+
 const searchValue = ref(props.table.searchInputs?.global?.value || '')
 
-// Debounced search handler
-const handleSearch = useDebounceFn((value: string) => {
-    const params = new URLSearchParams(window.location.search)
+const handleSearch = useDebounceFn((value: string) => applySearch(value), 350)
 
-    if (value) {
-        params.set(filterParam('global'), value)
-    } else {
-        params.delete(filterParam('global'))
-    }
-
-    params.delete(nsKey('page'))
-
-    router.get(window.location.pathname + '?' + params.toString(), {}, {
-        preserveState: true,
-        preserveScroll: true,
-    })
-}, 350)
-
-// Watch for search value changes
 watch(searchValue, (newValue) => {
     handleSearch(newValue)
 })
-
-function defaultSortKey(): string | null {
-    if (!props.table.defaultSort) return null
-
-    return (props.table.defaultSort as string).replace(/^-/, '')
-}
-
-function getEffectiveSort(column: Column): 'asc' | 'desc' | false {
-    if (column.sorted) return column.sorted as 'asc' | 'desc'
-
-    const sortKey = tableName.value !== 'default' ? `${tableName.value}_sort` : 'sort'
-    if (new URLSearchParams(window.location.search).has(sortKey)) return false
-
-    if (!props.table.defaultSort) return false
-    const defaultDir = (props.table.defaultSort as string).startsWith('-') ? 'desc' : 'asc'
-    return column.key === defaultSortKey() ? defaultDir as 'asc' | 'desc' : false
-}
-
-function nextSort(column: Column): 'asc' | 'desc' | false {
-    const currentSort = getEffectiveSort(column)
-
-    if (currentSort === 'asc') return 'desc'
-    if (currentSort !== 'desc') return 'asc'
-
-    // Dropping the sort parameter on the column the table sorts by default just
-    // re-applies that default, so toggle back to ascending instead.
-    return column.key === defaultSortKey() ? 'asc' : false
-}
-
-function handleSort(column: Column) {
-    if (!column.sortable) return
-
-    const newSort = nextSort(column)
-
-    const sortKey = tableName.value && tableName.value !== 'default' ? `${tableName.value}_sort` : 'sort'
-
-    const params = Object.fromEntries(new URLSearchParams(window.location.search)) as Record<string, string>
-    if (newSort) {
-        params[sortKey] = newSort === 'desc' ? `-${column.key}` : column.key
-    } else {
-        delete params[sortKey]
-    }
-
-    router.get(window.location.pathname, params, {
-        preserveState: true,
-        preserveScroll: true,
-    })
-}
 
 function getCellValue(row: any, key: string) {
     return key.split('.').reduce((obj, k) => obj?.[k], row)
 }
 
-// Row selection
+function isTruthy(value: any): boolean {
+    return value === true || value === 1 || value === '1'
+}
+
+const showsPagination = computed(() => Boolean(table.value.pagination && table.value.pagination.last_page > 1))
+const showsTopPagination = computed(() => showsPagination.value && props.paginationPosition !== 'bottom')
+const showsBottomPagination = computed(() => showsPagination.value && props.paginationPosition !== 'top')
+
 const rowSelection = ref<Set<number>>(new Set())
 const allResultsSelected = ref(false)
 const selectedCount = computed(() => rowSelection.value.size)
-const bulkActions = computed(() => props.table.bulkActions ?? [])
+const bulkActions = computed(() => table.value.bulkActions ?? [])
 const allVisibleItemsAreSelected = computed(() =>
     allResultsSelected.value ||
-    (props.table.data.length > 0 && selectedCount.value > 0)
+    (table.value.data.length > 0 && selectedCount.value > 0)
 )
 
 function isRowSelected(index: number): boolean {
@@ -176,12 +153,12 @@ function toggleRowSelection(index: number) {
 
 function selectCurrentPage() {
     allResultsSelected.value = false
-    rowSelection.value = new Set(props.table.data.map((_, i) => i))
+    rowSelection.value = new Set(table.value.data.map((_, index) => index))
 }
 
 function selectAllResults() {
     allResultsSelected.value = true
-    rowSelection.value = new Set(props.table.data.map((_, i) => i))
+    rowSelection.value = new Set(table.value.data.map((_, index) => index))
 }
 
 function resetRowSelection() {
@@ -190,7 +167,7 @@ function resetRowSelection() {
 }
 
 function handleRowClick(index: number, e: MouseEvent) {
-    if (!props.table.rowLinks || !props.table.rowLinks[index]) return
+    if (!table.value.rowLinks || !table.value.rowLinks[index]) return
 
     const cell = (e.target as HTMLElement).closest('td')
     if (cell) {
@@ -199,15 +176,15 @@ function handleRowClick(index: number, e: MouseEvent) {
         if (column && column.clickable === false) return
     }
 
-    const url = props.table.rowLinks[index]
+    const url = table.value.rowLinks[index]
 
-    if (props.table.rowLinkTarget === '_blank') {
+    if (table.value.rowLinkTarget === '_blank') {
         window.open(url, '_blank', 'noopener')
 
         return
     }
 
-    if (props.table.rowLinkType === 'modal') {
+    if (table.value.rowLinkType === 'modal') {
         fetch(url, {headers: {Accept: 'application/json'}})
             .then((r) => r.json())
             .then((data) => window.dispatchEvent(new CustomEvent('table-builder:open-modal', {detail: data})))
@@ -215,7 +192,7 @@ function handleRowClick(index: number, e: MouseEvent) {
         return
     }
 
-    if (props.table.rowLinkType === 'href') {
+    if (table.value.rowLinkType === 'href') {
         window.location.href = url
 
         return
@@ -225,41 +202,42 @@ function handleRowClick(index: number, e: MouseEvent) {
 }
 
 function handlePerPageChange(value: string) {
-    const perPageKey = nsKey('perPage')
-    const params = new URLSearchParams(window.location.search)
-    params.set(perPageKey, value)
-    params.delete(nsKey('page'))
-    router.get(window.location.pathname + '?' + params.toString(), {}, {
-        preserveState: true,
-        preserveScroll: true,
-        ...(props.only ? {only: props.only} : {}),
-    })
+    applyPerPage(value)
 }
 
 function navigatePage(direction: -1 | 1) {
-    const pageKey = tableName.value !== 'default' ? `${tableName.value}_page` : 'page'
-    const currentPage = props.table.pagination?.current_page ?? 1
-    const newPage = currentPage + direction
-    const params = new URLSearchParams(window.location.search)
-    if (newPage <= 1) {
-        params.delete(pageKey)
-    } else {
-        params.set(pageKey, String(newPage))
-    }
-    router.get(window.location.pathname + '?' + params.toString(), {}, {
-        preserveState: true,
-        preserveScroll: true,
-        ...(props.only ? {only: props.only} : {}),
-    })
+    applyPage(direction)
 }
 
 const actionError = ref<string | null>(null)
 
 function performBulkAction(action: any) {
-    const ids = Array.from(rowSelection.value).map(i => (props.table.data[i] as any)?.id).filter(Boolean)
+    const ids = Array.from(rowSelection.value).map(index => (table.value.data[index] as any)?.id).filter(Boolean)
     if (ids.length === 0) return
 
     actionError.value = null
+
+    if (props.transport === 'http') {
+        fetch(action.url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json', Accept: 'application/json', ...xsrfHeaders()},
+            body: JSON.stringify({ids}),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(t('vue-table-builder::table.bulk_actions.error'))
+                }
+
+                resetRowSelection()
+                reload()
+            })
+            .catch((exception) => {
+                actionError.value = exception instanceof Error ? exception.message : String(exception)
+            })
+
+        return
+    }
 
     router.post(action.url, {ids}, {
         preserveScroll: true,
@@ -285,15 +263,26 @@ function performBulkAction(action: any) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" class="w-64">
                         <div v-for="(filter, index) in table.filters" :key="index" class="p-2">
-                            <label class="mb-2 block text-sm font-medium capitalize">{{ filter.label }}</label> <select
-                            class="w-full rounded-md border bg-white px-3 py-2 dark:bg-gray-800"
-                            :value="filter.value || ''"
-                            @change="(e) => handleFilterChange(filter.key, (e.target as HTMLSelectElement).value)">
-                            <option v-for="(optionLabel, optionValue) in filter.options" :key="optionValue"
-                                    :value="optionValue">
-                                {{ optionLabel }}
-                            </option>
-                        </select>
+                            <label class="mb-2 block text-sm font-medium capitalize">{{ filter.label }}</label>
+
+                            <Input
+                                v-if="filter.type === 'text'"
+                                class="w-full"
+                                :model-value="textFilterValues[filter.key] ?? ''"
+                                :placeholder="filter.label"
+                                @update:model-value="(value: string | number) => handleTextFilterInput(filter.key, String(value))"
+                            />
+
+                            <select
+                                v-else
+                                class="w-full rounded-md border bg-white px-3 py-2 dark:bg-gray-800"
+                                :value="filter.value || ''"
+                                @change="(e) => handleFilterChange(filter.key, (e.target as HTMLSelectElement).value)">
+                                <option v-for="(optionLabel, optionValue) in filter.options" :key="optionValue"
+                                        :value="optionValue">
+                                    {{ optionLabel }}
+                                </option>
+                            </select>
                         </div>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -305,6 +294,17 @@ function performBulkAction(action: any) {
                 </div>
             </div>
             <div class="flex items-center gap-2">
+                <TablePagination
+                    v-if="showsTopPagination"
+                    compact
+                    :pagination="table.pagination!"
+                    :per-page-options="table.perPageOptions"
+                    @update:per-page="handlePerPageChange"
+                    @navigate="navigatePage"
+                />
+
+                <slot name="toolbar" />
+
                 <DropdownMenu v-if="columnSelector">
                     <DropdownMenuTrigger as-child>
                         <Button variant="outline" class="ml-auto">
@@ -324,7 +324,11 @@ function performBulkAction(action: any) {
             </div>
         </div>
 
-        <!-- Bulk Action Error -->
+        <div v-if="transportError"
+             class="mb-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            {{ transportError }}
+        </div>
+
         <div v-if="actionError"
              class="mb-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
             {{ actionError }}
@@ -365,7 +369,8 @@ function performBulkAction(action: any) {
             </div>
         </div>
 
-        <div class="rounded-md border">
+        <div class="rounded-md border" :class="loading ? 'opacity-60 transition-opacity' : ''"
+             :aria-busy="loading">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -393,22 +398,23 @@ function performBulkAction(action: any) {
                             </DropdownMenu>
                         </TableHead>
                         <TableHead v-for="column in visibleColumns" :key="column.key" :class="table.headClass">
-                            <button v-if="column.sortable" @click="handleSort(column)"
-                                    class="flex items-center gap-1.5 hover:text-foreground"
-                                    :class="{ 'font-semibold text-foreground': getEffectiveSort(column) }"
+                            <button v-if="column.sortable" @click="applySort(column)"
+                                    class="flex cursor-pointer items-center gap-1.5 hover:text-foreground"
+                                    :class="{ 'font-semibold text-foreground': sortFor(column) }"
                                     type="button">
                                 {{ column.label }}
-                                <ArrowUp v-if="getEffectiveSort(column) === 'asc'" class="h-4 w-4"/>
-                                <ArrowDown v-else-if="getEffectiveSort(column) === 'desc'" class="h-4 w-4"/>
+                                <ArrowUp v-if="sortFor(column) === 'asc'" class="h-4 w-4"/>
+                                <ArrowDown v-else-if="sortFor(column) === 'desc'" class="h-4 w-4"/>
                                 <ArrowUpDown v-else class="h-4 w-4 opacity-40"/>
                             </button>
                             <span v-else>{{ column.label }}</span>
                         </TableHead>
+                        <TableHead v-if="$slots.actions" :class="[table.headClass, 'w-px text-right']" />
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     <TableRow v-if="!table.data || table.data.length === 0">
-                        <TableCell :colspan="visibleColumns.length" class="text-center text-muted-foreground">
+                        <TableCell :colspan="visibleColumns.length + (bulkActions.length > 0 ? 1 : 0) + ($slots.actions ? 1 : 0)" class="text-center text-muted-foreground">
                             {{ t('vue-table-builder::table.no_results') }}
                         </TableCell>
                     </TableRow>
@@ -420,79 +426,45 @@ function performBulkAction(action: any) {
                                       @update:model-value="() => toggleRowSelection(index)" class="h-4 w-4"/>
                         </TableCell>
                         <TableCell v-for="column in visibleColumns" :key="column.key"
-                                   :class="[table.cellClass, column.class]"
-                                   v-html="getCellValue(row, column.key)"></TableCell>
+                                   :class="[table.cellClass, column.class]">
+                            <slot
+                                :name="`cell-${column.key}`"
+                                :row="row"
+                                :value="getCellValue(row, column.key)"
+                                :index="index"
+                                :column="column"
+                            >
+                                <Check
+                                    v-if="column.boolean && isTruthy(getCellValue(row, column.key))"
+                                    class="size-4 text-emerald-600"
+                                    role="img"
+                                    aria-label="true"
+                                />
+                                <X
+                                    v-else-if="column.boolean"
+                                    class="size-4 text-muted-foreground"
+                                    role="img"
+                                    aria-label="false"
+                                />
+                                <span v-else v-html="getCellValue(row, column.key)"></span>
+                            </slot>
+                        </TableCell>
+                        <TableCell v-if="$slots.actions" :class="[table.cellClass, 'text-right']" @click.stop>
+                            <slot name="actions" :row="row" :index="index" />
+                        </TableCell>
                     </TableRow>
                 </TableBody>
             </Table>
         </div>
 
         <!-- Pagination -->
-        <div v-if="table.pagination && table.pagination.last_page > 1" class="flex items-center justify-between mt-3">
-            <div class="flex items-center gap-3">
-                <div v-if="table.perPageOptions && table.perPageOptions.length > 1" class="flex items-center gap-1.5">
-                    <span class="text-sm text-muted-foreground">{{
-                            t('vue-table-builder::table.pagination.per_page')
-                        }}</span>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger as-child>
-                            <Button variant="outline" size="sm">
-                                {{ table.pagination.per_page }}
-                                <ChevronDown class="ml-1 h-3.5 w-3.5"/>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                            <DropdownMenuItem v-for="option in table.perPageOptions" :key="option"
-                                              @click="handlePerPageChange(String(option))">
-                                {{ option }}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-                <span class="text-sm text-muted-foreground">
-              {{
-                        t('vue-table-builder::table.pagination.showing', {
-                            'from': table.pagination.from ?? 0,
-                            'to': table.pagination.to ?? 0,
-                            'total': table.pagination.total
-                        })
-                    }}
-          </span>
-            </div>
-            <div class="flex items-center gap-2">
-                <button v-if="table.pagination.current_page > 1" type="button"
-                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                        @click="navigatePage(-1)">
-                    <ChevronLeft class="h-4 w-4"/>
-                    {{ t('vue-table-builder::table.pagination.previous') }}
-                </button>
-                <span v-else
-                      class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background h-9 px-3 opacity-50 cursor-not-allowed">
-          <ChevronLeft class="h-4 w-4"/>
-          {{ t('vue-table-builder::table.pagination.previous') }}
-        </span>
-
-                <div class="text-sm">
-                    {{
-                        t('vue-table-builder::table.pagination.page_of', {
-                            'current': table.pagination.current_page,
-                            'last': table.pagination.last_page
-                        })
-                    }}
-                </div>
-
-                <button v-if="table.pagination.current_page < table.pagination.last_page" type="button"
-                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                        @click="navigatePage(1)">
-                    {{ t('vue-table-builder::table.pagination.next') }}
-                    <ChevronRight class="h-4 w-4"/>
-                </button>
-                <span v-else
-                      class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background h-9 px-3 opacity-50 cursor-not-allowed">
-          {{ t('vue-table-builder::table.pagination.next') }}
-          <ChevronRight class="h-4 w-4"/>
-        </span>
-            </div>
-        </div>
+        <TablePagination
+            v-if="showsBottomPagination"
+            class="mt-3"
+            :pagination="table.pagination!"
+            :per-page-options="table.perPageOptions"
+            @update:per-page="handlePerPageChange"
+            @navigate="navigatePage"
+        />
     </div>
 </template>

@@ -80,6 +80,18 @@ TableBuilder::defaultPerPage(25);
 Every table is namespaced by its `name`, so its parameters are prefixed: `?users_page=2&users_perPage=30`. 
 When using a table class the name is derived automatically from the class name (see [Table Classes](table-classes.md#multiple-tables-on-one-page)), so multiple tables on one page never share `page`/`perPage`.
 
+## Position
+
+The controls render below the table. Move or duplicate them with the `paginationPosition` prop:
+
+```vue
+
+<TableBuilder :table="table" pagination-position="both"/>
+```
+
+`top` and `both` render a compact version next to the column selector, without the surrounding
+space-between layout.
+
 ## Hide Pagination on Single Page
 
 If the dataset fits on a single page, the pagination controls can be hidden automatically:
