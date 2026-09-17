@@ -16,6 +16,7 @@
 
 - **Frontend**
     - [Vue Component](vue-component.md)
+    - [HTTP Transport](http-transport.md)
     - [TypeScript Types](typescript.md)
 
 - **Reference**

@@ -19,6 +19,7 @@ function column(key: string, overrides: Partial<Column> = {}): Column {
         class: '',
         alignment: '',
         clickable: true,
+        boolean: false,
         ...overrides,
     }
 }
@@ -165,6 +166,52 @@ describe('useTableTransport with the http transport', () => {
 
         expect(transport.error.value).toBe('Request failed with status 500')
         expect(transport.loading.value).toBe(false)
+    })
+
+    it('discards a slow response that a newer request has overtaken', async () => {
+        const responses: Array<(value: unknown) => void> = []
+
+        const fetcher = vi.fn((query: TableQuery) => new Promise((resolve) => {
+            responses.push(() => resolve({data: [{ident: query.search || 'initial'}], pagination: null}))
+        }))
+
+        const {transport} = setup({fetcher})
+        await nextTick()
+
+        transport.applySearch('acme')
+        await nextTick()
+
+        responses[1]()
+        await nextTick()
+        await nextTick()
+
+        responses[0]()
+        await nextTick()
+        await nextTick()
+
+        expect(transport.table.value.data).toEqual([{ident: 'acme'}])
+        expect(transport.loading.value).toBe(false)
+    })
+
+    it('reloads when the source url changes', async () => {
+        const fetcher = vi.fn(async () => ({data: [], pagination: null}))
+        const source = ref<string | undefined>('https://api.pedroshop.nl/admin/v1/brands.json')
+
+        useTableTransport({
+            table: computed(() => tableData()),
+            transport: ref('http'),
+            source,
+            name: ref('brands'),
+            fetcher,
+        })
+
+        await nextTick()
+        expect(fetcher).toHaveBeenCalledOnce()
+
+        source.value = 'https://api.pedroshop.nl/admin/v1/categories.json'
+        await nextTick()
+
+        expect(fetcher).toHaveBeenCalledTimes(2)
     })
 
     it('maps a payload through a custom adapter', async () => {

@@ -49,6 +49,7 @@ interface Column {
     class: string
     alignment: string
     clickable: boolean
+    boolean: boolean
 }
 ```
 
@@ -113,6 +114,39 @@ interface BulkAction {
     cancelButton: string
     requirePassword: boolean | string
 }
+```
+
+## Transport Types
+
+Exported from `@/composables` for the `http` transport. See [HTTP Transport](http-transport.md).
+
+```ts
+import type {
+    TableAdapter,
+    TableFetcher,
+    TableQuery,
+    TableResponse,
+    TableTransport,
+} from '@/composables'
+
+type TableTransport = 'inertia' | 'http'
+
+interface TableQuery {
+    sort: string | null
+    filters: Record<string, string>
+    search: string
+    page: number
+    perPage: number | null
+}
+
+interface TableResponse {
+    data: any[]
+    pagination?: PaginationData | null
+}
+
+type TableFetcher = (query: TableQuery, source: string) => Promise<unknown>
+
+type TableAdapter = (payload: any) => TableResponse
 ```
 
 ## Usage in Vue Pages

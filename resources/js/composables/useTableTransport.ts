@@ -1,4 +1,4 @@
-import {computed, ref, type Ref} from 'vue'
+import {computed, ref, watch, type Ref} from 'vue'
 import {router} from '@inertiajs/vue3'
 import type {Column, PaginationData, TableData} from '../types/table-builder'
 
@@ -54,6 +54,12 @@ function defaultAdapter(payload: any): TableResponse {
         data: payload?.data ?? [],
         pagination: payload?.pagination ?? payload?.meta ?? null,
     }
+}
+
+export function xsrfHeaders(): Record<string, string> {
+    const token = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/)
+
+    return token ? {'X-XSRF-TOKEN': decodeURIComponent(token[1])} : {}
 }
 
 const defaultFetcher: TableFetcher = async (query, source) => {
@@ -127,12 +133,16 @@ export function useTableTransport(options: TableTransportOptions) {
         }
     })
 
+    let latestRequest = 0
+
     async function load(): Promise<void> {
         if (!source.value) {
             error.value = 'A source url is required when using the http transport.'
 
             return
         }
+
+        const request = ++latestRequest
 
         loading.value = true
         error.value = null
@@ -141,11 +151,23 @@ export function useTableTransport(options: TableTransportOptions) {
             const adapter = options.adapter ?? defaultAdapter
             const fetcher = options.fetcher ?? defaultFetcher
 
-            fetched.value = adapter(await fetcher(query.value, source.value))
+            const payload = await fetcher(query.value, source.value)
+
+            if (request !== latestRequest) {
+                return
+            }
+
+            fetched.value = adapter(payload)
         } catch (exception) {
+            if (request !== latestRequest) {
+                return
+            }
+
             error.value = exception instanceof Error ? exception.message : String(exception)
         } finally {
-            loading.value = false
+            if (request === latestRequest) {
+                loading.value = false
+            }
         }
     }
 
@@ -324,9 +346,15 @@ export function useTableTransport(options: TableTransportOptions) {
         router.reload({preserveScroll: true, ...(options.only ? {only: options.only} : {})})
     }
 
-    if (transport.value === 'http') {
+    if (isHttp.value) {
         void load()
     }
+
+    watch([source, transport], () => {
+        if (isHttp.value) {
+            void load()
+        }
+    })
 
     return {
         table,

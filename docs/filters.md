@@ -1,6 +1,7 @@
 # Filters
 
-Filters render as select dropdowns above the table. The selected value is applied to the query automatically.
+Filters render above the table in a dropdown. A select filter renders as a dropdown, a text filter as
+an input. The active value is applied to the query automatically.
 
 ## Select Filter
 
@@ -40,6 +41,36 @@ selectFilter(
 | `defaultValue`        | `string\|null` | `null`        | Pre-selected value                                                 |
 | `noFilterOption`      | `bool`         | `true`        | Show a "show all" option at the top                                |
 | `noFilterOptionLabel` | `string\|null` | `'-'`         | Label for the "show all" option                                    |
+
+## Text Filter
+
+A free text input applied as a `LIKE '%value%'` clause on the column matching `$key`:
+
+```php
+$table->textFilter(key: 'name', label: 'Name');
+```
+
+### Signature
+
+```php
+textFilter(
+    string $key,
+    ?string $label = null,
+    ?string $defaultValue = null,
+): self
+```
+
+### Parameters
+
+| Parameter      | Type           | Default       | Description                                                        |
+|----------------|----------------|---------------|--------------------------------------------------------------------|
+| `key`          | `string`       | -             | Column name to filter on; also the query param key (`filter[key]`) |
+| `label`        | `string\|null` | auto from key | Label shown above the input                                        |
+| `defaultValue` | `string\|null` | `null`        | Pre-filled value                                                   |
+
+Typing is debounced by 350ms. The value is matched case insensitively and is never split into
+separate terms, so `de la` matches `Vincent de la Cruz` as one phrase. Select and callback filters
+keep matching exactly and case sensitively.
 
 ## Callback Filter
 

@@ -17,7 +17,7 @@ import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Funnel, Search, X} 
 import type {Column, TableData} from '../types/table-builder'
 import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
-import {useTableTransport, type TableAdapter, type TableFetcher, type TableTransport} from '../composables/useTableTransport'
+import {useTableTransport, xsrfHeaders, type TableAdapter, type TableFetcher, type TableTransport} from '../composables/useTableTransport'
 import TablePagination from './TablePagination.vue'
 
 const {t} = useTranslations('vue_table_builder_table_translations')
@@ -88,10 +88,24 @@ function handleFilterChange(key: string, value: string) {
     applyFilter(key, value)
 }
 
+const textFilterValues = ref<Record<string, string>>(
+    Object.fromEntries(
+        (props.table.filters ?? [])
+            .filter(filter => filter.type === 'text')
+            .map(filter => [filter.key, filter.value ?? ''])
+    )
+)
+
 const handleTextFilterChange = useDebounceFn(
     (key: string, value: string) => applyFilter(key, value),
     350
 )
+
+function handleTextFilterInput(key: string, value: string) {
+    textFilterValues.value[key] = value
+
+    handleTextFilterChange(key, value)
+}
 
 const searchValue = ref(props.table.searchInputs?.global?.value || '')
 
@@ -206,7 +220,8 @@ function performBulkAction(action: any) {
     if (props.transport === 'http') {
         fetch(action.url, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json', Accept: 'application/json'},
+            credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json', Accept: 'application/json', ...xsrfHeaders()},
             body: JSON.stringify({ids}),
         })
             .then((response) => {
@@ -253,9 +268,9 @@ function performBulkAction(action: any) {
                             <Input
                                 v-if="filter.type === 'text'"
                                 class="w-full"
-                                :model-value="filter.value || ''"
+                                :model-value="textFilterValues[filter.key] ?? ''"
                                 :placeholder="filter.label"
-                                @update:model-value="(value: string | number) => handleTextFilterChange(filter.key, String(value))"
+                                @update:model-value="(value: string | number) => handleTextFilterInput(filter.key, String(value))"
                             />
 
                             <select

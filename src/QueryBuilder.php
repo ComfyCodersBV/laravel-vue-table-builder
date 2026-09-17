@@ -9,7 +9,6 @@ use Illuminate\Database\MySqlConnection;
 use Illuminate\Database\PostgresConnection;
 use Illuminate\Database\Query\Builder as BaseQueryBuilder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Kirschbaum\PowerJoins\EloquentJoins;
@@ -172,7 +171,6 @@ class QueryBuilder extends TableBuilder
         $ignoreCaseSetting = $this->ignoreCase;
         $parseTermsSetting = $this->parseTerms;
 
-        $this->ignoreCase(false);
         $this->parseTerms(false);
 
         $this->filters()->filter->hasValue()->each(function (Filter $filter) {
@@ -182,7 +180,14 @@ class QueryBuilder extends TableBuilder
                 return;
             }
 
-            $this->applyConstraint([$filter->key => SearchInput::EXACT], $filter->value);
+            $isTextFilter = $filter->type === 'text';
+
+            $this->ignoreCase($isTextFilter);
+
+            $this->applyConstraint(
+                [$filter->key => $isTextFilter ? SearchInput::WILDCARD : SearchInput::EXACT],
+                $filter->value
+            );
         });
 
         $this->ignoreCase($ignoreCaseSetting);
@@ -192,7 +197,7 @@ class QueryBuilder extends TableBuilder
     private function applySearchInputs()
     {
         $this->searchInputs()->filter->value->each(
-            fn(SearchInput $searchInput) => $this->applyConstraint($searchInput->columns, $searchInput->value)
+            fn (SearchInput $searchInput) => $this->applyConstraint($searchInput->columns, $searchInput->value)
         );
     }
 
