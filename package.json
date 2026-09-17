@@ -3,7 +3,7 @@
     "private": true,
     "peerDependencies": {
         "@inertiajs/vue3": ">=2 <4",
-        "@vueuse/core": ">=12 <15",
+        "@vueuse/core": ">=12 <16",
         "class-variance-authority": ">=0.7 <1",
         "clsx": "^2.0",
         "lucide-vue-next": ">=0.556 <2",
