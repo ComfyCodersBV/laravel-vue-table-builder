@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {router} from '@inertiajs/vue3'
-import {computed, ref, watch} from 'vue'
+import {computed, getCurrentInstance, ref, useSlots, watch} from 'vue'
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from './ui/table'
 import {
     DropdownMenu,
@@ -13,7 +13,7 @@ import {
 import {Input} from './ui/input';
 import {Checkbox} from './ui/checkbox';
 import {Button} from './ui/button';
-import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Funnel, Search, X} from 'lucide-vue-next'
+import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Funnel, GripVertical, Search, X} from 'lucide-vue-next'
 import type {Column, TableData} from '../types/table-builder'
 import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
@@ -31,10 +31,30 @@ const props = withDefaults(defineProps<{
     source?: string
     fetcher?: TableFetcher
     adapter?: TableAdapter
+    reorderable?: boolean
+    rowClass?: (row: any, index: number) => string | string[] | Record<string, boolean> | undefined
 }>(), {
     transport: 'inertia',
     paginationPosition: 'bottom',
+    reorderable: false,
 })
+
+const emit = defineEmits<{
+    reorder: [{from: number; to: number; row: any}]
+    'row-click': [{row: any; index: number; event: MouseEvent}]
+}>()
+
+const listensToRowClick = Boolean(getCurrentInstance()?.vnode.props?.onRowClick)
+
+function clickRow(row: any, index: number, event: MouseEvent): void {
+    if (table.value.rowLinks && table.value.rowLinks[index]) {
+        handleRowClick(index, event)
+
+        return
+    }
+
+    emit('row-click', {row, index, event})
+}
 
 const tableName = computed(() => props.name || props.table?.name || 'default')
 
@@ -81,7 +101,58 @@ function toggleColumn(columnKey: string, visible: boolean) {
     hiddenColumns.value = new Set(hiddenColumns.value)
 }
 
+const slots = useSlots()
+const hasActions = computed(() => Boolean(slots.actions))
+
 const filterDropdownOpen = ref(false)
+
+const draggedIndex = ref<number | null>(null)
+const overIndex = ref<number | null>(null)
+
+const rowColspan = computed(() =>
+    visibleColumns.value.length
+    + (bulkActions.value.length > 0 ? 1 : 0)
+    + (hasActions.value ? 1 : 0)
+    + (props.reorderable ? 1 : 0)
+)
+
+function startRowDrag(index: number, event: DragEvent): void {
+    draggedIndex.value = index
+    event.dataTransfer!.effectAllowed = 'move'
+    event.dataTransfer?.setData('text/plain', String(index))
+
+    const row = (event.target as HTMLElement | null)?.closest('tr')
+
+    if (row) {
+        event.dataTransfer?.setDragImage(row, 0, 0)
+    }
+}
+
+function dragOverRow(index: number, event: DragEvent): void {
+    if (draggedIndex.value === null) {
+        return
+    }
+
+    event.preventDefault()
+    overIndex.value = index
+}
+
+function dropOnRow(index: number): void {
+    const from = draggedIndex.value
+
+    endRowDrag()
+
+    if (from === null || from === index) {
+        return
+    }
+
+    emit('reorder', {from, to: index, row: table.value.data[from]})
+}
+
+function endRowDrag(): void {
+    draggedIndex.value = null
+    overIndex.value = null
+}
 
 function handleFilterChange(key: string, value: string) {
     filterDropdownOpen.value = false
@@ -374,6 +445,7 @@ function performBulkAction(action: any) {
             <Table>
                 <TableHeader>
                     <TableRow>
+                        <TableHead v-if="reorderable" :class="[table.headClass, 'w-px']" />
                         <TableHead v-if="bulkActions.length > 0" :class="[table.headClass, 'w-10']">
                             <DropdownMenu>
                                 <DropdownMenuTrigger as-child>
@@ -409,50 +481,71 @@ function performBulkAction(action: any) {
                             </button>
                             <span v-else>{{ column.label }}</span>
                         </TableHead>
-                        <TableHead v-if="$slots.actions" :class="[table.headClass, 'w-px text-right']" />
+                        <TableHead v-if="hasActions" :class="[table.headClass, 'w-px text-right']" />
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     <TableRow v-if="!table.data || table.data.length === 0">
-                        <TableCell :colspan="visibleColumns.length + (bulkActions.length > 0 ? 1 : 0) + ($slots.actions ? 1 : 0)" class="text-center text-muted-foreground">
+                        <TableCell :colspan="rowColspan" class="text-center text-muted-foreground">
                             {{ t('vue-table-builder::table.no_results') }}
                         </TableCell>
                     </TableRow>
-                    <TableRow v-for="(row, index) in table.data" :key="index"
-                              @click="table.rowLinks && table.rowLinks[index] ? handleRowClick(index, $event) : undefined"
-                              :class="table.rowLinks && table.rowLinks[index] ? 'cursor-pointer hover:bg-muted/50' : ''">
-                        <TableCell v-if="bulkActions.length > 0" :class="table.cellClass" @click.stop>
-                            <Checkbox :model-value="isRowSelected(index)"
-                                      @update:model-value="() => toggleRowSelection(index)" class="h-4 w-4"/>
-                        </TableCell>
-                        <TableCell v-for="column in visibleColumns" :key="column.key"
-                                   :class="[table.cellClass, column.class]">
-                            <slot
-                                :name="`cell-${column.key}`"
-                                :row="row"
-                                :value="getCellValue(row, column.key)"
-                                :index="index"
-                                :column="column"
-                            >
-                                <Check
-                                    v-if="column.boolean && isTruthy(getCellValue(row, column.key))"
-                                    class="size-4 text-emerald-600"
-                                    role="img"
-                                    aria-label="true"
-                                />
-                                <X
-                                    v-else-if="column.boolean"
-                                    class="size-4 text-muted-foreground"
-                                    role="img"
-                                    aria-label="false"
-                                />
-                                <span v-else v-html="getCellValue(row, column.key)"></span>
-                            </slot>
-                        </TableCell>
-                        <TableCell v-if="$slots.actions" :class="[table.cellClass, 'text-right']" @click.stop>
-                            <slot name="actions" :row="row" :index="index" />
-                        </TableCell>
-                    </TableRow>
+                    <template v-for="(row, index) in table.data" :key="index">
+                        <TableRow
+                            @click="clickRow(row, index, $event)"
+                            @dragover="reorderable ? dragOverRow(index, $event) : undefined"
+                            @drop="reorderable ? dropOnRow(index) : undefined"
+                            :class="[
+                                (table.rowLinks && table.rowLinks[index]) || listensToRowClick ? 'cursor-pointer hover:bg-muted/50' : '',
+                                rowClass ? rowClass(row, index) : '',
+                                draggedIndex === index ? 'opacity-50' : '',
+                                overIndex === index && draggedIndex !== index ? 'border-t-2 border-t-primary' : '',
+                            ]">
+                            <TableCell v-if="reorderable" :class="[table.cellClass, 'w-px']" @click.stop>
+                                <span
+                                    draggable="true"
+                                    class="inline-flex cursor-grab text-muted-foreground hover:text-foreground"
+                                    data-reorder-handle
+                                    @dragstart="startRowDrag(index, $event)"
+                                    @dragend="endRowDrag"
+                                >
+                                    <GripVertical class="size-4"/>
+                                </span>
+                            </TableCell>
+                            <TableCell v-if="bulkActions.length > 0" :class="table.cellClass" @click.stop>
+                                <Checkbox :model-value="isRowSelected(index)"
+                                          @update:model-value="() => toggleRowSelection(index)" class="h-4 w-4"/>
+                            </TableCell>
+                            <TableCell v-for="column in visibleColumns" :key="column.key"
+                                       :class="[table.cellClass, column.class]">
+                                <slot
+                                    :name="`cell-${column.key}`"
+                                    :row="row"
+                                    :value="getCellValue(row, column.key)"
+                                    :index="index"
+                                    :column="column"
+                                >
+                                    <Check
+                                        v-if="column.boolean && isTruthy(getCellValue(row, column.key))"
+                                        class="size-4 text-emerald-600"
+                                        role="img"
+                                        aria-label="true"
+                                    />
+                                    <X
+                                        v-else-if="column.boolean"
+                                        class="size-4 text-muted-foreground"
+                                        role="img"
+                                        aria-label="false"
+                                    />
+                                    <span v-else v-html="getCellValue(row, column.key)"></span>
+                                </slot>
+                            </TableCell>
+                            <TableCell v-if="hasActions" :class="[table.cellClass, 'text-right']" @click.stop>
+                                <slot name="actions" :row="row" :index="index" />
+                            </TableCell>
+                        </TableRow>
+                        <slot name="row-after" :row="row" :index="index" :colspan="rowColspan" :columns="visibleColumns" />
+                    </template>
                 </TableBody>
             </Table>
         </div>
