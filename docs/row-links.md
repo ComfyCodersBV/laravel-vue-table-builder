@@ -105,6 +105,11 @@ Individual columns can opt out of following the row link. This is useful for act
 ->column('actions', 'Actions', clickable: false, canBeHidden: false)
 ```
 
+## Row Clicks Without a Link
+
+Rows without a row link emit a `row-click` event from the Vue component instead. See
+[Vue Component](vue-component.md#clicking-rows).
+
 ## Primary Key
 
 The row link system needs to identify each row. For Eloquent models this is automatic. For plain arrays or models with a

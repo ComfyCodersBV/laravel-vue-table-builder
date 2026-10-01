@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
-## 1.4.0 - 2026-09-30
+## 1.4.0 - 2026-10-01
 
 * `reorderable` adds a leading drag handle to every row. Dropping a row on another emits
   `reorder` with `{from, to, row}`; the indexes are positions within the rows currently shown, and
@@ -14,7 +14,15 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
   actions columns). `TableRow` and `TableCell` are exported so those rows match the table.
 * A row without a row link emits `row-click` with `{row, index, event}` and gets the pointer cursor
   when a listener is bound, so an http table can open a record without a server-side row link.
-  Clicks on the handle, selection and actions cells do not reach it.
+  Clicks on the handle, selection and actions cells do not reach it, and neither do clicks in a
+  column marked `clickable: false`.
+* Fix `clickable: false` columns on tables with bulk actions. The clicked cell was matched to a
+  column by its position, so the selection checkbox shifted every column by one and the wrong cell
+  ignored the row link.
+
+## 1.3.1 - 2026-09-17
+
+* Allow @vueuse/core 15 in the peer range
 
 ## 1.3.0 - 2026-09-17
 

@@ -46,7 +46,17 @@ const emit = defineEmits<{
 
 const listensToRowClick = Boolean(getCurrentInstance()?.vnode.props?.onRowClick)
 
+function clickedUnclickableColumn(event: MouseEvent): boolean {
+    const columnKey = (event.target as HTMLElement | null)?.closest<HTMLElement>('td[data-column-key]')?.dataset.columnKey
+
+    return visibleColumns.value.some((column) => column.key === columnKey && column.clickable === false)
+}
+
 function clickRow(row: any, index: number, event: MouseEvent): void {
+    if (clickedUnclickableColumn(event)) {
+        return
+    }
+
     if (table.value.rowLinks && table.value.rowLinks[index]) {
         handleRowClick(index, event)
 
@@ -118,13 +128,18 @@ const rowColspan = computed(() =>
 
 function startRowDrag(index: number, event: DragEvent): void {
     draggedIndex.value = index
-    event.dataTransfer!.effectAllowed = 'move'
-    event.dataTransfer?.setData('text/plain', String(index))
+
+    if (!event.dataTransfer) {
+        return
+    }
+
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', String(index))
 
     const row = (event.target as HTMLElement | null)?.closest('tr')
 
     if (row) {
-        event.dataTransfer?.setDragImage(row, 0, 0)
+        event.dataTransfer.setDragImage(row, 0, 0)
     }
 }
 
@@ -137,7 +152,9 @@ function dragOverRow(index: number, event: DragEvent): void {
     overIndex.value = index
 }
 
-function dropOnRow(index: number): void {
+function dropOnRow(index: number, event: DragEvent): void {
+    event.preventDefault()
+
     const from = draggedIndex.value
 
     endRowDrag()
@@ -239,13 +256,6 @@ function resetRowSelection() {
 
 function handleRowClick(index: number, e: MouseEvent) {
     if (!table.value.rowLinks || !table.value.rowLinks[index]) return
-
-    const cell = (e.target as HTMLElement).closest('td')
-    if (cell) {
-        const cellIndex = Array.from(cell.parentElement!.children).indexOf(cell)
-        const column = visibleColumns.value[cellIndex]
-        if (column && column.clickable === false) return
-    }
 
     const url = table.value.rowLinks[index]
 
@@ -494,7 +504,7 @@ function performBulkAction(action: any) {
                         <TableRow
                             @click="clickRow(row, index, $event)"
                             @dragover="reorderable ? dragOverRow(index, $event) : undefined"
-                            @drop="reorderable ? dropOnRow(index) : undefined"
+                            @drop="reorderable ? dropOnRow(index, $event) : undefined"
                             :class="[
                                 (table.rowLinks && table.rowLinks[index]) || listensToRowClick ? 'cursor-pointer hover:bg-muted/50' : '',
                                 rowClass ? rowClass(row, index) : '',
@@ -516,7 +526,7 @@ function performBulkAction(action: any) {
                                 <Checkbox :model-value="isRowSelected(index)"
                                           @update:model-value="() => toggleRowSelection(index)" class="h-4 w-4"/>
                             </TableCell>
-                            <TableCell v-for="column in visibleColumns" :key="column.key"
+                            <TableCell v-for="column in visibleColumns" :key="column.key" :data-column-key="column.key"
                                        :class="[table.cellClass, column.class]">
                                 <slot
                                     :name="`cell-${column.key}`"

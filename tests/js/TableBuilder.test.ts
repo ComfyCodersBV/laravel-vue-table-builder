@@ -114,4 +114,18 @@ describe('TableBuilder rows', () => {
         expect(onRowClick.mock.calls[0][0]).toMatchObject({row: {id: 'b', name: 'Second'}, index: 1})
         expect(wrapper.findAll('tbody tr')[1].classes()).toContain('cursor-pointer')
     })
+
+    it('ignores clicks in an unclickable column behind the drag handle', async () => {
+        const onRowClick = vi.fn()
+        const table = tableData()
+        table.columns = [column('name'), {...column('status'), clickable: false}]
+
+        const wrapper = mount(TableBuilder, {props: {table, reorderable: true, onRowClick}})
+
+        await wrapper.find('tbody tr [data-column-key="status"]').trigger('click')
+        expect(onRowClick).not.toHaveBeenCalled()
+
+        await wrapper.find('tbody tr [data-column-key="name"]').trigger('click')
+        expect(onRowClick).toHaveBeenCalledTimes(1)
+    })
 })
