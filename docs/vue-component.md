@@ -30,6 +30,8 @@ The component is exported from the package's `resources/js/components/` director
 | `source` | `string`   | No       | Url the `http` transport fetches from. Required with `transport="http"`                                                                                                                                                                                                             |
 | `fetcher` | `TableFetcher` | No  | Replaces the built-in request of the `http` transport                                                                                                                                                                                                                               |
 | `adapter` | `TableAdapter` | No  | Maps a non-standard response body onto `{data, pagination}`                                                                                                                                                                                                                         |
+| `reorderable` | `boolean` | No   | Adds a drag handle in front of every row. See [Reordering Rows](#reordering-rows)                                                                                                                                                                                                  |
+| `rowClass` | `(row, index) => string \| string[] \| Record<string, boolean>` | No | Extra classes per row, for status colours and similar                                                                                                                                                                     |
 
 ## Features Rendered
 
@@ -45,7 +47,8 @@ The component renders all of the following automatically based on what the PHP b
 | Per-page selector                   | `perPageOptions` has more than one option |
 | Bulk action toolbar                 | `bulkActions` array is non-empty          |
 | Row checkboxes                      | bulk actions present                      |
-| Clickable rows                      | `rowLinks` array is non-empty             |
+| Clickable rows                      | `rowLinks` array is non-empty, or a `row-click` listener is bound |
+| Drag handles                        | `reorderable` is set                      |
 | Reset button                        | any filter/search/sort is active          |
 
 ## User Interactions
@@ -107,13 +110,12 @@ The package uses shadcn/ui-style CSS variables. Override in your `app.css`:
 
 ## Slots
 
-The component emits no events. Everything you add lives in a slot.
-
 | Slot          | Scope                          | Renders                                                    |
 |---------------|--------------------------------|------------------------------------------------------------|
 | `cell-{key}`  | `row`, `value`, `index`, `column` | Replaces the cell body of the column named `{key}`      |
 | `actions`     | `row`, `index`                 | A trailing column on every row, right aligned; clicks do not follow the row link |
 | `toolbar`     | -                              | Controls next to the column selector above the table        |
+| `row-after`   | `row`, `index`, `columns`, `colspan` | Extra rows under each row. See [Nested Rows](#nested-rows) |
 
 ```vue
 
@@ -136,6 +138,78 @@ Without a `cell-{key}` slot the value is rendered with `v-html`. The PHP builder
 values before they are serialized, so that is safe for tables driven by the builder. It is not safe
 for rows fetched from an API with the `http` transport: escape those yourself, or render them
 through a `cell-{key}` slot.
+
+## Events
+
+| Event       | Payload                  | Fired when                                                                 |
+|-------------|--------------------------|----------------------------------------------------------------------------|
+| `reorder`   | `{from, to, row}`        | A row is dropped on another row of a `reorderable` table                   |
+| `row-click` | `{row, index, event}`    | A row without a row link is clicked                                        |
+
+### Reordering Rows
+
+`reorderable` puts a drag handle in front of every row. Dropping a row on another emits `reorder`;
+`from` and `to` are positions within the rows currently shown and `row` is the dragged row. The
+component does not move anything itself: persist the new order and reload.
+
+```vue
+
+<script setup lang="ts">
+    import {useTemplateRef} from 'vue'
+    import {router} from '@inertiajs/vue3'
+
+    const lines = useTemplateRef('lines')
+
+    function move({row, to}: {from: number; to: number; row: any}) {
+        router.post(`/lines/${row.id}/move`, {position: to}, {
+            onSuccess: () => lines.value?.reload(),
+        })
+    }
+</script>
+
+<template>
+    <TableBuilder ref="lines" :table="table" reorderable @reorder="move"/>
+</template>
+```
+
+On a paginated table add the offset of the current page yourself, and keep in mind that a sorted
+or filtered table shows a different order than the one you store.
+
+### Clicking Rows
+
+A row with a row link from the PHP builder follows that link. Every other row emits `row-click`, and
+gets the pointer cursor as soon as a listener is bound, so an `http` table can open a record without
+a server-side row link. Clicks on the drag handle, the selection checkbox, the `actions` slot and
+columns marked `clickable: false` never reach it.
+
+```vue
+
+<TableBuilder :table="table" @row-click="({row}) => open(row)"/>
+```
+
+### Nested Rows
+
+The `row-after` slot renders below each row, for option lines or grouped sub-rows. `colspan` is the
+full width of a row including the handle, selection and actions columns, and `columns` are the
+visible columns. `TableRow` and `TableCell` are exported so those rows look like the rest of the
+table.
+
+```vue
+
+<script setup lang="ts">
+    import {TableBuilder, TableCell, TableRow} from '@/components'
+</script>
+
+<template>
+    <TableBuilder :table="table">
+        <template #row-after="{row, colspan}">
+            <TableRow v-for="option in row.options" :key="option.id" class="bg-muted/30">
+                <TableCell :colspan="colspan" class="pl-10">{{ option.name }}</TableCell>
+            </TableRow>
+        </template>
+    </TableBuilder>
+</template>
+```
 
 ## Exposed Methods
 
