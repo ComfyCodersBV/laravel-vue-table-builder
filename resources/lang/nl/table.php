@@ -19,8 +19,23 @@ return [
     ],
 
     'filters' => [
+        'any' => 'Altijd',
+        'custom' => 'Aangepaste periode',
         'from' => 'Van',
         'to' => 'Tot en met',
+    ],
+
+    'date_presets' => [
+        'today' => 'Vandaag',
+        'upcoming' => 'Komend',
+        'past' => 'Verleden',
+        'this_week' => 'Deze week',
+        'last_week' => 'Vorige week',
+        'next_week' => 'Volgende week',
+        'this_month' => 'Deze maand',
+        'last_month' => 'Vorige maand',
+        'next_month' => 'Volgende maand',
+        'this_year' => 'Dit jaar',
     ],
 
     'row_actions' => [

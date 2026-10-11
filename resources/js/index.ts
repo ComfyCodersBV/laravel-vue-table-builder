@@ -11,6 +11,7 @@ export type {
 } from './composables/useTableTransport'
 export type {
     Column,
+    DateRangePreset,
     EmptyState,
     Filter,
     PaginationData,

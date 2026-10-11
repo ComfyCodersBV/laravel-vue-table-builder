@@ -60,6 +60,8 @@ class TestCase extends Orchestra
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
             $table->date('released_on')->nullable();
+            $table->dateTime('starts_at')->nullable();
+            $table->dateTime('ends_at')->nullable();
         });
 
         Schema::create('variants', function (Blueprint $table) {

@@ -14,7 +14,7 @@ import {Input} from './ui/input';
 import {Checkbox} from './ui/checkbox';
 import {Button} from './ui/button';
 import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Funnel, GripVertical, Search, X} from '@lucide/vue'
-import type {EmptyState, RowAction, TableData} from '../types/table-builder'
+import type {EmptyState, Filter, RowAction, TableData} from '../types/table-builder'
 import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
 import {useTableTransport, xsrfHeaders, type TableAdapter, type TableFetcher, type TableTransport} from '../composables/useTableTransport'
@@ -234,7 +234,7 @@ async function runRowAction(action: RowAction, event?: MouseEvent): Promise<void
 }
 
 const isFiltered = computed(() =>
-    (table.value.filters ?? []).some((filter) => Boolean(filter.value))
+    (table.value.filters ?? []).some((filter) => Boolean(filter.value) && filter.value !== '..')
     || Object.values(table.value.searchInputs ?? {}).some((searchInput) => Boolean(searchInput?.value))
 )
 
@@ -392,25 +392,74 @@ const handleTextFilterChange = useDebounceFn(
     350
 )
 
+function splitDateRange(value: string | null | undefined): {from: string; to: string} {
+    const text = String(value ?? '')
+
+    if (!text.includes('..')) {
+        return {from: '', to: ''}
+    }
+
+    const [from = '', to = ''] = text.split('..')
+
+    return {from, to}
+}
+
 const dateRangeValues = ref<Record<string, {from: string; to: string}>>(
     Object.fromEntries(
         (props.table.filters ?? [])
             .filter(filter => filter.type === 'date_range')
-            .map(filter => {
-                const [from = '', to = ''] = String(filter.value ?? '').split('..')
-
-                return [filter.key, {from, to}]
-            })
+            .map(filter => [filter.key, splitDateRange(filter.value)])
     )
 )
 
-function handleDateRangeInput(key: string, part: 'from' | 'to', value: string) {
-    const current = dateRangeValues.value[key] ?? {from: '', to: ''}
+const customDateRanges = ref<Set<string>>(new Set())
+
+function presetSelection(filter: Filter): string {
+    const value = filter.value ?? ''
+
+    if ((filter.presets ?? []).some((preset) => preset.key === value)) {
+        return value
+    }
+
+    const range = splitDateRange(value)
+
+    if (customDateRanges.value.has(filter.key) || range.from || range.to) {
+        return 'custom'
+    }
+
+    return '..'
+}
+
+function showsDateRangeInputs(filter: Filter): boolean {
+    return !(filter.presets ?? []).length || presetSelection(filter) === 'custom'
+}
+
+function handlePresetChange(filter: Filter, value: string) {
+    if (value === 'custom') {
+        customDateRanges.value = new Set([...customDateRanges.value, filter.key])
+
+        return
+    }
+
+    customDateRanges.value = new Set([...customDateRanges.value].filter((key) => key !== filter.key))
+    dateRangeValues.value[filter.key] = {from: '', to: ''}
+
+    handleFilterChange(filter.key, value)
+}
+
+function handleDateRangeInput(filter: Filter, part: 'from' | 'to', value: string) {
+    const current = dateRangeValues.value[filter.key] ?? {from: '', to: ''}
     const next = {...current, [part]: value}
 
-    dateRangeValues.value[key] = next
+    dateRangeValues.value[filter.key] = next
 
-    applyFilter(key, next.from || next.to ? `${next.from}..${next.to}` : '')
+    if (next.from || next.to) {
+        applyFilter(filter.key, `${next.from}..${next.to}`)
+
+        return
+    }
+
+    applyFilter(filter.key, (filter.presets ?? []).length ? '..' : '')
 }
 
 function handleTextFilterInput(key: string, value: string) {
@@ -586,22 +635,36 @@ function performBulkAction(action: any) {
                             />
 
                             <div v-else-if="filter.type === 'date_range'" class="flex flex-col gap-2">
-                                <Input
-                                    type="date"
-                                    class="w-full"
-                                    :aria-label="`${filter.label} ${t('vue-table-builder::table.filters.from')}`"
-                                    :model-value="dateRangeValues[filter.key]?.from ?? ''"
-                                    :data-filter-key="`${filter.key}.from`"
-                                    @change="(e: Event) => handleDateRangeInput(filter.key, 'from', (e.target as HTMLInputElement).value)"
-                                />
-                                <Input
-                                    type="date"
-                                    class="w-full"
-                                    :aria-label="`${filter.label} ${t('vue-table-builder::table.filters.to')}`"
-                                    :model-value="dateRangeValues[filter.key]?.to ?? ''"
-                                    :data-filter-key="`${filter.key}.to`"
-                                    @change="(e: Event) => handleDateRangeInput(filter.key, 'to', (e.target as HTMLInputElement).value)"
-                                />
+                                <select
+                                    v-if="filter.presets?.length"
+                                    class="w-full rounded-md border bg-white px-3 py-2 dark:bg-gray-800"
+                                    :value="presetSelection(filter)"
+                                    :data-filter-preset="filter.key"
+                                    @change="(e) => handlePresetChange(filter, (e.target as HTMLSelectElement).value)">
+                                    <option value="..">{{ t('vue-table-builder::table.filters.any') }}</option>
+                                    <option v-for="preset in filter.presets" :key="preset.key" :value="preset.key">
+                                        {{ preset.label }}
+                                    </option>
+                                    <option value="custom">{{ t('vue-table-builder::table.filters.custom') }}</option>
+                                </select>
+                                <template v-if="showsDateRangeInputs(filter)">
+                                    <Input
+                                        type="date"
+                                        class="w-full"
+                                        :aria-label="`${filter.label} ${t('vue-table-builder::table.filters.from')}`"
+                                        :model-value="dateRangeValues[filter.key]?.from ?? ''"
+                                        :data-filter-key="`${filter.key}.from`"
+                                        @change="(e: Event) => handleDateRangeInput(filter, 'from', (e.target as HTMLInputElement).value)"
+                                    />
+                                    <Input
+                                        type="date"
+                                        class="w-full"
+                                        :aria-label="`${filter.label} ${t('vue-table-builder::table.filters.to')}`"
+                                        :model-value="dateRangeValues[filter.key]?.to ?? ''"
+                                        :data-filter-key="`${filter.key}.to`"
+                                        @change="(e: Event) => handleDateRangeInput(filter, 'to', (e.target as HTMLInputElement).value)"
+                                    />
+                                </template>
                             </div>
 
                             <select

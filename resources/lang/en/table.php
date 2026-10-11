@@ -19,8 +19,23 @@ return [
     ],
 
     'filters' => [
+        'any' => 'Any time',
+        'custom' => 'Custom range',
         'from' => 'From',
         'to' => 'To',
+    ],
+
+    'date_presets' => [
+        'today' => 'Today',
+        'upcoming' => 'Upcoming',
+        'past' => 'Past',
+        'this_week' => 'This week',
+        'last_week' => 'Last week',
+        'next_week' => 'Next week',
+        'this_month' => 'This month',
+        'last_month' => 'Last month',
+        'next_month' => 'Next month',
+        'this_year' => 'This year',
     ],
 
     'row_actions' => [

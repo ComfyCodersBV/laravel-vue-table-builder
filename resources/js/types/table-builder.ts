@@ -32,12 +32,18 @@ export interface PaginationData {
     prev_page_url: string | null
 }
 
+export interface DateRangePreset {
+    key: string
+    label: string
+}
+
 export interface Filter {
     key: string
     label: string
     options: Record<string, string>
     value?: string | null
     type: 'select' | 'text' | 'date' | 'date_range'
+    presets?: DateRangePreset[]
 }
 
 export interface SearchInput {

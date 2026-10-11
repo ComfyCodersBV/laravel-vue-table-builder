@@ -132,6 +132,7 @@ dateFilter(
     ?string $label = null,
     ?string $defaultValue = null,
     ?string $column = null,
+    ?string $timezone = null,
 ): self
 
 dateRangeFilter(
@@ -140,6 +141,10 @@ dateRangeFilter(
     ?string $defaultFrom = null,
     ?string $defaultTo = null,
     ?string $column = null,
+    ?string $endColumn = null,
+    ?string $timezone = null,
+    array $presets = [],
+    ?string $defaultPreset = null,
 ): self
 ```
 
@@ -152,9 +157,90 @@ Dates are `Y-m-d`; anything else is ignored. A range travels as one value, `from
 ?filter[period]=..2026-10-31
 ```
 
-`whereDate` compares the date part as stored. For a datetime column stored in UTC with users in
-another timezone, or for a period that has to overlap a start and an end column, use a
-`callbackFilter` and parse the value yourself.
+Without `timezone`, `endColumn` or presets the filter compares the date part as stored with
+`whereDate`, from and to inclusive.
+
+### Display Timezone
+
+A datetime column is usually stored in the application timezone (UTC), while users pick dates in
+their own. With `timezone` the picked dates are days in that timezone: the range runs from the start
+of the first day up to (not including) the start of the day after the last one, converted to
+`config('app.timezone')` before it is compared.
+
+```php
+$table->dateRangeFilter('period', column: 'starts_at', timezone: 'Europe/Amsterdam');
+```
+
+On 11 October a booking stored as `2026-10-10 22:30:00` UTC (00:30 in Amsterdam) now counts as the
+11th. Set it once for every date filter in the config:
+
+```php
+// config/vue-table-builder.php
+'display_timezone' => 'Europe/Amsterdam',
+```
+
+### Overlapping Periods
+
+Records with a start and an end, such as bookings, match when their period overlaps the range. Pass
+the end column as `endColumn`:
+
+```php
+$table->dateRangeFilter('period', column: 'starts_at', endColumn: 'ends_at');
+```
+
+A record matches when it starts before the end of the range and ends after its start. The end is
+exclusive, so a booking that ends at midnight on the first day of the range does not match, and a
+`null` end counts as open-ended. Either end of the range may stay empty: `2026-10-06..` finds
+everything that has not ended before the 6th.
+
+### Presets
+
+Offer common periods in a dropdown next to the custom range:
+
+```php
+use TranquilTools\TableBuilder\Components\DateRangePreset;
+
+$table->dateRangeFilter(
+    'period',
+    column: 'starts_at',
+    endColumn: 'ends_at',
+    presets: [
+        'upcoming',
+        'this_week',
+        'this_month',
+        'past' => 'Earlier',
+        'last_30_days' => fn (CarbonImmutable $now) => [$now->subDays(30)->startOfDay(), $now],
+        DateRangePreset::make('season', 'This season', fn (CarbonImmutable $now) => [$now->startOfYear()->addMonths(3), $now->startOfYear()->addMonths(9)]),
+    ],
+    defaultPreset: 'upcoming',
+);
+```
+
+| Built-in key   | Range                                   |
+|----------------|-----------------------------------------|
+| `today`        | today                                   |
+| `upcoming`     | from now on                             |
+| `past`         | until now                               |
+| `this_week`    | this week, from Carbon's `startOfWeek()`  |
+| `last_week`    | the week before                         |
+| `next_week`    | the week after                          |
+| `this_month`   | this calendar month                     |
+| `last_month`   | the month before                        |
+| `next_month`   | the month after                         |
+| `this_year`    | this calendar year                      |
+
+A list entry is a built-in key with its translated label, a `key => label` pair renames a built-in, a
+`key => callback` pair or a `DateRangePreset` adds your own. A callback receives the current time in
+the display timezone and returns `[$from, $until]`: Carbon instances where `$until` is exclusive and
+`null` leaves that end open.
+
+The selected preset travels as its key, `?filter[period]=this_week`, so it is evaluated when the page
+loads and a bookmarked link keeps meaning "this week". `defaultPreset` applies a preset when the
+query has no value. Choosing "Any time" in the dropdown sends an empty range, `..`, which clears the
+filter without bringing the default back. "Custom range" shows the two date inputs.
+
+`upcoming` and `past` compare with the current time; with an end column, `upcoming` keeps records
+that are still running and `past` keeps records that have started.
 
 Date filters are applied to query tables only, like the other filters.
 

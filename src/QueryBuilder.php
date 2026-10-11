@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TranquilTools\TableBuilder;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\MySqlConnection;
 use Illuminate\Database\PostgresConnection;
@@ -211,17 +212,61 @@ class QueryBuilder extends TableBuilder
 
     private function applyDateFilter(Filter $filter): void
     {
+        $column = $this->qualifiedColumn($filter->column ?: $filter->key);
+
+        if ($filter->usesDateTimeBounds()) {
+            $this->applyDateTimeBounds($filter, $column);
+
+            return;
+        }
+
         ['from' => $from, 'to' => $to] = $filter->dateRange();
 
-        $column = $filter->column ?: $filter->key;
-
         if (! is_null($from)) {
-            $this->builder->whereDate($this->qualifiedColumn($column), '>=', $from);
+            $this->builder->whereDate($column, '>=', $from);
         }
 
         if (! is_null($to)) {
-            $this->builder->whereDate($this->qualifiedColumn($column), '<=', $to);
+            $this->builder->whereDate($column, '<=', $to);
         }
+    }
+
+    private function applyDateTimeBounds(Filter $filter, string $column): void
+    {
+        ['from' => $from, 'until' => $until] = $filter->dateTimeBounds();
+
+        $comparesDates = is_null($filter->timezone);
+
+        if (! is_null($until)) {
+            $comparesDates && $until->isStartOfDay()
+                ? $this->builder->whereDate($column, '<', $until->toDateString())
+                : $this->builder->where($column, '<', $this->storedMoment($until));
+        }
+
+        if (is_null($from)) {
+            return;
+        }
+
+        if (! is_null($filter->endColumn)) {
+            $endColumn = $this->qualifiedColumn($filter->endColumn);
+
+            $this->builder->where(fn ($query) => $query
+                ->where($endColumn, '>', $this->storedMoment($from))
+                ->orWhereNull($endColumn));
+
+            return;
+        }
+
+        $comparesDates && $from->isStartOfDay()
+            ? $this->builder->whereDate($column, '>=', $from->toDateString())
+            : $this->builder->where($column, '>=', $this->storedMoment($from));
+    }
+
+    private function storedMoment(CarbonImmutable $moment): string
+    {
+        return $moment
+            ->setTimezone((string) config('app.timezone', 'UTC'))
+            ->format('Y-m-d H:i:s');
     }
 
     private function qualifiedColumn(string $column): string

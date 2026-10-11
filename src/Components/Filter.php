@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TranquilTools\TableBuilder\Components;
 
+use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Arr;
@@ -20,6 +21,9 @@ class Filter implements Arrayable
         public string $type,
         public mixed $callback = null,
         public ?string $column = null,
+        public ?string $endColumn = null,
+        public ?string $timezone = null,
+        public array $presets = [],
     ) {}
 
     public function clone(): static
@@ -59,6 +63,45 @@ class Filter implements Arrayable
         ];
     }
 
+    public function preset(): ?DateRangePreset
+    {
+        return $this->presets[(string) $this->value] ?? null;
+    }
+
+    public function usesDateTimeBounds(): bool
+    {
+        return ! is_null($this->timezone) || ! is_null($this->endColumn) || ! is_null($this->preset());
+    }
+
+    public function displayTimezone(): string
+    {
+        return $this->timezone ?? (string) config('app.timezone', 'UTC');
+    }
+
+    /**
+     * @return array{from: CarbonImmutable|null, until: CarbonImmutable|null}
+     */
+    public function dateTimeBounds(): array
+    {
+        $preset = $this->preset();
+
+        if (! is_null($preset)) {
+            return $preset->range(CarbonImmutable::now($this->displayTimezone()));
+        }
+
+        ['from' => $from, 'to' => $to] = $this->dateRange();
+
+        return [
+            'from' => is_null($from) ? null : $this->startOfDay($from),
+            'until' => is_null($to) ? null : $this->startOfDay($to)->addDay(),
+        ];
+    }
+
+    private function startOfDay(string $date): CarbonImmutable
+    {
+        return CarbonImmutable::createFromFormat('!Y-m-d', $date, $this->displayTimezone());
+    }
+
     private static function validDate(?string $value): ?string
     {
         if (is_null($value) || $value === '') {
@@ -87,12 +130,21 @@ class Filter implements Arrayable
 
     public function toArray(): array
     {
-        return [
+        $array = [
             'key' => $this->key,
             'label' => $this->label,
             'options' => $this->options(),
             'value' => $this->value,
             'type' => $this->type,
+        ];
+
+        if ($this->presets === []) {
+            return $array;
+        }
+
+        return [
+            ...$array,
+            'presets' => array_values(array_map(fn (DateRangePreset $preset): array => $preset->toArray(), $this->presets)),
         ];
     }
 }

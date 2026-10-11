@@ -384,4 +384,65 @@ describe('TableBuilder date filters', () => {
 
         wrapper.unmount()
     })
+
+    function presetTable(value: string | null): TableData {
+        const table = tableData()
+        table.filters = [{
+            key: 'period',
+            label: 'Period',
+            options: {},
+            value,
+            type: 'date_range',
+            presets: [{key: 'upcoming', label: 'Upcoming'}, {key: 'past', label: 'Past'}],
+        }]
+
+        return table
+    }
+
+    async function openFilters(table: TableData) {
+        const wrapper = mount(TableBuilder, {props: {table}, attachTo: document.body})
+
+        await wrapper.find('button').trigger('click')
+        await flush()
+
+        return wrapper
+    }
+
+    it('offers the presets and hides the date inputs while a preset is active', async () => {
+        const wrapper = await openFilters(presetTable('upcoming'))
+
+        const select = document.querySelector<HTMLSelectElement>('[data-filter-preset="period"]')!
+
+        expect(Array.from(select.options).map((option) => option.textContent?.trim())).toEqual(['any', 'Upcoming', 'Past', 'custom'])
+        expect(select.value).toBe('upcoming')
+        expect(document.querySelector('[data-filter-key="period.from"]')).toBeNull()
+
+        select.value = 'past'
+        select.dispatchEvent(new Event('change'))
+
+        expect(visitedQuery().get('lines_filter[period]')).toBe('past')
+
+        wrapper.unmount()
+    })
+
+    it('clears a preset with an empty range so a default preset does not come back', async () => {
+        const wrapper = await openFilters(presetTable('upcoming'))
+
+        const select = document.querySelector<HTMLSelectElement>('[data-filter-preset="period"]')!
+        select.value = '..'
+        select.dispatchEvent(new Event('change'))
+
+        expect(visitedQuery().get('lines_filter[period]')).toBe('..')
+
+        wrapper.unmount()
+    })
+
+    it('shows the date inputs for a custom range', async () => {
+        const wrapper = await openFilters(presetTable('2026-10-01..2026-10-31'))
+
+        expect(document.querySelector<HTMLSelectElement>('[data-filter-preset="period"]')!.value).toBe('custom')
+        expect(document.querySelector<HTMLInputElement>('[data-filter-key="period.from"]')!.value).toBe('2026-10-01')
+
+        wrapper.unmount()
+    })
 })
