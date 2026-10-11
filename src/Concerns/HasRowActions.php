@@ -26,6 +26,7 @@ trait HasRowActions
         bool|Closure $visible = true,
         bool|string|Closure $disabled = false,
         ?string $key = null,
+        bool|string $download = false,
     ): self {
         $key = $key ?: Str::slug($label);
 
@@ -39,6 +40,7 @@ trait HasRowActions
             variant: $variant,
             visible: $visible,
             disabled: $disabled,
+            download: $download,
         );
 
         return $this;

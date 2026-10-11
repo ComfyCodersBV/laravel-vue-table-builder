@@ -137,9 +137,40 @@ function opensInNewTab(event: MouseEvent): boolean {
     return event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1
 }
 
+function downloadName(action: RowAction): string {
+    return typeof action.download === 'string' ? action.download : ''
+}
+
+function triggerDownload(action: RowAction): void {
+    const link = document.createElement('a')
+
+    link.href = action.url
+    link.download = downloadName(action)
+    link.rel = 'noopener'
+    link.style.display = 'none'
+
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+}
+
 async function runRowAction(action: RowAction, event?: MouseEvent): Promise<void> {
     if (action.disabled || actionRunning.value) {
         event?.preventDefault()
+
+        return
+    }
+
+    if (action.download) {
+        if (event && !action.confirm) {
+            return
+        }
+
+        event?.preventDefault()
+
+        if (await confirmed(action.confirm)) {
+            triggerDownload(action)
+        }
 
         return
     }
@@ -787,6 +818,17 @@ function performBulkAction(action: any) {
                                                     {{ action.label }}
                                                 </Button>
                                             </span>
+                                            <Button v-else-if="action.download" size="sm" :variant="action.variant" as-child>
+                                                <a
+                                                    :href="action.url"
+                                                    :download="downloadName(action)"
+                                                    :data-row-action="action.key"
+                                                    data-row-action-download
+                                                    @click="runRowAction(action, $event)"
+                                                >
+                                                    {{ action.label }}
+                                                </a>
+                                            </Button>
                                             <Button v-else-if="action.method === 'get'" size="sm" :variant="action.variant" as-child>
                                                 <a :href="action.url" :data-row-action="action.key" @click="runRowAction(action, $event)">
                                                     {{ action.label }}

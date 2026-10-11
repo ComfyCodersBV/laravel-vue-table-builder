@@ -112,3 +112,23 @@ it('passes the model to the callbacks of a query table', function () {
 
     expect($table->toArray()['rowActions'][0][0]['url'])->toBe('/products/1');
 });
+
+it('marks a download action and keeps the payload of other actions unchanged', function () {
+    $table = TableBuilder::for([['id' => 1]]);
+
+    $table
+        ->rowAction('Edit', url: '/edit')
+        ->rowAction('PDF', url: fn (array $row) => "/items/{$row['id']}/pdf", download: true)
+        ->rowAction('CSV', url: '/export.csv', download: 'items.csv');
+
+    [$edit, $pdf, $csv] = $table->toArray()['rowActions'][0];
+
+    expect($edit)->not->toHaveKey('download')
+        ->and($pdf['download'])->toBeTrue()
+        ->and($pdf['url'])->toBe('/items/1/pdf')
+        ->and($csv['download'])->toBe('items.csv');
+});
+
+it('refuses a download action with another method than get', function () {
+    TableBuilder::for([])->rowAction('PDF', url: '/pdf', method: 'post', download: true);
+})->throws(InvalidArgumentException::class);

@@ -29,11 +29,16 @@ class RowAction
         public string $variant = 'outline',
         public bool|Closure $visible = true,
         public bool|string|Closure $disabled = false,
+        public bool|string $download = false,
     ) {
         $this->method = strtolower($method);
 
         if (! in_array($this->method, self::METHODS, true)) {
             throw new InvalidArgumentException('Row action method must be one of: '.implode(', ', self::METHODS).'.');
+        }
+
+        if ($download !== false && $this->method !== 'get') {
+            throw new InvalidArgumentException("Row action [{$label}] can only download with the get method.");
         }
 
         if (is_null($url) && is_null($route)) {
@@ -42,7 +47,7 @@ class RowAction
     }
 
     /**
-     * @return array{key: string, label: string, url: string, method: string, confirm: string|null, variant: string, disabled: bool, disabledReason: string|null}|null
+     * @return array{key: string, label: string, url: string, method: string, confirm: string|null, variant: string, disabled: bool, disabledReason: string|null, download?: bool|string}|null
      */
     public function resolve(mixed $item): ?array
     {
@@ -60,7 +65,7 @@ class RowAction
             ? call_user_func($this->disabled, $item)
             : $this->disabled;
 
-        return [
+        $resolved = [
             'key' => $this->key,
             'label' => $this->label,
             'url' => $url,
@@ -69,6 +74,15 @@ class RowAction
             'variant' => $this->variant,
             'disabled' => is_string($disabled) ? $disabled !== '' : (bool) $disabled,
             'disabledReason' => is_string($disabled) && $disabled !== '' ? $disabled : null,
+        ];
+
+        if ($this->download === false || $this->download === '') {
+            return $resolved;
+        }
+
+        return [
+            ...$resolved,
+            'download' => $this->download,
         ];
     }
 

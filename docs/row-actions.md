@@ -30,6 +30,7 @@ rowAction(
     bool|Closure $visible = true,
     bool|string|Closure $disabled = false,
     ?string $key = null,
+    bool|string $download = false,
 ): self
 ```
 
@@ -44,6 +45,7 @@ rowAction(
 | `visible`  | `false` or a callback returning `false` leaves the action out of the payload for that row                    |
 | `disabled` | `true`, or a callback returning `true` or a reason string. The reason is shown as the button's tooltip      |
 | `key`      | Identifier of the action, defaults to the slug of the label. Registering a key again replaces the action     |
+| `download` | `true` or a file name: the action downloads a file instead of visiting a page. Only with the `get` method    |
 
 `url` or `route` is required.
 
@@ -67,6 +69,29 @@ Use `disabled` with a reason when the user should see that the action exists but
 ```
 
 The prop may return a boolean or a promise of one.
+
+## Downloads
+
+A file download, such as an invoice PDF, must not go through an Inertia visit: Inertia expects a page
+back and shows the file as an error. Mark the action with `download`:
+
+```php
+$table->rowAction(
+    'PDF',
+    url: fn (Invoice $invoice) => route('invoices.pdf', $invoice),
+    download: true,
+);
+
+$table->rowAction('CSV', url: fn (Report $report) => route('reports.csv', $report), download: 'report.csv');
+```
+
+The component renders a plain link with a `download` attribute, so the browser fetches the file
+itself and the page stays where it is. A string sets the suggested file name; with `true` the
+`Content-Disposition` header of the response decides, which is what `response()->download()` and
+`Storage::download()` send. A download with a `confirm` question asks first and then starts the
+download. The `run` function of the `#actions` slot downloads too.
+
+The resolved action carries `download: true` or the file name; other actions have no `download` key.
 
 ## Custom Rendering
 

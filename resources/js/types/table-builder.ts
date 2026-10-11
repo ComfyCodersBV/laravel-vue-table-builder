@@ -70,6 +70,7 @@ export interface RowAction {
     variant: RowActionVariant
     disabled: boolean
     disabledReason: string | null
+    download?: boolean | string
 }
 
 export interface EmptyState {

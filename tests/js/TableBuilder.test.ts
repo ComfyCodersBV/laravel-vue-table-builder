@@ -214,6 +214,46 @@ describe('TableBuilder row actions', () => {
         expect(router.visit).not.toHaveBeenCalled()
     })
 
+    it('renders a download action as a plain link the browser follows itself', async () => {
+        const table = tableData()
+        table.rowActions = [[rowAction({key: 'pdf', label: 'PDF', url: '/lines/a/pdf', download: 'line-a.pdf'})], [], []]
+
+        const wrapper = mount(TableBuilder, {props: {table}})
+        const link = wrapper.find('a[data-row-action="pdf"]')
+        let preventedByComponent: boolean | null = null
+
+        link.element.addEventListener('click', (event) => {
+            preventedByComponent = event.defaultPrevented
+            event.preventDefault()
+        })
+
+        expect(link.attributes('href')).toBe('/lines/a/pdf')
+        expect(link.attributes('download')).toBe('line-a.pdf')
+
+        await link.trigger('click')
+        await flush()
+
+        expect(preventedByComponent).toBe(false)
+        expect(router.visit).not.toHaveBeenCalled()
+    })
+
+    it('downloads through a temporary link once a download action is confirmed', async () => {
+        const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+        const table = tableData()
+        table.rowActions = [[rowAction({key: 'pdf', label: 'PDF', url: '/lines/a/pdf', download: true, confirm: 'Download?'})], [], []]
+
+        const wrapper = mount(TableBuilder, {props: {table, confirm: () => true}})
+
+        await wrapper.find('a[data-row-action="pdf"]').trigger('click')
+        await flush()
+
+        expect(click).toHaveBeenCalledTimes(1)
+        expect((click.mock.contexts[0] as HTMLAnchorElement).getAttribute('href')).toBe('/lines/a/pdf')
+        expect(router.visit).not.toHaveBeenCalled()
+
+        click.mockRestore()
+    })
+
     it('lets the actions slot override the rendering and receive the actions', () => {
         const wrapper = mount(TableBuilder, {
             props: {table: tableWithActions()},
