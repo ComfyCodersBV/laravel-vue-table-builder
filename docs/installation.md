@@ -34,8 +34,12 @@ php artisan vendor:publish --tag="vue-table-builder-config"
 The package ships its Vue component and UI primitives. Install peer dependencies:
 
 ```bash
-npm install lucide-vue-next
+npm install reka-ui @lucide/vue
 ```
+
+The components import their icons from `@lucide/vue`, the maintained successor of `lucide-vue-next` that Laravel's
+starter kits ship. An app that still only has `lucide-vue-next` can install `@lucide/vue` next to it, or alias it in
+Vite: `'@lucide/vue': 'lucide-vue-next'`.
 
 ## Import CSS
 

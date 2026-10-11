@@ -51,6 +51,8 @@ The component renders all of the following automatically based on what the PHP b
 | Row checkboxes                      | bulk actions present                      |
 | Clickable rows                      | `rowLinks` array is non-empty, or a `row-click` listener is bound |
 | Drag handles                        | `reorderable` is set                      |
+| Totals footer                       | `totals` is set and the table has rows    |
+| Export button                       | `export.url` is set                       |
 | Reset button                        | any filter/search/sort is active          |
 
 ## User Interactions
@@ -119,6 +121,7 @@ The package uses shadcn/ui-style CSS variables. Override in your `app.css`:
 | `empty`       | `filtered`, `title`, `description`, `reset` | The content of the row shown when there are no rows. See [Empty State](empty-state.md) |
 | `toolbar`     | -                              | Controls next to the column selector above the table        |
 | `row-after`   | `row`, `index`, `columns`, `colspan` | Extra rows under each row. See [Nested Rows](#nested-rows) |
+| `total-{key}` | `value`, `column`, `totals`    | Replaces the total of the column named `{key}` in the footer. See [Totals](totals.md) |
 
 ```vue
 
@@ -132,7 +135,7 @@ The package uses shadcn/ui-style CSS variables. Override in your `app.css`:
     </template>
 
     <template #toolbar>
-        <Button variant="outline" @click="exportCsv">Export</Button>
+        <Button variant="outline" @click="openSettings">Settings</Button>
     </template>
 </TableBuilder>
 ```
@@ -214,6 +217,7 @@ table.
 |------------------|--------------|----------------------------------------------------------------------|
 | `reload()`       | `void`       | Refetches the rows (`http`) or reloads the Inertia props (`inertia`) |
 | `currentQuery()` | `TableQuery` | The active sort, filters, search, page and per-page                  |
+| `exportUrl()`    | `string \| null` | The signed export url with the current state appended. See [Export](export.md) |
 
 ## TypeScript
 

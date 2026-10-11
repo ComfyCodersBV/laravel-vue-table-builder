@@ -15,6 +15,9 @@ import type {
     EmptyState,
     ReorderConfig,
     QueryKeys,
+    Totals,
+    ExportConfig,
+    DateRangePreset,
 } from '@/types/table-builder'
 ```
 
@@ -40,6 +43,8 @@ interface TableData {
     emptyState?: EmptyState
     reorder?: ReorderConfig | null
     queryKeys?: QueryKeys
+    totals?: Totals | null
+    export?: ExportConfig | null
 }
 
 interface RowAction {
@@ -51,6 +56,22 @@ interface RowAction {
     variant: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
     disabled: boolean
     disabledReason: string | null
+    download?: boolean | string         // only on download actions
+}
+
+interface Totals {
+    label: string | null
+    values: Record<string, string | number | null>
+}
+
+interface ExportConfig {
+    label: string
+    url: string | null
+}
+
+interface DateRangePreset {
+    key: string
+    label: string
 }
 
 interface EmptyState {

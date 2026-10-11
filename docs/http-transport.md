@@ -129,6 +129,13 @@ When the response carries a `rowActions` array next to `data` (the shape `TableB
 returns), the default adapter passes it on and the row action buttons render for the fetched rows.
 Actions other than `get` are sent with `fetch()` and the table reloads afterwards.
 
+## Totals and Export
+
+A `totals` key in the response (the shape `TableBuilder::toArray()` returns) replaces the totals of
+the initial render; without it the footer is hidden, because totals of the first render would no
+longer match the rows. The export button appends the in-memory sort, search and filters to the
+export url in the query keys of the table, so the file matches what the table shows.
+
 ## Bulk Actions
 
 Bulk actions post `{ids: [...]}` to the action url with same-origin credentials and the

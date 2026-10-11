@@ -29,7 +29,7 @@ composer require tranquil-tools/laravel-vue-table-builder
 Install the required npm packages:
 
 ```bash
-npm install reka-ui lucide-vue-next
+npm install reka-ui @lucide/vue
 ```
 
 Alter your `vite.config.ts` to add an `@table-builder` alias:

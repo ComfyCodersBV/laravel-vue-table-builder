@@ -280,10 +280,10 @@ Make sure your `tsconfig.json` includes the path alias:
 
 ### Icons not showing
 
-Ensure `lucide-vue-next` is installed:
+Ensure `@lucide/vue` is installed:
 
 ```bash
-npm install lucide-vue-next
+npm install @lucide/vue
 ```
 
 ### Styles not applying
