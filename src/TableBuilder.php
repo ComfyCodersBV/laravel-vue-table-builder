@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Conditionable;
 use InvalidArgumentException;
 use JsonSerializable;
+use LogicException;
 use ReflectionClass;
 use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
 use TranquilTools\TableBuilder\Components\Column;
@@ -27,6 +28,7 @@ use TranquilTools\TableBuilder\Concerns\HasReordering;
 use TranquilTools\TableBuilder\Concerns\HasResource;
 use TranquilTools\TableBuilder\Concerns\HasRowActions;
 use TranquilTools\TableBuilder\Concerns\HasSearchInputs;
+use TranquilTools\TableBuilder\Concerns\HasTotals;
 use TranquilTools\TableBuilder\Exceptions\PaginationException;
 
 class TableBuilder implements Arrayable, JsonSerializable
@@ -40,6 +42,7 @@ class TableBuilder implements Arrayable, JsonSerializable
     use HasResource;
     use HasRowActions;
     use HasSearchInputs;
+    use HasTotals;
 
     const DEFAULT_NAME = 'default';
 
@@ -376,9 +379,11 @@ class TableBuilder implements Arrayable, JsonSerializable
         $items = $data instanceof Collection ? $data : (is_array($data) ? collect($data) : null);
 
         $rowActions = [];
+        $totals = null;
 
         if ($items !== null) {
             $rowActions = $this->resolveRowActions($items);
+            $totals = $this->resolveTotals($items);
             $data = $items->map(fn ($item) => $this->transformItem($item))->all();
         }
 
@@ -401,6 +406,7 @@ class TableBuilder implements Arrayable, JsonSerializable
             'emptyState' => $this->emptyState,
             'reorder' => $this->reorderPayload(),
             'queryKeys' => $this->queryKeys(),
+            'totals' => $totals,
         ];
     }
 
@@ -490,6 +496,20 @@ class TableBuilder implements Arrayable, JsonSerializable
     }
 
     public function performBulkAction(callable $action, array $ids) {}
+
+    public function filteredQuery(?Request $request = null): Builder|SpatieQueryBuilder
+    {
+        throw new LogicException('Only a table built from a query has a filtered query.');
+    }
+
+    protected function allItemsForTotals(Collection $pageItems): Collection
+    {
+        if ($this->resource instanceof Collection) {
+            return $this->resource;
+        }
+
+        return $pageItems;
+    }
 
     private function preventPaginationCall()
     {

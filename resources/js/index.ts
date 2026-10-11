@@ -22,4 +22,5 @@ export type {
     RowActionVariant,
     SearchInput,
     TableData,
+    Totals,
 } from './types/table-builder'

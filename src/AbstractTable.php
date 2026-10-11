@@ -7,10 +7,12 @@ namespace TranquilTools\TableBuilder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Query\Builder as BaseQueryBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use ReflectionClass;
+use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
 use TranquilTools\TableBuilder\Components\BulkAction;
 
 abstract class AbstractTable
@@ -81,6 +83,11 @@ abstract class AbstractTable
     public function configure(TableBuilder $table)
     {
         //
+    }
+
+    public function filteredQuery(?Request $request = null): Builder|BaseQueryBuilder|SpatieQueryBuilder
+    {
+        return $this->make()->filteredQuery($request);
     }
 
     public function performReorder(int|string $id, int|string $toId): void

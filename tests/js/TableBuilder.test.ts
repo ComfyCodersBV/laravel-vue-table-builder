@@ -446,3 +446,49 @@ describe('TableBuilder date filters', () => {
         wrapper.unmount()
     })
 })
+
+describe('TableBuilder totals', () => {
+    function tableWithTotals(): TableData {
+        const table = tableData()
+        table.columns = [column('name'), column('hours'), column('amount')]
+        table.totals = {label: 'Total', values: {hours: 12, amount: '&euro; 1.250,00'}}
+
+        return table
+    }
+
+    it('renders the totals in a footer under their columns with the label in the first column', () => {
+        const wrapper = mount(TableBuilder, {props: {table: tableWithTotals()}})
+
+        const footer = wrapper.find('tfoot[data-totals]')
+
+        expect(footer.find('[data-total-key="name"]').text()).toBe('Total')
+        expect(footer.find('[data-total-key="hours"]').text()).toBe('12')
+        expect(footer.find('[data-total-key="amount"]').text()).toBe('€ 1.250,00')
+    })
+
+    it('lines the footer up with the handle and selection columns', () => {
+        const table = tableWithTotals()
+        table.bulkActions = [{key: '0', label: 'Delete', url: '/bulk', confirm: false, confirmText: '', confirmButton: '', cancelButton: '', requirePassword: false}]
+
+        const wrapper = mount(TableBuilder, {props: {table, reorderable: true}})
+
+        expect(wrapper.findAll('tfoot td')).toHaveLength(wrapper.findAll('tbody tr')[0].findAll('td').length)
+    })
+
+    it('lets a total-{key} slot render a total', () => {
+        const wrapper = mount(TableBuilder, {
+            props: {table: tableWithTotals()},
+            slots: {'total-hours': ({value}: {value: number}) => h('strong', `${value} h`)},
+        })
+
+        expect(wrapper.find('[data-total-key="hours"] strong').text()).toBe('12 h')
+    })
+
+    it('renders no footer for an empty table or without totals', () => {
+        const empty = tableWithTotals()
+        empty.data = []
+
+        expect(mount(TableBuilder, {props: {table: empty}}).find('tfoot').exists()).toBe(false)
+        expect(mount(TableBuilder, {props: {table: tableData()}}).find('tfoot').exists()).toBe(false)
+    })
+})

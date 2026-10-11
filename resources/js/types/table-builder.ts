@@ -100,6 +100,11 @@ export interface QueryKeys {
     columns: string
 }
 
+export interface Totals {
+    label: string | null
+    values: Record<string, string | number | null>
+}
+
 export interface TableData {
     name?: string
     data: any[]
@@ -119,4 +124,5 @@ export interface TableData {
     emptyState?: EmptyState
     reorder?: ReorderConfig | null
     queryKeys?: QueryKeys
+    totals?: Totals | null
 }

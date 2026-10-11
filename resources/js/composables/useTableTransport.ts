@@ -1,6 +1,6 @@
 import {computed, ref, watch, type Ref} from 'vue'
 import {router} from '@inertiajs/vue3'
-import type {Column, PaginationData, RowAction, TableData} from '../types/table-builder'
+import type {Column, PaginationData, RowAction, TableData, Totals} from '../types/table-builder'
 
 export type TableTransport = 'inertia' | 'http'
 
@@ -16,6 +16,7 @@ export interface TableResponse {
     data: any[]
     pagination?: PaginationData | null
     rowActions?: RowAction[][]
+    totals?: Totals | null
 }
 
 export type TableFetcher = (query: TableQuery, source: string) => Promise<unknown>
@@ -55,6 +56,7 @@ function defaultAdapter(payload: any): TableResponse {
         data: payload?.data ?? [],
         pagination: payload?.pagination ?? payload?.meta ?? null,
         rowActions: Array.isArray(payload?.rowActions) ? payload.rowActions : undefined,
+        totals: payload?.totals ?? null,
     }
 }
 
@@ -124,6 +126,7 @@ export function useTableTransport(options: TableTransportOptions) {
             data: fetched.value?.data ?? [],
             pagination: fetched.value?.pagination ?? undefined,
             rowActions: fetched.value?.rowActions ?? [],
+            totals: fetched.value?.totals ?? null,
             filters: (base.filters ?? []).map((filter) => ({
                 ...filter,
                 value: query.value.filters[filter.key] ?? null,

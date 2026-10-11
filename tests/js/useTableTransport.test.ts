@@ -215,6 +215,18 @@ describe('useTableTransport with the http transport', () => {
         expect(fetcher).toHaveBeenCalledTimes(2)
     })
 
+    it('takes the totals from the fetched response instead of the initial render', async () => {
+        const {transport} = setup({
+            table: tableData({totals: {label: 'Total', values: {name: 'stale'}}}),
+            fetcher: vi.fn(async () => ({data: [], pagination: null, totals: {label: 'Total', values: {name: 3}}})),
+        })
+
+        await nextTick()
+        await nextTick()
+
+        expect(transport.table.value.totals).toEqual({label: 'Total', values: {name: 3}})
+    })
+
     it('maps a payload through a custom adapter', async () => {
         const {transport} = setup({
             fetcher: vi.fn(async () => ({rows: [{ident: 'X'}], meta: {count: 1}})),

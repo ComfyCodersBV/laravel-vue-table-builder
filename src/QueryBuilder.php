@@ -308,11 +308,39 @@ class QueryBuilder extends TableBuilder
         }
     }
 
-    private function loadResults()
+    public function filteredQuery(?Request $request = null): BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder
+    {
+        $originalBuilder = $this->builder;
+        $originalRequest = $this->request;
+
+        $this->builder = clone $originalBuilder;
+        $this->request = $request ?? $originalRequest;
+
+        try {
+            if (! $this->builder instanceof SpatieQueryBuilder) {
+                $this->applyFilters();
+                $this->applySearchInputs();
+                $this->applySortingAndEagerLoading();
+            }
+
+            return $this->builder;
+        } finally {
+            $this->builder = $originalBuilder;
+            $this->request = $originalRequest;
+        }
+    }
+
+    protected function totalsQuery(): BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder
+    {
+        return $this->filteredQuery();
+    }
+
+    private function loadResults(BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder $query): void
     {
         if (! $this->paginateMethod) {
-            // No pagination, so get all results.
-            return $this->resource = $this->builder->get();
+            $this->resource = $query->get();
+
+            return;
         }
 
         // The 'perPage' value is taken from the request query
@@ -334,7 +362,7 @@ class QueryBuilder extends TableBuilder
 
         $pageName = $this->queryKey('page');
 
-        $this->resource = $this->builder->{$this->paginateMethod}($perPage, ['*'], $pageName)->withQueryString();
+        $this->resource = $query->{$this->paginateMethod}($perPage, ['*'], $pageName)->withQueryString();
     }
 
     public function addCurrentPerPageValueToOptions(): void
@@ -351,13 +379,10 @@ class QueryBuilder extends TableBuilder
         }
 
         if (! $this->builder instanceof SpatieQueryBuilder) {
-            $this->applyFilters();
-            $this->applySearchInputs();
-            $this->applySortingAndEagerLoading();
             $this->addCurrentPerPageValueToOptions();
         }
 
-        $this->loadResults();
+        $this->loadResults($this->filteredQuery());
 
         return parent::loadResource();
     }

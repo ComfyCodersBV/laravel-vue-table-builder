@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {router} from '@inertiajs/vue3'
 import {computed, getCurrentInstance, ref, useSlots, watch} from 'vue'
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from './ui/table'
+import {Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow,} from './ui/table'
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -484,6 +484,16 @@ function isTruthy(value: any): boolean {
     return value === true || value === 1 || value === '1'
 }
 
+const showsTotals = computed(() => Boolean(table.value.totals) && (table.value.data ?? []).length > 0)
+
+function totalFor(key: string): string | number | null {
+    return table.value.totals?.values?.[key] ?? null
+}
+
+function hasTotal(key: string): boolean {
+    return totalFor(key) !== null
+}
+
 const showsPagination = computed(() => Boolean(table.value.pagination && table.value.pagination.last_page > 1))
 const showsTopPagination = computed(() => showsPagination.value && props.paginationPosition !== 'bottom')
 const showsBottomPagination = computed(() => showsPagination.value && props.paginationPosition !== 'top')
@@ -915,6 +925,25 @@ function performBulkAction(action: any) {
                         <slot name="row-after" :row="row" :index="index" :colspan="rowColspan" :columns="visibleColumns" />
                     </template>
                 </TableBody>
+                <TableFooter v-if="showsTotals" data-totals>
+                    <TableRow>
+                        <TableCell v-if="showsReorderHandles" :class="[table.cellClass, 'w-px']" />
+                        <TableCell v-if="bulkActions.length > 0" :class="table.cellClass" />
+                        <TableCell v-for="(column, columnIndex) in visibleColumns" :key="column.key"
+                                   :data-total-key="column.key" :class="[table.cellClass, column.class]">
+                            <slot
+                                :name="`total-${column.key}`"
+                                :value="totalFor(column.key)"
+                                :column="column"
+                                :totals="table.totals"
+                            >
+                                <span v-if="hasTotal(column.key)" v-html="totalFor(column.key)"></span>
+                                <span v-else-if="columnIndex === 0 && table.totals?.label">{{ table.totals.label }}</span>
+                            </slot>
+                        </TableCell>
+                        <TableCell v-if="hasActions" :class="table.cellClass" />
+                    </TableRow>
+                </TableFooter>
             </Table>
         </div>
 
