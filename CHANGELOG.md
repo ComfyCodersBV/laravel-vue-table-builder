@@ -2,6 +2,52 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.6.0 - 2026-10-11
+
+* `total('amount')` adds a footer row with a total per column, computed on the server over every row that matches the
+  search and filters, not only the current page. `using` takes `sum`, `count`, `avg`, `min`, `max` or a callback
+  receiving the filtered query; `pageOnly: true` totals the current page; `format` turns the value into text and
+  `totalsLabel()` labels the row. The component renders a `<tfoot>` with a `total-{key}` slot.
+* `exportable()` adds an "Export" button that streams a CSV of the current filtered, searched and sorted rows across all
+  pages: UTF-8 with a BOM, read in chunks with `lazy()`, delimiter and decimal separator from the app locale or the
+  config, and text cells starting with `=`, `+`, `-`, `@`, a tab or a carriage return prefixed with `'` so a
+  spreadsheet never runs them. Columns take `exportAs:` and `export: false`; `columns:` picks, orders and renames them.
+  The download runs through a signed package route and `authorizeExport()`; `url:` and `$table->export($request)` serve
+  it from a route of your own.
+* `filteredQuery(?Request)` on a query table and on `AbstractTable` returns the table's query with the search, filters
+  and sort of the request applied and without pagination, for custom exports and reports.
+* `rowAction(..., download: true)` renders a plain link with a `download` attribute instead of an Inertia visit, for
+  PDFs and other files; a string sets the file name. A confirmed download starts after the question.
+* `dateFilter()` and `dateRangeFilter()` take a `timezone` (or the `display_timezone` config): the picked days are read
+  in that timezone and compared with the stored datetimes in the application timezone. `dateRangeFilter()` takes an
+  `endColumn` to match records whose period overlaps the range (a `null` end is open-ended), and `presets` with a
+  `defaultPreset`: built-in `today`, `upcoming`, `past`, `this_week`, `last_week`, `next_week`, `this_month`,
+  `last_month`, `next_month` and `this_year`, or callbacks returning `[$from, $until)`. The component shows them in a
+  dropdown next to a custom range, and "Any time" clears a default preset with an empty `..` range.
+* Reordering numbers rows that share a position in the order the table shows them: the order column first, then the
+  other `orderBy` clauses of the `for()` query, then `defaultSort()`, then the key. Ties used to be broken by the key,
+  so a dragged row could land next to another neighbour than the one it was dropped on. The first move numbers every
+  row from 1.
+* Signed package urls (bulk actions, reordering, export) expire after `routes.signature_ttl` minutes (720 by default,
+  `null` for no expiry) and carry the table's `signedParameters()`, which `fromSignedParameters()` uses to rebuild a
+  table with constructor arguments. Before, the routes created the table with `app()`, which silently built tables bound
+  to a record with an empty model. `routes.middleware` runs the routes in a middleware group of your own, such as
+  `['web', 'auth']`, so the authorization hooks see the logged-in user. `authorizeBulkAction()`, `authorizeReorder()`
+  and `authorizeExport()` fall back to `authorize()`. A refused request now answers `403` instead of a 500 from an
+  `UnauthorizedException`, the bulk action route only accepts `AbstractTable` subclasses, and an unknown bulk action or
+  a table that is not reorderable answers `404`.
+* Icons are imported from `@lucide/vue`, the maintained successor of `lucide-vue-next` that Laravel's starter kits ship.
+* Fix the phpstan config, which pointed at a `database` directory that does not exist, and make the codebase phpstan
+  and Pint clean. CI runs Pint, phpstan and `vue-tsc` next to the tests.
+* Docs: new pages for reordering, totals, export and the security of the package routes.
+
+### Upgrade notes
+* Install `@lucide/vue` (`npm install @lucide/vue`), or alias it to `lucide-vue-next` in Vite if you cannot.
+* Signed urls rendered before the upgrade carry no expiry and are still accepted until the page reloads. Set
+  `routes.signature_ttl` to `null` to keep urls that never expire.
+* Run the package routes in your `web` stack with `auth` and authorize your tables, see `docs/security.md`. The default
+  middleware stays empty so existing applications keep working.
+
 ## 1.5.0 - 2026-10-11
 
 * `rowAction()` defines the buttons of every row in the Table class: a label, a url (string or
