@@ -22,6 +22,32 @@ abstract class AbstractTable
         return true;
     }
 
+    public function authorizeBulkAction(Request $request, int $key): bool
+    {
+        return $this->authorize($request);
+    }
+
+    public function authorizeReorder(Request $request): bool
+    {
+        return $this->authorize($request);
+    }
+
+    /**
+     * @return array<string, int|string|float|bool|null>
+     */
+    public function signedParameters(): array
+    {
+        return [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $parameters
+     */
+    public static function fromSignedParameters(array $parameters, Request $request): static
+    {
+        return app(static::class, $parameters);
+    }
+
     /**
      * @return Builder|Relation|Model|Collection|array|string|LengthAwarePaginator
      */

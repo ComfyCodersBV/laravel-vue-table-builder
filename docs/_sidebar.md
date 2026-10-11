@@ -23,4 +23,5 @@
 
 - **Reference**
     - [Global Defaults](global-defaults.md)
+    - [Security](security.md)
     - [CrudBuilder](crud-builder.md)

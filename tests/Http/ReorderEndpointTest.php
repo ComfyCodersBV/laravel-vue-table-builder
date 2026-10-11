@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Validation\UnauthorizedException;
 use TranquilTools\TableBuilder\AbstractTable;
 use TranquilTools\TableBuilder\TableBuilder;
 use TranquilTools\TableBuilder\Tests\Fixtures\Product;
@@ -66,7 +66,14 @@ it('rejects a table that does not authorize the request', function () {
     $this->withoutExceptionHandling();
 
     $this->postJson(reorderUrl(ForbiddenReorderTable::class), ['id' => 3, 'to' => 1]);
-})->throws(UnauthorizedException::class);
+})->throws(AuthorizationException::class);
+
+it('answers 403 and keeps the order for a table that does not authorize the request', function () {
+    $this->postJson(reorderUrl(ForbiddenReorderTable::class), ['id' => 3, 'to' => 1])
+        ->assertForbidden();
+
+    expect(Product::query()->orderBy('sort_order')->pluck('name')->all())->toBe(['A', 'B', 'C']);
+});
 
 it('answers 404 for a class that is not a table', function () {
     $this->postJson(reorderUrl(Product::class), ['id' => 3, 'to' => 1])

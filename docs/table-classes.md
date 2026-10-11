@@ -132,9 +132,10 @@ pagination automatically.
 
 Return `true` to allow the action, `false` to deny it. Defaults to `true`.
 
-Only the bulk action endpoint consults this method; rendering a table never calls it. Denying throws
-`Illuminate\Validation\UnauthorizedException`, which surfaces as a 500 unless you map it in your exception handler.
-Guard the page itself with a middleware, policy or gate in the controller.
+The package routes for bulk actions, reordering and exports consult this method through
+`authorizeBulkAction()`, `authorizeReorder()` and `authorizeExport()`, which you can override one by one. Rendering a
+table never calls it. Denying answers `403`. Guard the page itself with a middleware, policy or gate in the controller,
+and see [Security](security.md) for the recommended route setup.
 
 ```php
 public function authorize(Request $request): bool

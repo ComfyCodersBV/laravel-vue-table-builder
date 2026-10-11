@@ -6,9 +6,9 @@ namespace TranquilTools\TableBuilder\Components;
 
 use Closure;
 use Illuminate\Routing\Route;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use TranquilTools\TableBuilder\Http\Controllers\TableBulkActionController;
+use TranquilTools\TableBuilder\Routing\SignedTableUrl;
 
 class BulkAction
 {
@@ -28,6 +28,7 @@ class BulkAction
         public string $confirmButton = '',
         public string $cancelButton = '',
         bool|string $requirePassword = false,
+        public array $tableParameters = [],
     ) {
         if ($requirePassword === true) {
             $this->requirePassword = 'password';
@@ -52,11 +53,10 @@ class BulkAction
 
         /** @var array */
         $currentQuery = app()->bound('request') ? collect(request()->query())
-            ->except(['signature', 'expires'])
+            ->except(['signature', 'expires', 'table', 'params', 'action', 'slug'])
             ->toArray() : [];
 
-        return URL::signedRoute($route->getName(), array_merge($currentQuery, [
-            'table' => base64_encode($this->tableClass),
+        return SignedTableUrl::make($route->getName(), $this->tableClass, $this->tableParameters, array_merge($currentQuery, [
             'action' => base64_encode($this->key),
             'slug' => $this->getSlug(),
         ]));

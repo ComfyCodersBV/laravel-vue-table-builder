@@ -45,6 +45,7 @@ trait HasBulkActions
             confirmButton: $confirmButton,
             cancelButton: $cancelButton,
             requirePassword: $requirePassword,
+            tableParameters: $this->configurator->signedParameters(),
         );
 
         return $this;

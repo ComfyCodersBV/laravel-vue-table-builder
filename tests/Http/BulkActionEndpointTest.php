@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Validation\UnauthorizedException;
 use TranquilTools\TableBuilder\AbstractTable;
 use TranquilTools\TableBuilder\TableBuilder;
 use TranquilTools\TableBuilder\Tests\Fixtures\Product;
@@ -120,7 +120,12 @@ it('requires an ids array', function () {
 it('refuses a table the user is not authorized for', function () {
     $this->withoutExceptionHandling()
         ->post(bulkActionUrl(ForbiddenProductsTable::class), ['ids' => [1]]);
-})->throws(UnauthorizedException::class);
+})->throws(AuthorizationException::class);
+
+it('answers 403 for a table the user is not authorized for', function () {
+    $this->post(bulkActionUrl(ForbiddenProductsTable::class), ['ids' => [1]])
+        ->assertForbidden();
+});
 
 it('leaves the rows untouched for an unauthorized table', function () {
     $this->post(bulkActionUrl(ForbiddenProductsTable::class), ['ids' => [1]]);

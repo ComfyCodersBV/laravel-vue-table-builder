@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace TranquilTools\TableBuilder\Concerns;
 
-use Illuminate\Support\Facades\URL;
 use LogicException;
+use TranquilTools\TableBuilder\Routing\SignedTableUrl;
 
 trait HasReordering
 {
@@ -63,8 +63,6 @@ trait HasReordering
             return null;
         }
 
-        return URL::signedRoute('table.reorder', [
-            'table' => base64_encode(get_class($this->configurator)),
-        ]);
+        return SignedTableUrl::make('table.reorder', $this->configurator::class, $this->configurator->signedParameters());
     }
 }

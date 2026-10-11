@@ -115,24 +115,24 @@ processing.
 
 ## Security
 
-Bulk action URLs are generated with `URL::signedRoute()`, and the table class name and action index are base64-encoded
-into them. The route is protected by Laravel's `ValidateSignature` middleware, so a request with a missing, tampered or
-expired signature is rejected with a `403` before the controller runs. The signature covers the URL, which means the
-table class, the action index and the query string cannot be swapped out.
+Bulk action urls are signed by the server with an expiry and posted to the package route
+`table.bulk-action`. The signature covers the table class, its signed parameters, the action key and
+the query string of the page, so none of them can be swapped. The posted `ids` are not part of it,
+but they only ever select rows within the table's own `for()` query.
 
-The signature says the URL came from a page this application rendered. It does not say *who* is calling, and the posted
-`ids` are not part of it. Authorization stays your job: `AbstractTable::authorize()` returns `true` by default, so
-override it on every table class that exposes bulk actions.
+The signature does not say *who* is calling. Run the package routes in your `web` stack with `auth`
+and authorize the action on the table:
 
 ```php
-public function authorize(Request $request): bool
+public function authorizeBulkAction(Request $request, int $key): bool
 {
-    return $request->user()?->can('update', User::class) ?? false;
+    return $request->user()->can('delete', User::class);
 }
 ```
 
-The package route is registered without a middleware group, so it carries no `web` session or CSRF protection of its
-own. If your bulk actions depend on the session user, make sure the route runs inside your application's `web` stack.
+`authorizeBulkAction()` falls back to `authorize()`, which returns `true` by default. A refused
+action answers `403`. See [Security](security.md) for the middleware, the url lifetime and tables
+with constructor arguments.
 
 ## Handling in AbstractTable
 
