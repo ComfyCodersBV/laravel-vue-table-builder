@@ -13,7 +13,7 @@ import {
 import {Input} from './ui/input';
 import {Checkbox} from './ui/checkbox';
 import {Button} from './ui/button';
-import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Funnel, GripVertical, Search, X} from 'lucide-vue-next'
+import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Funnel, GripVertical, Search, X} from '@lucide/vue'
 import type {EmptyState, RowAction, TableData} from '../types/table-builder'
 import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'

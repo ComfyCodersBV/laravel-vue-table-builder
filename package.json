@@ -3,30 +3,32 @@
     "private": true,
     "peerDependencies": {
         "@inertiajs/vue3": ">=2 <4",
+        "@lucide/vue": "^1.0",
         "@vueuse/core": ">=12 <16",
         "class-variance-authority": ">=0.7 <1",
         "clsx": "^2.0",
-        "lucide-vue-next": ">=0.556 <2",
         "reka-ui": "^2.9.4",
         "tailwind-merge": "^3.0",
         "vue": "^3.5"
     },
     "scripts": {
-        "test": "vitest run"
+        "test": "vitest run",
+        "typecheck": "vue-tsc --noEmit"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^3.7.1",
+        "@lucide/vue": "^1.55.0",
         "@vitejs/plugin-vue": "^6.0.8",
         "@vue/test-utils": "^2.4.11",
         "@vueuse/core": "^14.4.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "jsdom": "^29.1.1",
-        "lucide-vue-next": "^1.0.0",
         "reka-ui": "^2.10.4",
         "tailwind-merge": "^3.7.0",
         "typescript": "^5.9.3",
         "vitest": "^4.1.10",
-        "vue": "^3.5.41"
+        "vue": "^3.5.41",
+        "vue-tsc": "^3.3.13"
     }
 }

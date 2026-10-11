@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ChevronDown, ChevronLeft, ChevronRight} from 'lucide-vue-next'
+import {ChevronDown, ChevronLeft, ChevronRight} from '@lucide/vue'
 import {Button} from './ui/button'
 import {
     DropdownMenu,
