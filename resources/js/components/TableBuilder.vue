@@ -14,7 +14,7 @@ import {Input} from './ui/input';
 import {Checkbox} from './ui/checkbox';
 import {Button} from './ui/button';
 import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Funnel, GripVertical, Search, X} from 'lucide-vue-next'
-import type {Column, TableData} from '../types/table-builder'
+import type {EmptyState, RowAction, TableData} from '../types/table-builder'
 import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
 import {useTableTransport, xsrfHeaders, type TableAdapter, type TableFetcher, type TableTransport} from '../composables/useTableTransport'
@@ -33,6 +33,8 @@ const props = withDefaults(defineProps<{
     adapter?: TableAdapter
     reorderable?: boolean
     rowClass?: (row: any, index: number) => string | string[] | Record<string, boolean> | undefined
+    emptyState?: EmptyState
+    confirm?: (message: string) => boolean | Promise<boolean>
 }>(), {
     transport: 'inertia',
     paginationPosition: 'bottom',
@@ -58,7 +60,7 @@ function clickRow(row: any, index: number, event: MouseEvent): void {
     }
 
     if (table.value.rowLinks && table.value.rowLinks[index]) {
-        handleRowClick(index, event)
+        handleRowClick(index)
 
         return
     }
@@ -79,6 +81,7 @@ const {
     applySearch,
     applyPerPage,
     applyPage,
+    resetFilters,
     reload,
 } = useTableTransport({
     table: computed(() => props.table),
@@ -112,9 +115,131 @@ function toggleColumn(columnKey: string, visible: boolean) {
 }
 
 const slots = useSlots()
-const hasActions = computed(() => Boolean(slots.actions))
+
+function rowActionsFor(index: number): RowAction[] {
+    return table.value.rowActions?.[index] ?? []
+}
+
+const hasRowActions = computed(() => (table.value.rowActions ?? []).some((actions) => actions.length > 0))
+const hasActions = computed(() => Boolean(slots.actions) || hasRowActions.value)
+
+const actionRunning = ref(false)
+
+async function confirmed(message: string | null): Promise<boolean> {
+    if (!message) {
+        return true
+    }
+
+    return props.confirm ? await props.confirm(message) : window.confirm(message)
+}
+
+function opensInNewTab(event: MouseEvent): boolean {
+    return event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1
+}
+
+async function runRowAction(action: RowAction, event?: MouseEvent): Promise<void> {
+    if (action.disabled || actionRunning.value) {
+        event?.preventDefault()
+
+        return
+    }
+
+    if (action.method === 'get' && event && opensInNewTab(event)) {
+        return
+    }
+
+    event?.preventDefault()
+
+    if (!(await confirmed(action.confirm))) {
+        return
+    }
+
+    actionError.value = null
+
+    if (action.method === 'get') {
+        router.visit(action.url)
+
+        return
+    }
+
+    if (props.transport === 'http') {
+        actionRunning.value = true
+
+        fetch(action.url, {
+            method: action.method.toUpperCase(),
+            credentials: 'same-origin',
+            headers: {Accept: 'application/json', ...xsrfHeaders()},
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(t('vue-table-builder::table.row_actions.error'))
+                }
+
+                reload()
+            })
+            .catch((exception) => {
+                actionError.value = exception instanceof Error ? exception.message : String(exception)
+            })
+            .finally(() => {
+                actionRunning.value = false
+            })
+
+        return
+    }
+
+    router.visit(action.url, {
+        method: action.method,
+        preserveScroll: true,
+        onStart: () => {
+            actionRunning.value = true
+        },
+        onFinish: () => {
+            actionRunning.value = false
+        },
+        onError: (errors) => {
+            actionError.value = Object.values(errors)[0] ?? t('vue-table-builder::table.row_actions.error')
+        },
+    })
+}
+
+const isFiltered = computed(() =>
+    (table.value.filters ?? []).some((filter) => Boolean(filter.value))
+    || Object.values(table.value.searchInputs ?? {}).some((searchInput) => Boolean(searchInput?.value))
+)
+
+const resolvedEmptyState = computed<EmptyState>(() => ({...(table.value.emptyState ?? {}), ...(props.emptyState ?? {})}))
+
+const emptyTitle = computed(() => {
+    const state = resolvedEmptyState.value
+
+    if (isFiltered.value) {
+        return state.filteredTitle || state.title || t('vue-table-builder::table.no_results')
+    }
+
+    return state.title || t('vue-table-builder::table.no_results')
+})
+
+const emptyDescription = computed(() => {
+    const state = resolvedEmptyState.value
+
+    return (isFiltered.value ? state.filteredDescription : state.description) || null
+})
 
 const filterDropdownOpen = ref(false)
+
+const actionError = ref<string | null>(null)
+
+const sortedByAnotherColumn = computed(() =>
+    table.value.columns.some((column) => sortFor(column) && column.key !== table.value.reorder?.column)
+)
+
+const showsReorderHandles = computed(() => {
+    if (table.value.reorder) {
+        return !sortedByAnotherColumn.value
+    }
+
+    return props.reorderable
+})
 
 const draggedIndex = ref<number | null>(null)
 const overIndex = ref<number | null>(null)
@@ -123,7 +248,7 @@ const rowColspan = computed(() =>
     visibleColumns.value.length
     + (bulkActions.value.length > 0 ? 1 : 0)
     + (hasActions.value ? 1 : 0)
-    + (props.reorderable ? 1 : 0)
+    + (showsReorderHandles.value ? 1 : 0)
 )
 
 function startRowDrag(index: number, event: DragEvent): void {
@@ -164,6 +289,53 @@ function dropOnRow(index: number, event: DragEvent): void {
     }
 
     emit('reorder', {from, to: index, row: table.value.data[from]})
+
+    persistReorder(from, index)
+}
+
+function persistReorder(from: number, to: number): void {
+    const config = table.value.reorder
+
+    if (!config?.url) {
+        return
+    }
+
+    const payload = {
+        id: table.value.data[from]?.[config.key],
+        to: table.value.data[to]?.[config.key],
+    }
+
+    actionError.value = null
+
+    if (props.transport === 'http') {
+        fetch(config.url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json', Accept: 'application/json', ...xsrfHeaders()},
+            body: JSON.stringify(payload),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(t('vue-table-builder::table.reorder.error'))
+                }
+
+                reload()
+            })
+            .catch((exception) => {
+                actionError.value = exception instanceof Error ? exception.message : String(exception)
+            })
+
+        return
+    }
+
+    router.post(config.url, payload, {
+        preserveScroll: true,
+        preserveState: true,
+        ...(props.only ? {only: props.only} : {}),
+        onError: (errors) => {
+            actionError.value = Object.values(errors)[0] ?? t('vue-table-builder::table.reorder.error')
+        },
+    })
 }
 
 function endRowDrag(): void {
@@ -188,6 +360,27 @@ const handleTextFilterChange = useDebounceFn(
     (key: string, value: string) => applyFilter(key, value),
     350
 )
+
+const dateRangeValues = ref<Record<string, {from: string; to: string}>>(
+    Object.fromEntries(
+        (props.table.filters ?? [])
+            .filter(filter => filter.type === 'date_range')
+            .map(filter => {
+                const [from = '', to = ''] = String(filter.value ?? '').split('..')
+
+                return [filter.key, {from, to}]
+            })
+    )
+)
+
+function handleDateRangeInput(key: string, part: 'from' | 'to', value: string) {
+    const current = dateRangeValues.value[key] ?? {from: '', to: ''}
+    const next = {...current, [part]: value}
+
+    dateRangeValues.value[key] = next
+
+    applyFilter(key, next.from || next.to ? `${next.from}..${next.to}` : '')
+}
 
 function handleTextFilterInput(key: string, value: string) {
     textFilterValues.value[key] = value
@@ -254,7 +447,7 @@ function resetRowSelection() {
     rowSelection.value = new Set()
 }
 
-function handleRowClick(index: number, e: MouseEvent) {
+function handleRowClick(index: number) {
     if (!table.value.rowLinks || !table.value.rowLinks[index]) return
 
     const url = table.value.rowLinks[index]
@@ -289,8 +482,6 @@ function handlePerPageChange(value: string) {
 function navigatePage(direction: -1 | 1) {
     applyPage(direction)
 }
-
-const actionError = ref<string | null>(null)
 
 function performBulkAction(action: any) {
     const ids = Array.from(rowSelection.value).map(index => (table.value.data[index] as any)?.id).filter(Boolean)
@@ -353,6 +544,34 @@ function performBulkAction(action: any) {
                                 :placeholder="filter.label"
                                 @update:model-value="(value: string | number) => handleTextFilterInput(filter.key, String(value))"
                             />
+
+                            <Input
+                                v-else-if="filter.type === 'date'"
+                                type="date"
+                                class="w-full"
+                                :model-value="filter.value ?? ''"
+                                :data-filter-key="filter.key"
+                                @change="(e: Event) => handleFilterChange(filter.key, (e.target as HTMLInputElement).value)"
+                            />
+
+                            <div v-else-if="filter.type === 'date_range'" class="flex flex-col gap-2">
+                                <Input
+                                    type="date"
+                                    class="w-full"
+                                    :aria-label="`${filter.label} ${t('vue-table-builder::table.filters.from')}`"
+                                    :model-value="dateRangeValues[filter.key]?.from ?? ''"
+                                    :data-filter-key="`${filter.key}.from`"
+                                    @change="(e: Event) => handleDateRangeInput(filter.key, 'from', (e.target as HTMLInputElement).value)"
+                                />
+                                <Input
+                                    type="date"
+                                    class="w-full"
+                                    :aria-label="`${filter.label} ${t('vue-table-builder::table.filters.to')}`"
+                                    :model-value="dateRangeValues[filter.key]?.to ?? ''"
+                                    :data-filter-key="`${filter.key}.to`"
+                                    @change="(e: Event) => handleDateRangeInput(filter.key, 'to', (e.target as HTMLInputElement).value)"
+                                />
+                            </div>
 
                             <select
                                 v-else
@@ -455,7 +674,7 @@ function performBulkAction(action: any) {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead v-if="reorderable" :class="[table.headClass, 'w-px']" />
+                        <TableHead v-if="showsReorderHandles" :class="[table.headClass, 'w-px']" />
                         <TableHead v-if="bulkActions.length > 0" :class="[table.headClass, 'w-10']">
                             <DropdownMenu>
                                 <DropdownMenuTrigger as-child>
@@ -496,22 +715,31 @@ function performBulkAction(action: any) {
                 </TableHeader>
                 <TableBody>
                     <TableRow v-if="!table.data || table.data.length === 0">
-                        <TableCell :colspan="rowColspan" class="text-center text-muted-foreground">
-                            {{ t('vue-table-builder::table.no_results') }}
+                        <TableCell :colspan="rowColspan" class="text-center text-muted-foreground" data-empty-state>
+                            <slot
+                                name="empty"
+                                :filtered="isFiltered"
+                                :title="emptyTitle"
+                                :description="emptyDescription"
+                                :reset="resetFilters"
+                            >
+                                <p :class="emptyDescription ? 'font-medium text-foreground' : ''">{{ emptyTitle }}</p>
+                                <p v-if="emptyDescription" class="mt-1 text-sm">{{ emptyDescription }}</p>
+                            </slot>
                         </TableCell>
                     </TableRow>
                     <template v-for="(row, index) in table.data" :key="index">
                         <TableRow
                             @click="clickRow(row, index, $event)"
-                            @dragover="reorderable ? dragOverRow(index, $event) : undefined"
-                            @drop="reorderable ? dropOnRow(index, $event) : undefined"
+                            @dragover="showsReorderHandles ? dragOverRow(index, $event) : undefined"
+                            @drop="showsReorderHandles ? dropOnRow(index, $event) : undefined"
                             :class="[
                                 (table.rowLinks && table.rowLinks[index]) || listensToRowClick ? 'cursor-pointer hover:bg-muted/50' : '',
                                 rowClass ? rowClass(row, index) : '',
                                 draggedIndex === index ? 'opacity-50' : '',
                                 overIndex === index && draggedIndex !== index ? 'border-t-2 border-t-primary' : '',
                             ]">
-                            <TableCell v-if="reorderable" :class="[table.cellClass, 'w-px']" @click.stop>
+                            <TableCell v-if="showsReorderHandles" :class="[table.cellClass, 'w-px']" @click.stop>
                                 <span
                                     draggable="true"
                                     class="inline-flex cursor-grab text-muted-foreground hover:text-foreground"
@@ -551,7 +779,32 @@ function performBulkAction(action: any) {
                                 </slot>
                             </TableCell>
                             <TableCell v-if="hasActions" :class="[table.cellClass, 'text-right']" @click.stop>
-                                <slot name="actions" :row="row" :index="index" />
+                                <slot name="actions" :row="row" :index="index" :actions="rowActionsFor(index)" :run="runRowAction">
+                                    <div class="flex justify-end gap-2">
+                                        <template v-for="action in rowActionsFor(index)" :key="action.key">
+                                            <span v-if="action.disabled" :title="action.disabledReason ?? undefined" class="inline-flex">
+                                                <Button size="sm" :variant="action.variant" disabled :data-row-action="action.key">
+                                                    {{ action.label }}
+                                                </Button>
+                                            </span>
+                                            <Button v-else-if="action.method === 'get'" size="sm" :variant="action.variant" as-child>
+                                                <a :href="action.url" :data-row-action="action.key" @click="runRowAction(action, $event)">
+                                                    {{ action.label }}
+                                                </a>
+                                            </Button>
+                                            <Button
+                                                v-else
+                                                size="sm"
+                                                :variant="action.variant"
+                                                :disabled="actionRunning"
+                                                :data-row-action="action.key"
+                                                @click="runRowAction(action, $event)"
+                                            >
+                                                {{ action.label }}
+                                            </Button>
+                                        </template>
+                                    </div>
+                                </slot>
                             </TableCell>
                         </TableRow>
                         <slot name="row-after" :row="row" :index="index" :colspan="rowColspan" :columns="visibleColumns" />

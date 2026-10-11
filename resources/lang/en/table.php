@@ -18,6 +18,19 @@ return [
         'error' => 'Something went wrong while performing the action.',
     ],
 
+    'filters' => [
+        'from' => 'From',
+        'to' => 'To',
+    ],
+
+    'row_actions' => [
+        'error' => 'Something went wrong while performing the action.',
+    ],
+
+    'reorder' => [
+        'error' => 'Something went wrong while saving the new order.',
+    ],
+
     'pagination' => [
         'next' => 'Next',
         'page_of' => 'Page :current of :last',

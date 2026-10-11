@@ -18,6 +18,19 @@ return [
         'error' => 'Er is iets misgegaan bij het uitvoeren van de actie.',
     ],
 
+    'filters' => [
+        'from' => 'Van',
+        'to' => 'Tot en met',
+    ],
+
+    'row_actions' => [
+        'error' => 'Er is iets misgegaan bij het uitvoeren van de actie.',
+    ],
+
+    'reorder' => [
+        'error' => 'Er is iets misgegaan bij het opslaan van de nieuwe volgorde.',
+    ],
+
     'pagination' => [
         'next' => 'Volgende',
         'page_of' => 'Pagina :current van :last',

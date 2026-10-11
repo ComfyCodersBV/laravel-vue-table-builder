@@ -12,7 +12,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Kirschbaum\PowerJoins\EloquentJoins;
+use LogicException;
 use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
+use TranquilTools\TableBuilder\Actions\ReorderRows;
 use TranquilTools\TableBuilder\Components\Column;
 use TranquilTools\TableBuilder\Components\Filter;
 use TranquilTools\TableBuilder\Components\SearchInput;
@@ -180,6 +182,12 @@ class QueryBuilder extends TableBuilder
                 return;
             }
 
+            if ($filter->isDateFilter()) {
+                $this->applyDateFilter($filter);
+
+                return;
+            }
+
             $isTextFilter = $filter->type === 'text';
 
             $this->ignoreCase($isTextFilter);
@@ -192,6 +200,30 @@ class QueryBuilder extends TableBuilder
 
         $this->ignoreCase($ignoreCaseSetting);
         $this->parseTerms($parseTermsSetting);
+    }
+
+    private function applyDateFilter(Filter $filter): void
+    {
+        ['from' => $from, 'to' => $to] = $filter->dateRange();
+
+        $column = $filter->column ?: $filter->key;
+
+        if (! is_null($from)) {
+            $this->builder->whereDate($this->qualifiedColumn($column), '>=', $from);
+        }
+
+        if (! is_null($to)) {
+            $this->builder->whereDate($this->qualifiedColumn($column), '<=', $to);
+        }
+    }
+
+    private function qualifiedColumn(string $column): string
+    {
+        if ($this->builder instanceof EloquentBuilder) {
+            return $this->builder->qualifyColumn($column);
+        }
+
+        return $column;
     }
 
     private function applySearchInputs()
@@ -248,7 +280,7 @@ class QueryBuilder extends TableBuilder
 
         sort($this->perPageOptions);
 
-        $pageName = $this->name === static::DEFAULT_NAME ? 'page' : "{$this->name}_page";
+        $pageName = $this->queryKey('page');
 
         $this->resource = $this->builder->{$this->paginateMethod}($perPage, ['*'], $pageName)->withQueryString();
     }
@@ -276,6 +308,32 @@ class QueryBuilder extends TableBuilder
         $this->loadResults();
 
         return parent::loadResource();
+    }
+
+    public function moveRow(int|string $id, int|string $toId): void
+    {
+        if (! $this->isReorderable()) {
+            throw new LogicException('Call reorderable() on the table before moving rows.');
+        }
+
+        if ($this->builder instanceof SpatieQueryBuilder) {
+            throw new LogicException('Rows of a Spatie query builder table cannot be reordered.');
+        }
+
+        app(ReorderRows::class)($this->builder, $this->reorderColumn, $this->reorderKeyName(), $id, $toId);
+    }
+
+    protected function reorderKeyName(): string
+    {
+        if ($this->primaryKey) {
+            return $this->primaryKey;
+        }
+
+        if ($this->builder instanceof EloquentBuilder) {
+            return $this->builder->getModel()->getKeyName();
+        }
+
+        return 'id';
     }
 
     public function performBulkAction(callable $action, array $ids)

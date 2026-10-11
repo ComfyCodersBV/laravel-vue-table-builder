@@ -37,7 +37,7 @@ export interface Filter {
     label: string
     options: Record<string, string>
     value?: string | null
-    type: 'select' | 'text'
+    type: 'select' | 'text' | 'date' | 'date_range'
 }
 
 export interface SearchInput {
@@ -57,6 +57,42 @@ export interface BulkAction {
     requirePassword: boolean | string
 }
 
+export type RowActionMethod = 'get' | 'post' | 'put' | 'patch' | 'delete'
+
+export type RowActionVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+
+export interface RowAction {
+    key: string
+    label: string
+    url: string
+    method: RowActionMethod
+    confirm: string | null
+    variant: RowActionVariant
+    disabled: boolean
+    disabledReason: string | null
+}
+
+export interface EmptyState {
+    title?: string | null
+    description?: string | null
+    filteredTitle?: string | null
+    filteredDescription?: string | null
+}
+
+export interface ReorderConfig {
+    column: string
+    key: string
+    url: string | null
+}
+
+export interface QueryKeys {
+    sort: string
+    filter: string
+    page: string
+    perPage: string
+    columns: string
+}
+
 export interface TableData {
     name?: string
     data: any[]
@@ -72,4 +108,8 @@ export interface TableData {
     rowLinkTarget: '_self' | '_blank'
     cellClass?: string
     headClass?: string
+    rowActions?: RowAction[][]
+    emptyState?: EmptyState
+    reorder?: ReorderConfig | null
+    queryKeys?: QueryKeys
 }

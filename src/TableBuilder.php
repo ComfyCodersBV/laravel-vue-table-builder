@@ -20,8 +20,11 @@ use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
 use TranquilTools\TableBuilder\Components\Column;
 use TranquilTools\TableBuilder\Concerns\HasBulkActions;
 use TranquilTools\TableBuilder\Concerns\HasColumns;
+use TranquilTools\TableBuilder\Concerns\HasEmptyState;
 use TranquilTools\TableBuilder\Concerns\HasFilters;
+use TranquilTools\TableBuilder\Concerns\HasReordering;
 use TranquilTools\TableBuilder\Concerns\HasResource;
+use TranquilTools\TableBuilder\Concerns\HasRowActions;
 use TranquilTools\TableBuilder\Concerns\HasSearchInputs;
 use TranquilTools\TableBuilder\Exceptions\PaginationException;
 
@@ -30,8 +33,11 @@ class TableBuilder implements Arrayable, JsonSerializable
     use Conditionable;
     use HasBulkActions;
     use HasColumns;
+    use HasEmptyState;
     use HasFilters;
+    use HasReordering;
     use HasResource;
+    use HasRowActions;
     use HasSearchInputs;
 
     const DEFAULT_NAME = 'default';
@@ -39,6 +45,10 @@ class TableBuilder implements Arrayable, JsonSerializable
     const GLOBAL_SEARCH_KEY = 'global';
 
     protected string $name;
+
+    protected ?string $queryPrefix = null;
+
+    protected ?string $filterQueryKey = null;
 
     protected array $perPageOptions = [];
 
@@ -144,10 +154,50 @@ class TableBuilder implements Arrayable, JsonSerializable
 
     protected function query(string $key, $default = null)
     {
-        return $this->request->query(
-            $this->name === static::DEFAULT_NAME ? $key : "{$this->name}_{$key}",
-            $default
-        );
+        return $this->request->query($this->queryKey($key), $default);
+    }
+
+    public function queryKey(string $key): string
+    {
+        if ($key === 'filter' && ! is_null($this->filterQueryKey)) {
+            return $this->filterQueryKey;
+        }
+
+        $prefix = $this->queryPrefix ?? ($this->name === static::DEFAULT_NAME ? '' : $this->name);
+
+        return $prefix === '' ? $key : "{$prefix}_{$key}";
+    }
+
+    public function queryPrefix(string $prefix): self
+    {
+        $this->queryPrefix = $prefix;
+
+        return $this;
+    }
+
+    public function filterQueryKey(string $key): self
+    {
+        if ($key === '') {
+            throw new InvalidArgumentException('The filter query key cannot be empty.');
+        }
+
+        $this->filterQueryKey = $key;
+
+        return $this;
+    }
+
+    /**
+     * @return array{sort: string, filter: string, page: string, perPage: string, columns: string}
+     */
+    public function queryKeys(): array
+    {
+        return [
+            'sort' => $this->queryKey('sort'),
+            'filter' => $this->queryKey('filter'),
+            'page' => $this->queryKey('page'),
+            'perPage' => $this->queryKey('perPage'),
+            'columns' => $this->queryKey('columns'),
+        ];
     }
 
     public function name(string $name): self
@@ -329,7 +379,10 @@ class TableBuilder implements Arrayable, JsonSerializable
 
         $items = $data instanceof Collection ? $data : (is_array($data) ? collect($data) : null);
 
+        $rowActions = [];
+
         if ($items !== null) {
+            $rowActions = $this->resolveRowActions($items);
             $data = $items->map(fn($item) => $this->transformItem($item))->all();
         }
 
@@ -348,6 +401,10 @@ class TableBuilder implements Arrayable, JsonSerializable
             'rowLinkTarget' => $this->rowLinkTarget,
             'cellClass' => $this->cellClass,
             'headClass' => $this->headClass,
+            'rowActions' => $rowActions,
+            'emptyState' => $this->emptyState,
+            'reorder' => $this->reorderPayload(),
+            'queryKeys' => $this->queryKeys(),
         ];
     }
 

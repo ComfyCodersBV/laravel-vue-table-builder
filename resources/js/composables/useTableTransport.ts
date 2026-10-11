@@ -1,6 +1,6 @@
 import {computed, ref, watch, type Ref} from 'vue'
 import {router} from '@inertiajs/vue3'
-import type {Column, PaginationData, TableData} from '../types/table-builder'
+import type {Column, PaginationData, RowAction, TableData} from '../types/table-builder'
 
 export type TableTransport = 'inertia' | 'http'
 
@@ -15,6 +15,7 @@ export interface TableQuery {
 export interface TableResponse {
     data: any[]
     pagination?: PaginationData | null
+    rowActions?: RowAction[][]
 }
 
 export type TableFetcher = (query: TableQuery, source: string) => Promise<unknown>
@@ -53,6 +54,7 @@ function defaultAdapter(payload: any): TableResponse {
     return {
         data: payload?.data ?? [],
         pagination: payload?.pagination ?? payload?.meta ?? null,
+        rowActions: Array.isArray(payload?.rowActions) ? payload.rowActions : undefined,
     }
 }
 
@@ -106,8 +108,9 @@ export function useTableTransport(options: TableTransportOptions) {
 
     const isHttp = computed(() => transport.value === 'http')
 
-    const namespacedKey = (key: string) => (name.value !== 'default' ? `${name.value}_${key}` : key)
-    const filterKey = (key: string) => (name.value !== 'default' ? `${name.value}_filter[${key}]` : `filter[${key}]`)
+    const namespacedKey = (key: 'sort' | 'filter' | 'page' | 'perPage') =>
+        initial.value.queryKeys?.[key] ?? (name.value !== 'default' ? `${name.value}_${key}` : key)
+    const filterKey = (key: string) => `${namespacedKey('filter')}[${key}]`
 
     const table = computed<TableData>(() => {
         const base = initial.value
@@ -120,6 +123,7 @@ export function useTableTransport(options: TableTransportOptions) {
             ...base,
             data: fetched.value?.data ?? [],
             pagination: fetched.value?.pagination ?? undefined,
+            rowActions: fetched.value?.rowActions ?? [],
             filters: (base.filters ?? []).map((filter) => ({
                 ...filter,
                 value: query.value.filters[filter.key] ?? null,
@@ -338,12 +342,33 @@ export function useTableTransport(options: TableTransportOptions) {
         visit(params)
     }
 
+    function resetFilters(): void {
+        if (isHttp.value) {
+            query.value.filters = {}
+            query.value.search = ''
+            query.value.page = 1
+
+            return void load()
+        }
+
+        const params = currentParams()
+        const prefix = `${namespacedKey('filter')}[`
+
+        Array.from(params.keys())
+            .filter((key) => key.startsWith(prefix))
+            .forEach((key) => params.delete(key))
+
+        params.delete(namespacedKey('page'))
+
+        visit(params)
+    }
+
     function reload(): void {
         if (isHttp.value) {
             return void load()
         }
 
-        router.reload({preserveScroll: true, ...(options.only ? {only: options.only} : {})})
+        router.reload({preserveScroll: true, ...(options.only ? {only: options.only} : {})} as Parameters<typeof router.reload>[0])
     }
 
     if (isHttp.value) {
@@ -368,6 +393,7 @@ export function useTableTransport(options: TableTransportOptions) {
         applySearch,
         applyPerPage,
         applyPage,
+        resetFilters,
         reload,
     }
 }

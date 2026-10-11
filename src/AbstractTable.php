@@ -56,6 +56,11 @@ abstract class AbstractTable
         //
     }
 
+    public function performReorder(int|string $id, int|string $toId): void
+    {
+        $this->make()->moveRow($id, $toId);
+    }
+
     public function performBulkAction(int $key, array $ids)
     {
         $table = $this->make();

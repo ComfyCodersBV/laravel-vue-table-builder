@@ -81,6 +81,49 @@ trait HasFilters
         return $this;
     }
 
+    public function dateFilter(
+        string $key,
+        ?string $label = null,
+        ?string $defaultValue = null,
+        ?string $column = null,
+    ): self
+    {
+        return $this->pushDateFilter('date', $key, $label, $defaultValue, $column);
+    }
+
+    public function dateRangeFilter(
+        string $key,
+        ?string $label = null,
+        ?string $defaultFrom = null,
+        ?string $defaultTo = null,
+        ?string $column = null,
+    ): self
+    {
+        $defaultValue = is_null($defaultFrom) && is_null($defaultTo)
+            ? null
+            : "{$defaultFrom}..{$defaultTo}";
+
+        return $this->pushDateFilter('date_range', $key, $label, $defaultValue, $column);
+    }
+
+    private function pushDateFilter(string $type, string $key, ?string $label, ?string $defaultValue, ?string $column): self
+    {
+        $this->filters = $this->filters->reject(function (Filter $filter) use ($key) {
+            return $filter->key === $key;
+        })->push(new Filter(
+            key: $key,
+            label: $label ?: Str::headline($key),
+            options: [],
+            value: $defaultValue,
+            noFilterOption: false,
+            noFilterOptionLabel: '-',
+            type: $type,
+            column: $column,
+        ))->values();
+
+        return $this;
+    }
+
     public function filters(): Collection
     {
         $queryFilters = $this->query('filter', []);
@@ -89,7 +132,7 @@ trait HasFilters
 
         if (! empty($filters)) {
             $filters->each(function (Filter $filter) use ($queryFilters) {
-                if (array_key_exists($filter->key, $queryFilters)) {
+                if (array_key_exists($filter->key, $queryFilters) && ! is_array($queryFilters[$filter->key])) {
                     $filter->value = $queryFilters[$filter->key];
                 }
             });

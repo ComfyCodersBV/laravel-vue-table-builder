@@ -9,4 +9,16 @@ export type {
     TableTransport,
     TableTransportOptions,
 } from './composables/useTableTransport'
-export type { Column, Filter, PaginationData, SearchInput, TableData } from './types/table-builder'
+export type {
+    Column,
+    EmptyState,
+    Filter,
+    PaginationData,
+    QueryKeys,
+    ReorderConfig,
+    RowAction,
+    RowActionMethod,
+    RowActionVariant,
+    SearchInput,
+    TableData,
+} from './types/table-builder'

@@ -1,8 +1,9 @@
-import {describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {router} from '@inertiajs/vue3'
 import {mount} from '@vue/test-utils'
 import {h} from 'vue'
 import TableBuilder from '../../resources/js/components/TableBuilder.vue'
-import type {Column, TableData} from '../../resources/js/types/table-builder'
+import type {Column, RowAction, TableData} from '../../resources/js/types/table-builder'
 
 vi.mock('@inertiajs/vue3', () => ({
     router: {get: vi.fn(), reload: vi.fn(), post: vi.fn(), visit: vi.fn()},
@@ -127,5 +128,220 @@ describe('TableBuilder rows', () => {
 
         await wrapper.find('tbody tr [data-column-key="name"]').trigger('click')
         expect(onRowClick).toHaveBeenCalledTimes(1)
+    })
+})
+
+function rowAction(overrides: Partial<RowAction> = {}): RowAction {
+    return {
+        key: 'edit',
+        label: 'Edit',
+        url: '/lines/a/edit',
+        method: 'get',
+        confirm: null,
+        variant: 'outline',
+        disabled: false,
+        disabledReason: null,
+        ...overrides,
+    }
+}
+
+function flush(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, 0))
+}
+
+describe('TableBuilder row actions', () => {
+    beforeEach(() => {
+        vi.mocked(router.visit).mockClear()
+    })
+
+    function tableWithActions(): TableData {
+        const table = tableData()
+
+        table.rowActions = [
+            [rowAction(), rowAction({key: 'delete', label: 'Delete', url: '/lines/a', method: 'delete', variant: 'destructive', confirm: 'Delete this line?'})],
+            [rowAction({url: '/lines/b/edit'}), rowAction({key: 'delete', label: 'Delete', url: '/lines/b', method: 'delete', disabled: true, disabledReason: 'Line is invoiced'})],
+            [],
+        ]
+
+        return table
+    }
+
+    it('renders the server-side actions without an actions slot', () => {
+        const wrapper = mount(TableBuilder, {props: {table: tableWithActions()}})
+
+        const rows = wrapper.findAll('tbody tr')
+
+        expect(rows[0].findAll('[data-row-action]').map((action) => action.text())).toEqual(['Edit', 'Delete'])
+        expect(rows[0].find('a[data-row-action="edit"]').attributes('href')).toBe('/lines/a/edit')
+        expect(rows[2].findAll('[data-row-action]')).toHaveLength(0)
+    })
+
+    it('renders a disabled action with its reason', () => {
+        const wrapper = mount(TableBuilder, {props: {table: tableWithActions()}})
+
+        const disabled = wrapper.findAll('tbody tr')[1].find('[data-row-action="delete"]')
+
+        expect(disabled.attributes('disabled')).toBeDefined()
+        expect(disabled.element.parentElement?.getAttribute('title')).toBe('Line is invoiced')
+    })
+
+    it('visits a get action through the router', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: tableWithActions()}})
+
+        await wrapper.find('a[data-row-action="edit"]').trigger('click')
+        await flush()
+
+        expect(router.visit).toHaveBeenCalledWith('/lines/a/edit')
+    })
+
+    it('asks for confirmation before running a delete action', async () => {
+        const confirm = vi.fn(() => true)
+        const wrapper = mount(TableBuilder, {props: {table: tableWithActions(), confirm}})
+
+        await wrapper.find('button[data-row-action="delete"]').trigger('click')
+        await flush()
+
+        expect(confirm).toHaveBeenCalledWith('Delete this line?')
+        expect(router.visit).toHaveBeenCalledWith('/lines/a', expect.objectContaining({method: 'delete'}))
+    })
+
+    it('does not run an action that is not confirmed', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: tableWithActions(), confirm: () => false}})
+
+        await wrapper.find('button[data-row-action="delete"]').trigger('click')
+        await flush()
+
+        expect(router.visit).not.toHaveBeenCalled()
+    })
+
+    it('lets the actions slot override the rendering and receive the actions', () => {
+        const wrapper = mount(TableBuilder, {
+            props: {table: tableWithActions()},
+            slots: {
+                actions: ({actions}: {actions: RowAction[]}) => h('span', {class: 'custom'}, actions.map((action) => action.key).join(',')),
+            },
+        })
+
+        expect(wrapper.findAll('[data-row-action]')).toHaveLength(0)
+        expect(wrapper.findAll('.custom').map((cell) => cell.text())).toEqual(['edit,delete', 'edit,delete', ''])
+    })
+})
+
+describe('TableBuilder empty state', () => {
+    function emptyTable(overrides: Partial<TableData> = {}): TableData {
+        return {...tableData(), data: [], ...overrides}
+    }
+
+    it('shows the generic text without configuration', () => {
+        const wrapper = mount(TableBuilder, {props: {table: emptyTable()}})
+
+        expect(wrapper.find('[data-empty-state]').text()).toBe('no_results')
+    })
+
+    it('shows the configured title and description', () => {
+        const wrapper = mount(TableBuilder, {
+            props: {table: emptyTable({emptyState: {title: 'No lines yet', description: 'Add the first line.'}})},
+        })
+
+        expect(wrapper.find('[data-empty-state]').text()).toBe('No lines yetAdd the first line.')
+    })
+
+    it('shows the filtered texts while a filter is active', () => {
+        const wrapper = mount(TableBuilder, {
+            props: {
+                table: emptyTable({
+                    filters: [{key: 'status', label: 'Status', options: {}, value: 'open', type: 'select'}],
+                    emptyState: {title: 'No lines yet', filteredTitle: 'No lines match'},
+                }),
+            },
+        })
+
+        expect(wrapper.find('[data-empty-state]').text()).toBe('No lines match')
+    })
+
+    it('lets the prop override the server texts', () => {
+        const wrapper = mount(TableBuilder, {
+            props: {table: emptyTable({emptyState: {title: 'Server'}}), emptyState: {title: 'Prop'}},
+        })
+
+        expect(wrapper.find('[data-empty-state]').text()).toBe('Prop')
+    })
+
+    it('renders the empty slot with the filtered state', () => {
+        const wrapper = mount(TableBuilder, {
+            props: {table: emptyTable({searchInputs: {global: {key: 'global', label: 'Search', value: 'zz'}}})},
+            slots: {empty: ({filtered}: {filtered: boolean}) => h('em', filtered ? 'filtered' : 'empty')},
+        })
+
+        expect(wrapper.find('[data-empty-state] em').text()).toBe('filtered')
+    })
+})
+
+describe('TableBuilder reorder persistence', () => {
+    beforeEach(() => {
+        vi.mocked(router.post).mockClear()
+    })
+
+    function persistedTable(): TableData {
+        return {...tableData(), reorder: {column: 'sort_order', key: 'id', url: '/table/reorder?signature=x'}}
+    }
+
+    it('shows handles and posts the moved row and its target', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: persistedTable()}})
+
+        await wrapper.findAll('[data-reorder-handle]')[0].trigger('dragstart', {dataTransfer: dataTransfer()})
+        await wrapper.findAll('tbody tr')[2].trigger('drop')
+
+        expect(wrapper.emitted('reorder')).toHaveLength(1)
+        expect(router.post).toHaveBeenCalledWith('/table/reorder?signature=x', {id: 'a', to: 'c'}, expect.objectContaining({preserveScroll: true}))
+    })
+
+    it('hides the handles while sorted on another column', () => {
+        const table = persistedTable()
+        table.columns = [{...column('name'), sortable: true, sorted: 'asc'}]
+
+        const wrapper = mount(TableBuilder, {props: {table}})
+
+        expect(wrapper.findAll('[data-reorder-handle]')).toHaveLength(0)
+    })
+
+    it('does not post without a reorder url', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: tableData(), reorderable: true}})
+
+        await wrapper.findAll('[data-reorder-handle]')[0].trigger('dragstart', {dataTransfer: dataTransfer()})
+        await wrapper.findAll('tbody tr')[2].trigger('drop')
+
+        expect(router.post).not.toHaveBeenCalled()
+    })
+})
+
+describe('TableBuilder date filters', () => {
+    beforeEach(() => {
+        vi.mocked(router.get).mockClear()
+        window.history.replaceState({}, '', '/lines')
+    })
+
+    function visitedQuery(): URLSearchParams {
+        const url = vi.mocked(router.get).mock.calls.at(-1)![0] as string
+
+        return new URLSearchParams(url.split('?')[1])
+    }
+
+    it('applies a date range as one from..to value', async () => {
+        const table = tableData()
+        table.filters = [{key: 'period', label: 'Period', options: {}, value: '2026-10-01..', type: 'date_range'}]
+
+        const wrapper = mount(TableBuilder, {props: {table}, attachTo: document.body})
+
+        await wrapper.find('button').trigger('click')
+        await flush()
+
+        const to = document.querySelector<HTMLInputElement>('[data-filter-key="period.to"]')!
+        to.value = '2026-10-31'
+        to.dispatchEvent(new Event('change'))
+
+        expect(visitedQuery().get('lines_filter[period]')).toBe('2026-10-01..2026-10-31')
+
+        wrapper.unmount()
     })
 })

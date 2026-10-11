@@ -1,4 +1,5 @@
-import {describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {router} from '@inertiajs/vue3'
 import {computed, nextTick, ref} from 'vue'
 import {useTableTransport, type TableQuery} from '../../resources/js/composables/useTableTransport'
 import type {Column, TableData} from '../../resources/js/types/table-builder'
@@ -255,5 +256,57 @@ describe('useTableTransport with the inertia transport', () => {
         await nextTick()
 
         expect(transport.error.value).toBe('A source url is required when using the http transport.')
+    })
+})
+
+describe('useTableTransport query keys', () => {
+    beforeEach(() => {
+        vi.mocked(router.get).mockClear()
+        window.history.replaceState({}, '', '/bookings?f[status]=open&f[global]=x&f[period]=2026-10-01..&p_page=3&other=1')
+    })
+
+    function inertiaTransport(table: TableData) {
+        return useTableTransport({
+            table: computed(() => table),
+            transport: ref('inertia'),
+            source: ref(undefined),
+            name: ref('brands'),
+        })
+    }
+
+    function visitedQuery(): URLSearchParams {
+        const url = vi.mocked(router.get).mock.calls[0][0] as string
+
+        return new URLSearchParams(url.split('?')[1])
+    }
+
+    it('uses the query keys the server sends', () => {
+        const transport = inertiaTransport(tableData({
+            queryKeys: {sort: 'p_sort', filter: 'f', page: 'p_page', perPage: 'p_perPage', columns: 'p_columns'},
+        }))
+
+        transport.applyFilter('name', 'acme')
+
+        const query = visitedQuery()
+
+        expect(query.get('f[name]')).toBe('acme')
+        expect(query.has('p_page')).toBe(false)
+        expect(query.has('brands_filter[name]')).toBe(false)
+    })
+
+    it('falls back to the table name without query keys', () => {
+        inertiaTransport(tableData()).applyFilter('name', 'acme')
+
+        expect(visitedQuery().get('brands_filter[name]')).toBe('acme')
+    })
+
+    it('removes every filter and the search when the filters are reset', () => {
+        const transport = inertiaTransport(tableData({
+            queryKeys: {sort: 'p_sort', filter: 'f', page: 'p_page', perPage: 'p_perPage', columns: 'p_columns'},
+        }))
+
+        transport.resetFilters()
+
+        expect(visitedQuery().toString()).toBe('other=1')
     })
 })
