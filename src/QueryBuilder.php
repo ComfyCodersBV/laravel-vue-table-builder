@@ -327,7 +327,15 @@ class QueryBuilder extends TableBuilder
             throw new LogicException('Rows of a Spatie query builder table cannot be reordered.');
         }
 
-        app(ReorderRows::class)($this->builder, $this->reorderColumn, $this->reorderKeyName(), $id, $toId);
+        $query = clone $this->builder;
+
+        $defaultSortColumn = ltrim($this->defaultSort, '-');
+
+        if ($defaultSortColumn !== '' && $defaultSortColumn !== $this->reorderColumn) {
+            $query->orderBy($defaultSortColumn, str_starts_with($this->defaultSort, '-') ? 'desc' : 'asc');
+        }
+
+        app(ReorderRows::class)($query, $this->reorderColumn, $this->reorderKeyName(), $id, $toId);
     }
 
     protected function reorderKeyName(): string

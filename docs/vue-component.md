@@ -30,7 +30,7 @@ The component is exported from the package's `resources/js/components/` director
 | `source` | `string`   | No       | Url the `http` transport fetches from. Required with `transport="http"`                                                                                                                                                                                                             |
 | `fetcher` | `TableFetcher` | No  | Replaces the built-in request of the `http` transport                                                                                                                                                                                                                               |
 | `adapter` | `TableAdapter` | No  | Maps a non-standard response body onto `{data, pagination}`                                                                                                                                                                                                                         |
-| `reorderable` | `boolean` | No   | Adds a drag handle in front of every row. See [Reordering Rows](#reordering-rows)                                                                                                                                                                                                  |
+| `reorderable` | `boolean` | No   | Adds a drag handle in front of every row. See [Reordering](reordering.md)                                                                                                                                                                                                  |
 | `rowClass` | `(row, index) => string \| string[] \| Record<string, boolean>` | No | Extra classes per row, for status colours and similar                                                                                                                                                                     |
 | `emptyState` | `EmptyState` | No | Texts for an empty table, overriding the ones from the Table class. See [Empty State](empty-state.md)                                                                                                                                                              |
 | `confirm` | `(message) => boolean \| Promise<boolean>` | No | Asks the confirmation of a row action. Defaults to `window.confirm()`. See [Row Actions](row-actions.md)                                                                                                                                       |
@@ -151,77 +151,9 @@ through a `cell-{key}` slot.
 
 ### Reordering Rows
 
-`reorderable` puts a drag handle in front of every row. Dropping a row on another emits `reorder`;
-`from` and `to` are positions within the rows currently shown and `row` is the dragged row. The
-component does not move anything itself: persist the new order and reload.
-
-```vue
-
-<script setup lang="ts">
-    import {useTemplateRef} from 'vue'
-    import {router} from '@inertiajs/vue3'
-
-    const lines = useTemplateRef('lines')
-
-    function move({row, to}: {from: number; to: number; row: any}) {
-        router.post(`/lines/${row.id}/move`, {position: to}, {
-            onSuccess: () => lines.value?.reload(),
-        })
-    }
-</script>
-
-<template>
-    <TableBuilder ref="lines" :table="table" reorderable @reorder="move"/>
-</template>
-```
-
-On a paginated table add the offset of the current page yourself, and keep in mind that a sorted
-or filtered table shows a different order than the one you store.
-
-#### Persisting the order on the server
-
-Declare the order column in the Table class and the package stores the new order itself:
-
-```php
-public function configure(TableBuilder $table): void
-{
-    $table->column('name')->reorderable('sort_order');
-}
-```
-
-The component then shows the handles without the `reorderable` prop and posts
-`{id, to}` (the keys of the dragged row and of the row it was dropped on) to a signed package route
-after the drop. `reorder` is still emitted. The handles hide while the table is sorted on another
-column, because the order you see is then not the stored one.
-
-The server takes every row of the table's `for()` query, without the current search and filters,
-in the order of the column, moves the row to the position of the target and numbers the rows from
-1, rewriting only the rows whose position changed. Pagination does not matter: the ids are global.
-
-The package route resolves the Table class from the container and calls its `authorize()` method,
-like bulk actions. It runs outside the `web` middleware group, so there is no session user there.
-For a table that needs constructor arguments or the logged-in user, point it at a route of your own:
-
-```php
-$table->reorderable('sort_order', url: route('venues.rooms.reorder', $venue));
-```
-
-```php
-use TranquilTools\TableBuilder\Http\Requests\ReorderRequest;
-
-public function reorder(ReorderRequest $request, Venue $venue): RedirectResponse
-{
-    Gate::authorize('update', $venue);
-
-    (new RoomTable($request->user(), $venue))->performReorder($request->rowId(), $request->targetId());
-
-    return back();
-}
-```
-
-`performReorder` throws an `InvalidArgumentException` for an id outside the table's query. The
-`TranquilTools\TableBuilder\Actions\ReorderRows` action does the work and can be called on any
-query directly: `app(ReorderRows::class)($query, 'sort_order', 'id', $id, $toId)`.
+`reorderable()` in the Table class, or the `reorderable` prop, puts a drag handle in front of every
+row and emits `reorder` with `{from, to, row}` after a drop. See [Reordering](reordering.md) for
+storing the order on the server, how ties are broken and handling the event yourself.
 
 ### Clicking Rows
 

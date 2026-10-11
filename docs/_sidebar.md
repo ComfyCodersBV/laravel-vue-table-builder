@@ -13,6 +13,7 @@
     - [Pagination](pagination.md)
     - [Bulk Actions](bulk-actions.md)
     - [Row Actions](row-actions.md)
+    - [Reordering](reordering.md)
     - [Empty State](empty-state.md)
     - [Row Links & Modals](row-links.md)
 

@@ -20,6 +20,41 @@ class ReorderableProductsTable extends AbstractTable
     }
 }
 
+class NameTieReorderTable extends AbstractTable
+{
+    public function for()
+    {
+        return Product::query()
+            ->orderBy('sort_order')
+            ->orderBy('name');
+    }
+
+    public function configure(TableBuilder $table): void
+    {
+        $table->column('name')->reorderable('sort_order');
+    }
+}
+
+class DefaultSortTieReorderTable extends AbstractTable
+{
+    public function for()
+    {
+        return Product::query()->orderBy('sort_order');
+    }
+
+    public function configure(TableBuilder $table): void
+    {
+        $table->column('name')->reorderable('sort_order')->defaultSort('name', 'desc');
+    }
+}
+
+function seedTiedProducts(): void
+{
+    foreach (['C', 'A', 'B', 'D'] as $name) {
+        Product::create(['name' => $name, 'sku' => $name, 'sort_order' => 0]);
+    }
+}
+
 function seedOrderedProducts(): void
 {
     foreach (['A', 'B', 'C', 'D'] as $index => $name) {
@@ -78,6 +113,41 @@ it('numbers rows that all share the same position', function () {
     (new ReorderableProductsTable)->performReorder(3, 1);
 
     expect(productNamesInOrder())->toBe(['C', 'A', 'B']);
+});
+
+it('breaks ties in the order column by the secondary order of the query', function () {
+    seedTiedProducts();
+
+    (new NameTieReorderTable)->performReorder(1, 2);
+
+    expect(productNamesInOrder())->toBe(['C', 'A', 'B', 'D'])
+        ->and(Product::query()->orderBy('sort_order')->pluck('sort_order')->all())->toBe([1, 2, 3, 4]);
+});
+
+it('numbers tied rows in the displayed order on the first move', function () {
+    seedTiedProducts();
+
+    (new NameTieReorderTable)->performReorder(4, 2);
+
+    expect(productNamesInOrder())->toBe(['D', 'A', 'B', 'C']);
+});
+
+it('breaks ties in the order column by the default sort of the table', function () {
+    seedTiedProducts();
+
+    (new DefaultSortTieReorderTable)->performReorder(2, 4);
+
+    expect(productNamesInOrder())->toBe(['A', 'D', 'C', 'B']);
+});
+
+it('keeps the order column first when the query also sorts on it', function () {
+    seedOrderedProducts();
+
+    Product::query()->where('name', 'A')->update(['sort_order' => 9]);
+
+    (new NameTieReorderTable)->performReorder(2, 3);
+
+    expect(productNamesInOrder())->toBe(['C', 'B', 'D', 'A']);
 });
 
 it('refuses a row outside the scope of the table', function () {

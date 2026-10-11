@@ -6,6 +6,7 @@ namespace TranquilTools\TableBuilder\Actions;
 
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as BaseQueryBuilder;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class ReorderRows
@@ -63,12 +64,33 @@ class ReorderRows
         $qualifiedColumn = $ordered instanceof EloquentBuilder ? $ordered->qualifyColumn($column) : $column;
         $qualifiedKey = $ordered instanceof EloquentBuilder ? $ordered->qualifyColumn($keyName) : $keyName;
 
+        $base = $ordered instanceof EloquentBuilder ? $ordered->getQuery() : $ordered;
+
+        $base->orders = [
+            [
+                'column' => $qualifiedColumn,
+                'direction' => 'asc',
+            ],
+            ...$this->tieBreakers($base->orders ?? [], $column),
+        ];
+
         return $ordered
-            ->reorder($qualifiedColumn)
             ->orderBy($qualifiedKey)
             ->lockForUpdate()
             ->pluck($qualifiedColumn, $qualifiedKey)
             ->all();
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $orders
+     * @return array<int, array<string, mixed>>
+     */
+    private function tieBreakers(array $orders, string $column): array
+    {
+        return array_values(array_filter(
+            $orders,
+            fn (array $order): bool => ! is_string($order['column'] ?? null) || Str::afterLast($order['column'], '.') !== $column,
+        ));
     }
 
     private function freshQuery(EloquentBuilder|BaseQueryBuilder $query): EloquentBuilder|BaseQueryBuilder
