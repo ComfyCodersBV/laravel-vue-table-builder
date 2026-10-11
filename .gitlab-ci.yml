@@ -11,7 +11,7 @@ pest:
     - composer install --no-interaction --prefer-dist --no-progress
   script:
     - vendor/bin/pint --test
-    - vendor/bin/phpstan analyse --no-progress
+    - vendor/bin/phpstan analyse --no-progress --memory-limit=1G
     - vendor/bin/pest --compact
   cache:
     key:
