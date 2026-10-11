@@ -8,7 +8,9 @@ table once in PHP - columns, filters, search, sorting, pagination, and bulk acti
 - **Server-driven** - all filtering, sorting, and pagination handled in PHP
 - **Inertia.js integration** - seamless SPA experience without custom AJAX code
 - **Column visibility** - users can show/hide columns via a dropdown
-- **Filters** - select, free text and callback-based filters
+- **Filters** - select, free text, date, date range and callback-based filters
+- **Row actions** - per-row buttons defined in PHP, hidden or disabled per row
+- **Empty states** - own texts for an empty and for a filtered table, or an `#empty` slot
 - **Global & per-column search** - with configurable wildcard modes
 - **Bulk actions** - with optional confirmation dialogs and password prompts
 - **Row links & modals** - make any row clickable

@@ -148,6 +148,53 @@ $table
     ->column('name', 'Name', headerClass: 'bg-blue-100');
 ```
 
+### Row Actions
+
+Buttons per row, defined in PHP and rendered without an `#actions` slot. Hidden actions are not sent
+to the browser, disabled ones show their reason as a tooltip:
+
+```php
+$table
+    ->rowAction('Edit', url: fn (Room $room) => route('rooms.edit', $room))
+    ->rowAction('Delete', url: fn (Room $room) => route('rooms.destroy', $room), method: 'delete',
+        confirm: 'Delete this room?', variant: 'destructive',
+        visible: fn (Room $room) => $user->can('delete', $room),
+        disabled: fn (Room $room) => $room->units_count > 0 ? 'The room still has units' : false);
+```
+
+See [docs/row-actions.md](docs/row-actions.md).
+
+### Empty State
+
+```php
+$table->emptyState(title: 'No rooms yet', description: 'Add the first room.', filteredTitle: 'No rooms match');
+```
+
+The component also takes an `emptyState` prop and an `#empty` slot. See [docs/empty-state.md](docs/empty-state.md).
+
+### Persisting a Drag-and-Drop Order
+
+```php
+$table->reorderable('sort_order');                                   // signed package route
+$table->reorderable('sort_order', url: route('rooms.reorder', $venue)); // your own route
+```
+
+See the reordering section of [docs/vue-component.md](docs/vue-component.md).
+
+### Date Filters
+
+```php
+$table->dateFilter('created_at');
+$table->dateRangeFilter('period', column: 'starts_at');   // ?filter[period]=2026-10-01..2026-10-31
+```
+
+### Query Keys
+
+```php
+$table->filterQueryKey('f');   // ?f[status]=open instead of ?booking_filter[status]=open
+$table->queryPrefix('');       // no prefix on sort, filter, page, perPage and columns
+```
+
 ### Expected Data Structure
 
 The TableBuilder component expects data in this format:

@@ -1,0 +1,93 @@
+# Row Actions
+
+Define the buttons of every row in the Table class. The component renders them in a trailing
+column, so a page needs no `#actions` slot.
+
+```php
+$table
+    ->rowAction('Edit', url: fn (Room $room) => route('rooms.edit', $room))
+    ->rowAction(
+        'Delete',
+        url: fn (Room $room) => route('rooms.destroy', $room),
+        method: 'delete',
+        confirm: 'Delete this room?',
+        variant: 'destructive',
+        visible: fn (Room $room) => $viewer->can('delete', $room),
+        disabled: fn (Room $room) => $room->units_count > 0 ? 'The room still has units' : false,
+    );
+```
+
+## Signature
+
+```php
+rowAction(
+    string $label,
+    string|Closure|null $url = null,
+    ?string $route = null,
+    string $method = 'get',
+    ?string $confirm = null,
+    string $variant = 'outline',
+    bool|Closure $visible = true,
+    bool|string|Closure $disabled = false,
+    ?string $key = null,
+): self
+```
+
+| Parameter  | Description                                                                                                  |
+|------------|--------------------------------------------------------------------------------------------------------------|
+| `label`    | Button text                                                                                                  |
+| `url`      | A fixed url, or a callback receiving the row item. Returning `null` hides the action for that row            |
+| `route`    | A route name resolved as `route($route, $item)`; use `url` when the route needs more parameters              |
+| `method`   | `get`, `post`, `put`, `patch` or `delete`                                                                     |
+| `confirm`  | Question asked before the action runs                                                                        |
+| `variant`  | Button variant: `default`, `destructive`, `outline`, `secondary`, `ghost` or `link`                          |
+| `visible`  | `false` or a callback returning `false` leaves the action out of the payload for that row                    |
+| `disabled` | `true`, or a callback returning `true` or a reason string. The reason is shown as the button's tooltip      |
+| `key`      | Identifier of the action, defaults to the slug of the label. Registering a key again replaces the action     |
+
+`url` or `route` is required.
+
+## Authorization
+
+Hidden actions are never sent to the browser, so `visible` is the place for policy checks. Keep the
+same check on the route the action points to: hiding a button does not protect the endpoint.
+
+Use `disabled` with a reason when the user should see that the action exists but cannot use it now.
+
+## How They Run
+
+- `get` actions render as a link. A click visits the url through Inertia; ctrl, cmd and middle
+  clicks open a new tab as usual.
+- Other methods are sent as an Inertia visit with that method and `preserveScroll`. With the `http`
+  transport they are sent with `fetch()` and the table reloads afterwards.
+- `confirm` uses `window.confirm()` unless the component gets a `confirm` prop:
+
+```vue
+<TableBuilder :table="table" :confirm="(message) => dialog.ask(message)"/>
+```
+
+The prop may return a boolean or a promise of one.
+
+## Custom Rendering
+
+An `#actions` slot still wins over the built-in buttons. It receives the resolved actions of the
+row and a `run` function, so you can restyle them and keep the behaviour:
+
+```vue
+<TableBuilder :table="table">
+    <template #actions="{actions, run}">
+        <DropdownMenu>
+            <DropdownMenuItem
+                v-for="action in actions"
+                :key="action.key"
+                :disabled="action.disabled"
+                @click="run(action)"
+            >
+                {{ action.label }}
+            </DropdownMenuItem>
+        </DropdownMenu>
+    </template>
+</TableBuilder>
+```
+
+The resolved actions are also in `table.rowActions`, an array with one list of actions per row.

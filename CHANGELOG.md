@@ -2,6 +2,30 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.5.0 - 2026-10-11
+
+* `rowAction()` defines the buttons of every row in the Table class: a label, a url (string or
+  callback) or route name, a method (`get`, `post`, `put`, `patch`, `delete`), an optional
+  confirmation and a button variant. `visible` leaves an action out for a row, so policy checks
+  never reach the browser, and `disabled` takes a reason that becomes the tooltip. The component
+  renders them without an `actions` slot; the slot still wins and now receives the resolved
+  `actions` and a `run` function. A `confirm` prop replaces `window.confirm()`.
+* `emptyState()` and an `emptyState` prop set the title and description of an empty table, with
+  separate texts while a search or filter is active. An `empty` slot receives `filtered`, the texts
+  and a `reset` function that clears the search and filters.
+* `reorderable('sort_order')` persists a drag-and-drop order on the server. The component posts the
+  dragged row and its target to a signed package route, which moves the row within the table's query
+  and renumbers the column, rewriting only the rows that changed. Pass `url:` to use a route of your
+  own with `performReorder()` and the `ReorderRequest`, or call the `ReorderRows` action directly.
+  The handles hide while the table is sorted on another column.
+* `dateFilter()` and `dateRangeFilter()` filter a date column with `whereDate`, from and to
+  inclusive and either end optional. A range travels as `from..to`.
+* `filterQueryKey()` sets the query parameter of filters and search, and `queryPrefix()` replaces
+  the table name prefix of every parameter. The resolved keys are sent as `queryKeys` and the
+  component uses them. Without either, the parameters stay as they were.
+* A filter given an array in the query string is ignored instead of throwing a `TypeError`.
+* Fix three type errors when the Vue sources are type-checked with `vue-tsc`.
+
 ## 1.4.0 - 2026-10-01
 
 * `reorderable` adds a leading drag handle to every row. Dropping a row on another emits

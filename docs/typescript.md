@@ -11,6 +11,10 @@ import type {
     Filter,
     SearchInput,
     BulkAction,
+    RowAction,
+    EmptyState,
+    ReorderConfig,
+    QueryKeys,
 } from '@/types/table-builder'
 ```
 
@@ -32,6 +36,42 @@ interface TableData {
     rowLinkType: 'modal' | 'link' | ''
     cellClass?: string
     headClass?: string
+    rowActions?: RowAction[][]          // one list per row
+    emptyState?: EmptyState
+    reorder?: ReorderConfig | null
+    queryKeys?: QueryKeys
+}
+
+interface RowAction {
+    key: string
+    label: string
+    url: string
+    method: 'get' | 'post' | 'put' | 'patch' | 'delete'
+    confirm: string | null
+    variant: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+    disabled: boolean
+    disabledReason: string | null
+}
+
+interface EmptyState {
+    title?: string | null
+    description?: string | null
+    filteredTitle?: string | null
+    filteredDescription?: string | null
+}
+
+interface ReorderConfig {
+    column: string
+    key: string           // the row property sent as id
+    url: string | null
+}
+
+interface QueryKeys {
+    sort: string
+    filter: string
+    page: string
+    perPage: string
+    columns: string
 }
 ```
 
@@ -87,7 +127,7 @@ interface Filter {
     label: string
     options: Record<string, string>   // { value: 'Label' }
     value?: string | null
-    type: 'select' | 'text'
+    type: 'select' | 'text' | 'date' | 'date_range'   // a date_range value is 'from..to'
 }
 ```
 

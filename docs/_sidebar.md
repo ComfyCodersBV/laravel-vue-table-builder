@@ -12,6 +12,8 @@
     - [Search](search.md)
     - [Pagination](pagination.md)
     - [Bulk Actions](bulk-actions.md)
+    - [Row Actions](row-actions.md)
+    - [Empty State](empty-state.md)
     - [Row Links & Modals](row-links.md)
 
 - **Frontend**

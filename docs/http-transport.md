@@ -123,6 +123,12 @@ const adapter: TableAdapter = (payload) => ({
 Rows that come from `source` are rendered with `v-html` and are not escaped by the PHP builder.
 Escape them on the server, or render the column through a `cell-{key}` slot.
 
+## Row Actions
+
+When the response carries a `rowActions` array next to `data` (the shape `TableBuilder::toArray()`
+returns), the default adapter passes it on and the row action buttons render for the fetched rows.
+Actions other than `get` are sent with `fetch()` and the table reloads afterwards.
+
 ## Bulk Actions
 
 Bulk actions post `{ids: [...]}` to the action url with same-origin credentials and the
