@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class Column implements Arrayable
@@ -25,6 +26,8 @@ class Column implements Arrayable
         public string $alignment = 'left',
         public bool $clickable = true,
         public bool $boolean = false,
+        public ?Closure $exportAs = null,
+        public bool $export = true,
     ) {
         if (is_array($classes)) {
             $classes = self::flattenClasses($classes);
@@ -97,6 +100,34 @@ class Column implements Arrayable
 
             return rescue(fn () => $item->{$this->key}, report: false);
         });
+    }
+
+    public function exportValue(mixed $item): mixed
+    {
+        $value = $this->getDataFromItem($item);
+
+        if (! is_null($this->exportAs)) {
+            return call_user_func($this->exportAs, $value, $item);
+        }
+
+        if (is_null($this->as)) {
+            return $value;
+        }
+
+        return self::plain(call_user_func($this->as, $value, $item));
+    }
+
+    private static function plain(mixed $value): mixed
+    {
+        if ($value instanceof HtmlString) {
+            return trim(html_entity_decode(strip_tags($value->toHtml()), ENT_QUOTES | ENT_HTML5));
+        }
+
+        if (is_array($value) && array_key_exists('label', $value)) {
+            return $value['label'];
+        }
+
+        return $value;
     }
 
     public function isNested(): bool

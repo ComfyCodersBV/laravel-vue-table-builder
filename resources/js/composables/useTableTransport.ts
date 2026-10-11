@@ -190,6 +190,36 @@ export function useTableTransport(options: TableTransportOptions) {
         return new URLSearchParams(window.location.search)
     }
 
+    const signedParameters = ['signature', 'expires', 'table', 'params']
+
+    function stateParams(): URLSearchParams {
+        if (!isHttp.value) {
+            const params = currentParams()
+
+            signedParameters.forEach((key) => params.delete(key))
+
+            return params
+        }
+
+        const params = new URLSearchParams()
+
+        if (query.value.sort) {
+            params.set(namespacedKey('sort'), query.value.sort)
+        }
+
+        Object.entries(query.value.filters).forEach(([key, value]) => {
+            if (value) {
+                params.set(filterKey(key), value)
+            }
+        })
+
+        if (query.value.search) {
+            params.set(filterKey('global'), query.value.search)
+        }
+
+        return params
+    }
+
     function defaultSortKey(): string | null {
         return initial.value.defaultSort ? String(initial.value.defaultSort).replace(/^-/, '') : null
     }
@@ -398,5 +428,6 @@ export function useTableTransport(options: TableTransportOptions) {
         applyPage,
         resetFilters,
         reload,
+        stateParams,
     }
 }

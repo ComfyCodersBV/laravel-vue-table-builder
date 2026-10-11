@@ -24,6 +24,8 @@ column(
     string $alignment = 'left',
     bool $clickable = true,
     bool $boolean = false,
+    ?callable $exportAs = null,
+    bool $export = true,
 ): self
 ```
 
@@ -43,6 +45,8 @@ column(
 | `alignment`   | `string`                | `'left'`                         | Text alignment: `'left'`, `'center'`, `'right'`                    |
 | `clickable`   | `bool`                  | `true`                           | Whether clicking this cell follows the row link                    |
 | `boolean`     | `bool`                  | `false`                          | Render a check or cross icon instead of the raw value              |
+| `exportAs`    | `callable\|null`        | `null`                           | The value written to a CSV [export](export.md) instead of `as`     |
+| `export`      | `bool`                  | `true`                           | Include the column in a CSV export                                 |
 
 Only `key` and `label` are safe to pass positionally; use named arguments for the rest.
 

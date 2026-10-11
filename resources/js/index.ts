@@ -13,6 +13,7 @@ export type {
     Column,
     DateRangePreset,
     EmptyState,
+    ExportConfig,
     Filter,
     PaginationData,
     QueryKeys,

@@ -492,3 +492,49 @@ describe('TableBuilder totals', () => {
         expect(mount(TableBuilder, {props: {table: tableData()}}).find('tfoot').exists()).toBe(false)
     })
 })
+
+describe('TableBuilder export', () => {
+    const signedUrl = 'https://app.test/table/export?expires=1&table=QXBw&signature=abc'
+
+    function exportableTable(): TableData {
+        const table = tableData()
+        table.queryKeys = {sort: 'lines_sort', filter: 'lines_filter', page: 'lines_page', perPage: 'lines_perPage', columns: 'lines_columns'}
+        table.export = {label: 'Export', url: signedUrl}
+
+        return table
+    }
+
+    function clickExport(wrapper: ReturnType<typeof mount>): string {
+        const link = wrapper.find('a[data-table-export]')
+
+        link.element.addEventListener('click', (event) => event.preventDefault())
+        link.element.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}))
+
+        return link.attributes('href')!
+    }
+
+    it('renders an export link only when the table is exportable', () => {
+        expect(mount(TableBuilder, {props: {table: tableData()}}).find('[data-table-export]').exists()).toBe(false)
+
+        const link = mount(TableBuilder, {props: {table: exportableTable()}}).find('a[data-table-export]')
+
+        expect(link.text()).toBe('Export')
+        expect(link.attributes('download')).toBeDefined()
+    })
+
+    it('appends the current sort, search and filters of the page to the signed url', () => {
+        window.history.replaceState({}, '', '/lines?lines_sort=-name&lines_filter%5Bstatus%5D=open&signature=page')
+
+        const href = clickExport(mount(TableBuilder, {props: {table: exportableTable()}}))
+
+        expect(href.startsWith(signedUrl + '&')).toBe(true)
+
+        const appended = new URLSearchParams(href.slice(signedUrl.length + 1))
+
+        expect(appended.get('lines_sort')).toBe('-name')
+        expect(appended.get('lines_filter[status]')).toBe('open')
+        expect(appended.has('signature')).toBe(false)
+
+        window.history.replaceState({}, '', '/')
+    })
+})

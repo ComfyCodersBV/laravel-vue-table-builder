@@ -18,6 +18,12 @@ return [
         'error' => 'Something went wrong while performing the action.',
     ],
 
+    'export' => [
+        'button' => 'Export',
+        'yes' => 'Yes',
+        'no' => 'No',
+    ],
+
     'filters' => [
         'any' => 'Any time',
         'custom' => 'Custom range',

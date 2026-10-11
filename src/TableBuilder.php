@@ -23,6 +23,7 @@ use TranquilTools\TableBuilder\Components\Column;
 use TranquilTools\TableBuilder\Concerns\HasBulkActions;
 use TranquilTools\TableBuilder\Concerns\HasColumns;
 use TranquilTools\TableBuilder\Concerns\HasEmptyState;
+use TranquilTools\TableBuilder\Concerns\HasExport;
 use TranquilTools\TableBuilder\Concerns\HasFilters;
 use TranquilTools\TableBuilder\Concerns\HasReordering;
 use TranquilTools\TableBuilder\Concerns\HasResource;
@@ -37,6 +38,7 @@ class TableBuilder implements Arrayable, JsonSerializable
     use HasBulkActions;
     use HasColumns;
     use HasEmptyState;
+    use HasExport;
     use HasFilters;
     use HasReordering;
     use HasResource;
@@ -407,6 +409,7 @@ class TableBuilder implements Arrayable, JsonSerializable
             'reorder' => $this->reorderPayload(),
             'queryKeys' => $this->queryKeys(),
             'totals' => $totals,
+            'export' => $this->exportPayload(),
         ];
     }
 

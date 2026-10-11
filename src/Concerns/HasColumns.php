@@ -40,6 +40,8 @@ trait HasColumns
         string $alignment = 'left',
         bool $clickable = true,
         bool $boolean = false,
+        ?callable $exportAs = null,
+        bool $export = true,
     ): self {
         $key = $key !== null ? $key : Str::kebab($label);
         $label = $label !== null ? $label : Str::headline(str_replace('.', ' ', $key));
@@ -67,6 +69,8 @@ trait HasColumns
             alignment: $alignment,
             clickable: $clickable,
             boolean: $boolean,
+            exportAs: is_null($exportAs) ? null : Closure::fromCallable($exportAs),
+            export: $export,
         ))->values();
 
         if (! $searchable) {

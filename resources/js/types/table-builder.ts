@@ -105,6 +105,11 @@ export interface Totals {
     values: Record<string, string | number | null>
 }
 
+export interface ExportConfig {
+    label: string
+    url: string | null
+}
+
 export interface TableData {
     name?: string
     data: any[]
@@ -125,4 +130,5 @@ export interface TableData {
     reorder?: ReorderConfig | null
     queryKeys?: QueryKeys
     totals?: Totals | null
+    export?: ExportConfig | null
 }

@@ -66,6 +66,9 @@ When `loadResource()` is called:
 4. Default sort applied if no sort query param
 5. Pagination executed
 
+The same steps without pagination are available as `filteredQuery(?Request $request = null)`, which returns a clone
+of the query for custom exports and reports. See [Export](export.md#custom-exports). Totals use it too.
+
 Query builder resources are filtered by the query only, paginated or not. The in-memory collection filter applies to
 array and `Collection` resources. See [Search](search.md#collection-resources).
 

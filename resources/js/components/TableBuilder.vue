@@ -13,7 +13,7 @@ import {
 import {Input} from './ui/input';
 import {Checkbox} from './ui/checkbox';
 import {Button} from './ui/button';
-import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Funnel, GripVertical, Search, X} from '@lucide/vue'
+import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Download, Funnel, GripVertical, Search, X} from '@lucide/vue'
 import type {EmptyState, Filter, RowAction, TableData} from '../types/table-builder'
 import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
@@ -83,6 +83,7 @@ const {
     applyPage,
     resetFilters,
     reload,
+    stateParams,
 } = useTableTransport({
     table: computed(() => props.table),
     transport: computed(() => props.transport),
@@ -93,7 +94,27 @@ const {
     adapter: props.adapter,
 })
 
-defineExpose({reload, currentQuery: () => ({...query.value})})
+function exportUrl(): string | null {
+    const url = table.value.export?.url
+
+    if (!url) {
+        return null
+    }
+
+    const state = stateParams().toString()
+
+    return state ? `${url}${url.includes('?') ? '&' : '?'}${state}` : url
+}
+
+function prepareExport(event: MouseEvent): void {
+    const url = exportUrl()
+
+    if (url) {
+        (event.currentTarget as HTMLAnchorElement).href = url
+    }
+}
+
+defineExpose({reload, currentQuery: () => ({...query.value}), exportUrl})
 
 const columnSelector = computed(() => table.value.columns.some((column) => column.can_be_hidden))
 
@@ -708,6 +729,13 @@ function performBulkAction(action: any) {
                 />
 
                 <slot name="toolbar" />
+
+                <Button v-if="table.export?.url" variant="outline" as-child>
+                    <a :href="table.export.url" download data-table-export @click="prepareExport">
+                        <Download class="h-4 w-4"/>
+                        {{ table.export.label }}
+                    </a>
+                </Button>
 
                 <DropdownMenu v-if="columnSelector">
                     <DropdownMenuTrigger as-child>

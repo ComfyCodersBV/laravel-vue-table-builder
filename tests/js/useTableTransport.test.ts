@@ -227,6 +227,23 @@ describe('useTableTransport with the http transport', () => {
         expect(transport.table.value.totals).toEqual({label: 'Total', values: {name: 3}})
     })
 
+    it('describes the in-memory query in the server query keys for an export', async () => {
+        const {transport} = setup({
+            table: tableData({queryKeys: {sort: 'brands_sort', filter: 'brands_filter', page: 'brands_page', perPage: 'brands_perPage', columns: 'brands_columns'}}),
+        })
+        await nextTick()
+
+        transport.applyFilter('name', 'acme')
+        transport.applySort(transport.table.value.columns[1])
+        await nextTick()
+
+        const params = transport.stateParams()
+
+        expect(params.get('brands_filter[name]')).toBe('acme')
+        expect(params.get('brands_sort')).toBe('name')
+        expect(params.has('brands_page')).toBe(false)
+    })
+
     it('maps a payload through a custom adapter', async () => {
         const {transport} = setup({
             fetcher: vi.fn(async () => ({rows: [{ident: 'X'}], meta: {count: 1}})),

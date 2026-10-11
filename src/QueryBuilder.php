@@ -330,6 +330,21 @@ class QueryBuilder extends TableBuilder
         }
     }
 
+    protected function exportItems(?Request $request): iterable
+    {
+        $query = $this->filteredQuery($request);
+
+        if ($query instanceof BaseQueryBuilder) {
+            return $query->cursor();
+        }
+
+        $eloquent = $query instanceof SpatieQueryBuilder ? $query->getEloquentBuilder() : $query;
+
+        return $eloquent
+            ->orderBy($eloquent->getModel()->getQualifiedKeyName())
+            ->lazy(max(1, (int) config('vue-table-builder.export.chunk_size', 1000)));
+    }
+
     protected function totalsQuery(): BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder
     {
         return $this->filteredQuery();

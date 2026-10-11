@@ -18,6 +18,12 @@ return [
         'error' => 'Er is iets misgegaan bij het uitvoeren van de actie.',
     ],
 
+    'export' => [
+        'button' => 'Exporteren',
+        'yes' => 'Ja',
+        'no' => 'Nee',
+    ],
+
     'filters' => [
         'any' => 'Altijd',
         'custom' => 'Aangepaste periode',

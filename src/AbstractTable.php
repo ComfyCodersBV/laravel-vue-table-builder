@@ -13,6 +13,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use ReflectionClass;
 use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use TranquilTools\TableBuilder\Components\BulkAction;
 
 abstract class AbstractTable
@@ -30,6 +31,11 @@ abstract class AbstractTable
     }
 
     public function authorizeReorder(Request $request): bool
+    {
+        return $this->authorize($request);
+    }
+
+    public function authorizeExport(Request $request): bool
     {
         return $this->authorize($request);
     }
@@ -88,6 +94,11 @@ abstract class AbstractTable
     public function filteredQuery(?Request $request = null): Builder|BaseQueryBuilder|SpatieQueryBuilder
     {
         return $this->make()->filteredQuery($request);
+    }
+
+    public function export(?Request $request = null): StreamedResponse
+    {
+        return $this->make()->export($request);
     }
 
     public function performReorder(int|string $id, int|string $toId): void

@@ -12,6 +12,7 @@
     - [Search](search.md)
     - [Pagination](pagination.md)
     - [Totals](totals.md)
+    - [Export](export.md)
     - [Bulk Actions](bulk-actions.md)
     - [Row Actions](row-actions.md)
     - [Reordering](reordering.md)
