@@ -40,8 +40,7 @@ trait HasColumns
         string $alignment = 'left',
         bool $clickable = true,
         bool $boolean = false,
-    ): self
-    {
+    ): self {
         $key = $key !== null ? $key : Str::kebab($label);
         $label = $label !== null ? $label : Str::headline(str_replace('.', ' ', $key));
 
@@ -91,7 +90,7 @@ trait HasColumns
 
             if ($sort === $column->key) {
                 $sorted = 'asc';
-            } else if ($sort === "-{$column->key}") {
+            } elseif ($sort === "-{$column->key}") {
                 $sorted = 'desc';
             }
 
@@ -110,7 +109,7 @@ trait HasColumns
     public function defaultVisibleToggleableColumns(): array
     {
         return $this->columns
-            ->filter(fn(Column $column) => ! $column->canBeHidden || ($column->canBeHidden && ! $column->hidden))
+            ->filter(fn (Column $column) => ! $column->canBeHidden || ! $column->hidden)
             ->map->key
             ->sort()
             ->values()
@@ -120,7 +119,7 @@ trait HasColumns
     public function hasToggleableColumns(): bool
     {
         return $this->columns
-            ->filter(fn(Column $column) => $column->canBeHidden)
+            ->filter(fn (Column $column) => $column->canBeHidden)
             ->isNotEmpty();
     }
 }

@@ -6,7 +6,9 @@ namespace TranquilTools\TableBuilder\Commands;
 
 use Illuminate\Console\GeneratorCommand;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'make:table')]
 class TableMakeCommand extends GeneratorCommand
@@ -17,13 +19,22 @@ class TableMakeCommand extends GeneratorCommand
 
     protected $description = 'Create a new table class';
 
-    public function handle(): int
-    {
-        if (parent::handle() === false && ! $this->option('force')) {
-            return self::FAILURE;
-        }
+    private bool $refused = false;
 
-        return self::SUCCESS;
+    public function handle(): ?bool
+    {
+        $result = parent::handle();
+
+        $this->refused = $result === false && ! $this->option('force');
+
+        return $result;
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $status = parent::execute($input, $output);
+
+        return $this->refused ? self::FAILURE : $status;
     }
 
     protected function getStub(): string
@@ -35,7 +46,7 @@ class TableMakeCommand extends GeneratorCommand
     {
         return file_exists($customPath = $this->laravel->basePath(trim($stub, '/')))
             ? $customPath
-            : __DIR__ . $stub;
+            : __DIR__.$stub;
     }
 
     protected function buildClass($name): array|string
@@ -56,7 +67,7 @@ class TableMakeCommand extends GeneratorCommand
 
     protected function getDefaultNamespace($rootNamespace): string
     {
-        return $rootNamespace . '\Tables';
+        return $rootNamespace.'\Tables';
     }
 
     protected function getOptions(): array

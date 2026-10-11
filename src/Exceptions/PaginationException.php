@@ -6,6 +6,4 @@ namespace TranquilTools\TableBuilder\Exceptions;
 
 use Exception;
 
-class PaginationException extends Exception
-{
-}
+class PaginationException extends Exception {}

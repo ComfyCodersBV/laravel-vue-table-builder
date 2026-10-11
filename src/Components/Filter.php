@@ -24,17 +24,7 @@ class Filter implements Arrayable
 
     public function clone(): static
     {
-        return new static(
-            $this->key,
-            $this->label,
-            $this->options,
-            $this->value,
-            $this->noFilterOption,
-            $this->noFilterOptionLabel,
-            $this->type,
-            $this->callback,
-            $this->column,
-        );
+        return clone $this;
     }
 
     public function hasValue(): bool

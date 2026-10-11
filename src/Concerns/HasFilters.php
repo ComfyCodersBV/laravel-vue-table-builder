@@ -17,8 +17,7 @@ trait HasFilters
         ?string $defaultValue = null,
         bool $noFilterOption = true,
         ?string $noFilterOptionLabel = null
-    ): self
-    {
+    ): self {
         $this->filters = $this->filters->reject(function (Filter $filter) use ($key) {
             return $filter->key === $key;
         })->push(new Filter(
@@ -38,8 +37,7 @@ trait HasFilters
         string $key,
         ?string $label = null,
         ?string $defaultValue = null
-    ): self
-    {
+    ): self {
         $this->filters = $this->filters->reject(function (Filter $filter) use ($key) {
             return $filter->key === $key;
         })->push(new Filter(
@@ -63,8 +61,7 @@ trait HasFilters
         ?string $defaultValue = null,
         bool $noFilterOption = true,
         ?string $noFilterOptionLabel = null
-    ): self
-    {
+    ): self {
         $this->filters = $this->filters->reject(function (Filter $filter) use ($key) {
             return $filter->key === $key;
         })->push(new Filter(
@@ -86,8 +83,7 @@ trait HasFilters
         ?string $label = null,
         ?string $defaultValue = null,
         ?string $column = null,
-    ): self
-    {
+    ): self {
         return $this->pushDateFilter('date', $key, $label, $defaultValue, $column);
     }
 
@@ -97,8 +93,7 @@ trait HasFilters
         ?string $defaultFrom = null,
         ?string $defaultTo = null,
         ?string $column = null,
-    ): self
-    {
+    ): self {
         $defaultValue = is_null($defaultFrom) && is_null($defaultTo)
             ? null
             : "{$defaultFrom}..{$defaultTo}";
@@ -128,17 +123,13 @@ trait HasFilters
     {
         $queryFilters = $this->query('filter', []);
 
-        $filters = $this->filters->map->clone()->keyBy->key;
+        $queryFilters = is_array($queryFilters) ? $queryFilters : [];
 
-        if (! empty($filters)) {
-            $filters->each(function (Filter $filter) use ($queryFilters) {
-                if (array_key_exists($filter->key, $queryFilters) && ! is_array($queryFilters[$filter->key])) {
-                    $filter->value = $queryFilters[$filter->key];
-                }
-            });
-        }
-
-        return $filters;
+        return $this->filters->map->clone()->keyBy->key->each(function (Filter $filter) use ($queryFilters) {
+            if (array_key_exists($filter->key, $queryFilters) && ! is_array($queryFilters[$filter->key])) {
+                $filter->value = $queryFilters[$filter->key];
+            }
+        });
     }
 
     public function hasFilters(): bool
@@ -148,6 +139,6 @@ trait HasFilters
 
     public function hasFiltersEnabled(): bool
     {
-        return $this->filters()->reject(fn(Filter $filter) => is_null($filter->value))->isNotEmpty();
+        return $this->filters()->reject(fn (Filter $filter) => is_null($filter->value))->isNotEmpty();
     }
 }

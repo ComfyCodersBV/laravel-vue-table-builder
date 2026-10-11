@@ -11,6 +11,7 @@ use Illuminate\Database\Query\Builder as BaseQueryBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Kirschbaum\PowerJoins\EloquentJoins;
 use LogicException;
 use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
@@ -116,6 +117,7 @@ class QueryBuilder extends TableBuilder
             SearchInput::WILDCARD => ["%{$term}%", $like],
             SearchInput::WILDCARD_LEFT => ["%{$term}", $like],
             SearchInput::WILDCARD_RIGHT => ["{$term}%", $like],
+            default => throw new InvalidArgumentException("Unknown search method [{$searchMethod}]."),
         };
     }
 
@@ -160,12 +162,17 @@ class QueryBuilder extends TableBuilder
             return $this->builder->orderBy($column->key, $column->sorted);
         }
 
-        class_exists(EloquentJoins::class) || throw new PowerJoinsException(
-            "To order the query using a column from a relationship, please install the 'kirschbaum-development/eloquent-power-joins' package."
-        );
+        $builder = $this->builder instanceof SpatieQueryBuilder
+            ? $this->builder->getEloquentBuilder()
+            : $this->builder;
 
-        // Apply the sorting using the PowerJoins package.
-        return $this->builder->orderByLeftPowerJoins($column->key, $column->sorted);
+        if (! class_exists(EloquentJoins::class) || ! $builder instanceof EloquentBuilder || ! EloquentBuilder::hasGlobalMacro('orderByLeftPowerJoins')) {
+            throw new PowerJoinsException(
+                "To order the query using a column from a relationship, please install the 'kirschbaum-development/eloquent-power-joins' package."
+            );
+        }
+
+        return $builder->orderByLeftPowerJoins($column->key, $column->sorted);
     }
 
     private function applyFilters()
@@ -292,7 +299,7 @@ class QueryBuilder extends TableBuilder
         }
     }
 
-    public function loadResource(): self
+    public function loadResource(): static
     {
         if ($this->resourceLoaded) {
             return $this;

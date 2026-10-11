@@ -25,8 +25,7 @@ class Column implements Arrayable
         public string $alignment = 'left',
         public bool $clickable = true,
         public bool $boolean = false,
-    )
-    {
+    ) {
         if (is_array($classes)) {
             $classes = self::flattenClasses($classes);
         }
@@ -59,20 +58,7 @@ class Column implements Arrayable
 
     public function clone(): static
     {
-        return new static(
-            $this->key,
-            $this->label,
-            $this->canBeHidden,
-            $this->hidden,
-            $this->sortable,
-            $this->sorted,
-            $this->highlight,
-            $this->classes,
-            $this->as,
-            $this->alignment,
-            $this->clickable,
-            $this->boolean,
-        );
+        return clone $this;
     }
 
     public function toArray(): array
@@ -109,7 +95,7 @@ class Column implements Arrayable
                 return null;
             }
 
-            return rescue(fn() => $item->{$this->key}, report: false);
+            return rescue(fn () => $item->{$this->key}, report: false);
         });
     }
 
@@ -127,5 +113,4 @@ class Column implements Arrayable
     {
         return Str::afterLast($this->key, '.');
     }
-
 }

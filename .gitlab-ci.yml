@@ -10,6 +10,8 @@ pest:
     - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
     - composer install --no-interaction --prefer-dist --no-progress
   script:
+    - vendor/bin/pint --test
+    - vendor/bin/phpstan analyse --no-progress
     - vendor/bin/pest --compact
   cache:
     key:

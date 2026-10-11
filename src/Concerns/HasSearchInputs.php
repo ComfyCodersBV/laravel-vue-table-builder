@@ -32,8 +32,7 @@ trait HasSearchInputs
         ?string $label = null,
         ?string $defaultValue = null,
         array $columns = []
-    ): self
-    {
+    ): self {
         if (empty($columns)) {
             $columns = Arr::sort(Arr::wrap($key));
         }
@@ -42,7 +41,7 @@ trait HasSearchInputs
             $key = Str::slug(implode(' ', $columns));
         }
 
-        $columns = static::normalizeSearchColumnsWithMethod($columns);
+        $columns = self::normalizeSearchColumnsWithMethod($columns);
 
         $this->searchInputs = $this->searchInputs->reject(function (SearchInput $searchInput) use ($key) {
             return $searchInput->key === $key;
@@ -82,14 +81,14 @@ trait HasSearchInputs
     public function hasToggleableSearchInputs(): bool
     {
         return $this->searchInputs
-            ->reject(fn(SearchInput $searchInput) => $searchInput->key === TableBuilder::GLOBAL_SEARCH_KEY)
+            ->reject(fn (SearchInput $searchInput) => $searchInput->key === TableBuilder::GLOBAL_SEARCH_KEY)
             ->isNotEmpty();
     }
 
     public static function defaultGlobalSearch(bool|string $label = 'Search')
     {
         static::$defaultGlobalSearch = $label !== false
-            ? trans($label) . '...'
+            ? trans($label).'...'
             : false;
     }
 
@@ -97,7 +96,7 @@ trait HasSearchInputs
     {
         return $this->searchInput(
             key: TableBuilder::GLOBAL_SEARCH_KEY,
-            label: $label ?: trans('vue-table-builder::table.search') . '...',
+            label: $label ?: trans('vue-table-builder::table.search').'...',
             columns: $columns
         );
     }
@@ -105,7 +104,7 @@ trait HasSearchInputs
     public function withoutGlobalSearch(): self
     {
         $this->searchInputs = $this->searchInputs->reject(
-            fn(SearchInput $searchInput) => $searchInput->key === TableBuilder::GLOBAL_SEARCH_KEY
+            fn (SearchInput $searchInput) => $searchInput->key === TableBuilder::GLOBAL_SEARCH_KEY
         )->values();
 
         return $this;

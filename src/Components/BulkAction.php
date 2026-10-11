@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TranquilTools\TableBuilder\Components;
 
 use Closure;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use TranquilTools\TableBuilder\Http\Controllers\TableBulkActionController;
@@ -46,7 +47,7 @@ class BulkAction
 
     public function getUrl(): string
     {
-        /** @var Route */
+        /** @var Route $route */
         $route = app('router')->getRoutes()->getByAction(TableBulkActionController::class);
 
         /** @var array */

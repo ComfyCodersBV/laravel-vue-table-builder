@@ -23,12 +23,7 @@ class SearchInput
 
     public function clone(): static
     {
-        return new static(
-            $this->key,
-            $this->columns,
-            $this->label,
-            $this->value,
-        );
+        return clone $this;
     }
 
     public function toArray(): array

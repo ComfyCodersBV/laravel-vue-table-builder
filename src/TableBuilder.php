@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Conditionable;
 use InvalidArgumentException;
 use JsonSerializable;
+use ReflectionClass;
 use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
 use TranquilTools\TableBuilder\Components\Column;
 use TranquilTools\TableBuilder\Concerns\HasBulkActions;
@@ -124,12 +125,7 @@ class TableBuilder implements Arrayable, JsonSerializable
             return new QueryBuilder($resource);
         }
 
-        // If it's an Eloquent Builder, wrap it with QueryBuilder
-        if ($resource instanceof \Illuminate\Database\Eloquent\Builder) {
-            return new QueryBuilder($resource);
-        }
-
-        return new static($resource);
+        return (new ReflectionClass(static::class))->newInstance($resource);
     }
 
     public function setConfigurator(AbstractTable $configurator): self
@@ -383,7 +379,7 @@ class TableBuilder implements Arrayable, JsonSerializable
 
         if ($items !== null) {
             $rowActions = $this->resolveRowActions($items);
-            $data = $items->map(fn($item) => $this->transformItem($item))->all();
+            $data = $items->map(fn ($item) => $this->transformItem($item))->all();
         }
 
         return [
@@ -452,7 +448,7 @@ class TableBuilder implements Arrayable, JsonSerializable
         return $this->loadResource()->resolveRowLinks();
     }
 
-    public function loadResource(): self
+    public function loadResource(): static
     {
         if (! $this->resourceLoaded) {
             $this->resourceLoaded = true;

@@ -6,6 +6,4 @@ namespace TranquilTools\TableBuilder\Exceptions;
 
 use Exception;
 
-class PowerJoinsException extends Exception
-{
-}
+class PowerJoinsException extends Exception {}

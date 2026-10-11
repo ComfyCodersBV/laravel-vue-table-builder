@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use ReflectionClass;
 use TranquilTools\TableBuilder\Components\BulkAction;
 
 abstract class AbstractTable
@@ -31,7 +32,7 @@ abstract class AbstractTable
 
     public static function build(...$arguments): TableBuilder
     {
-        $table = new static(...$arguments);
+        $table = (new ReflectionClass(static::class))->newInstanceArgs($arguments);
 
         return $table->make()->beforeRender();
     }
