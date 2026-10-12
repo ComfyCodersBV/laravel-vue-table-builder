@@ -68,7 +68,8 @@ Use `disabled` with a reason when the user should see that the action exists but
 <TableBuilder :table="table" :confirm="(message) => dialog.ask(message)"/>
 ```
 
-The prop may return a boolean or a promise of one.
+The prop may return a boolean or a promise of one. Bulk actions use the same prop and pass a second `details` argument; see
+[Bulk Actions](bulk-actions.md#confirmation-dialog).
 
 ## Downloads
 

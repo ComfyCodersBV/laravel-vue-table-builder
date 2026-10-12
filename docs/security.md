@@ -58,8 +58,9 @@ Each url is made with `URL::temporarySignedRoute()` and checked by Laravel's `Va
 - `action` - the bulk action key. A key the table does not have is a `404`.
 - `expires` - the expiry, see below.
 
-A bulk action url also signs the query string of the page it was rendered on, which carries the
-active search and filters for "select all results". The export url signs only `table`, `params` and
+A bulk action url also signs the query string of the page it was rendered on. For "select all
+results" the component posts the sort, search and filters it is showing as `state` in the body, which
+takes the place of the table's own sort and filter keys from that query. The export url signs only `table`, `params` and
 `expires`: the component appends the current sort, search and filters when the button is pressed, so
 those may change after rendering. They select rows within the same table and are checked by the same
 authorization as the page itself.

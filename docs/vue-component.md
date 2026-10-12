@@ -33,7 +33,7 @@ The component is exported from the package's `resources/js/components/` director
 | `reorderable` | `boolean` | No   | Adds a drag handle in front of every row. See [Reordering](reordering.md)                                                                                                                                                                                                  |
 | `rowClass` | `(row, index) => string \| string[] \| Record<string, boolean>` | No | Extra classes per row, for status colours and similar                                                                                                                                                                     |
 | `emptyState` | `EmptyState` | No | Texts for an empty table, overriding the ones from the Table class. See [Empty State](empty-state.md)                                                                                                                                                              |
-| `confirm` | `(message) => boolean \| Promise<boolean>` | No | Asks the confirmation of a row action. Defaults to `window.confirm()`. See [Row Actions](row-actions.md)                                                                                                                                       |
+| `confirm` | `(message, details?) => boolean \| Promise<boolean>` | No | Asks the confirmation of a row or bulk action. Defaults to `window.confirm()`. A bulk action passes `details` with its `text`, `confirmButton` and `cancelButton`. See [Row Actions](row-actions.md) and [Bulk Actions](bulk-actions.md)                                                                                                                                       |
 
 ## Features Rendered
 
@@ -42,7 +42,7 @@ The component renders all of the following automatically based on what the PHP b
 | Feature                             | Rendered when                             |
 |-------------------------------------|-------------------------------------------|
 | Column headers with sort indicators | columns exist                             |
-| Column visibility dropdown          | any column has `can_be_hidden: true`      |
+| Column visibility dropdown          | any column has `can_be_hidden: true` and `columnToggle` is not `false` |
 | Filter dropdowns                    | filters array is non-empty                |
 | Search inputs                       | searchInputs map is non-empty             |
 | Pagination controls                 | `pagination` object is present            |

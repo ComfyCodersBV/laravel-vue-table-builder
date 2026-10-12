@@ -161,6 +161,18 @@ Hide a column by default (user can reveal it):
 ->column('notes', 'Notes', hidden: true)
 ```
 
+The "Columns" menu only renders when at least one column can be hidden. For a small or fixed table, turn it off
+while leaving `canBeHidden` alone:
+
+```php
+$table->withoutColumnToggle();
+
+$table->columnToggle(false);
+```
+
+The payload then carries `columnToggle: false`. A column that is `hidden: true` stays hidden, because nothing can reveal
+it any more.
+
 ## CSS Classes
 
 Per-column classes accept a string, a (nested) array of strings, or a conditional array:

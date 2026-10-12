@@ -45,6 +45,7 @@ interface TableData {
     queryKeys?: QueryKeys
     totals?: Totals | null
     export?: ExportConfig | null
+    columnToggle?: boolean              // false hides the "Columns" menu
 }
 
 interface RowAction {
@@ -174,6 +175,12 @@ interface BulkAction {
     confirmButton: string
     cancelButton: string
     requirePassword: boolean | string
+}
+
+interface ConfirmDetails {
+    text: string | null          // confirmText of a bulk action
+    confirmButton: string | null
+    cancelButton: string | null
 }
 ```
 

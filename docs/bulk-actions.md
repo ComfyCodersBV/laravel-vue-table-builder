@@ -50,7 +50,8 @@ bulkAction(
 ->bulkAction('Activate', each: fn($user) => $user->update(['active' => true]))
 ```
 
-Rows are processed in chunks of 1,000 to avoid memory issues.
+Rows are processed in chunks of 1,000 by primary key (`chunkById`), so a table sorted on another column still reaches
+every row and memory stays flat.
 
 ### `before` and `after` - hooks
 
@@ -76,7 +77,21 @@ Rows are processed in chunks of 1,000 to avoid memory issues.
 )
 ```
 
-Pass `true` to use the default translated confirmation message.
+Pass `true` to use the default translated confirmation message (`bulk_actions.confirm`).
+
+The Vue component asks before it posts, through the same mechanism as [row actions](row-actions.md#how-they-run):
+`window.confirm()` with the message and `confirmText` below it, or the component's `confirm` prop. That prop gets the
+message and the other texts:
+
+```vue
+<TableBuilder
+    :table="table"
+    :confirm="(message, details) => dialog.ask(message, details?.text, details?.confirmButton, details?.cancelButton)"
+/>
+```
+
+`details` is only passed for bulk actions; a row action calls the prop with the message alone. Cancelling keeps the
+selection and posts nothing.
 
 ## Password Confirmation
 
@@ -110,15 +125,36 @@ In the frontend, users can:
 - **Select all results** (across all pages) via the "Select all N results" prompt that appears after selecting the
   current page
 
-When "all results" is selected, `$ids` will be `['*']` and the backend re-applies all active filters/search before
-processing.
+When "all results" is selected, the selection bar shows the total and the component posts `ids: ['*']` together with
+`state`: the sort, search and filters the table is showing, as a query string (`filter[status]=open&sort=-created_at`,
+namespaced like every table parameter). The endpoint runs the action over the table's `filteredQuery()` with that
+state, so it reaches exactly the rows matching what the user sees, across every page, in chunks. Only the table's own
+sort and filter keys are taken from `state`; everything else in it is ignored.
+
+Without `state` (an older frontend, or your own client posting `['*']`) the filters from the page query the bulk action
+url was signed with are used, as before. Posted ids other than `['*']` are never narrowed by filters.
+
+A table built on a Spatie `QueryBuilder` applies its own filters from the page request; `state` does not change those.
+
+If you override `performBulkAction()` on an `AbstractTable`, `$ids === ['*']` means "everything in
+`$this->filteredQuery()`", which already carries the posted state:
+
+```php
+public function performBulkAction(int $key, array $ids): void
+{
+    $query = $ids === ['*'] ? $this->filteredQuery() : User::query()->whereKey($ids);
+
+    $query->reorder()->chunkById(1000, fn ($users) => $users->each->archive());
+}
+```
 
 ## Security
 
 Bulk action urls are signed by the server with an expiry and posted to the package route
 `table.bulk-action`. The signature covers the table class, its signed parameters, the action key and
-the query string of the page, so none of them can be swapped. The posted `ids` are not part of it,
-but they only ever select rows within the table's own `for()` query.
+the query string of the page, so none of them can be swapped. The posted `ids` and `state` are not
+part of it, but they only ever select rows within the table's own `for()` query: `state` can narrow
+the rows with the table's own filters and search, never widen them, the same way the export does.
 
 The signature does not say *who* is calling. Run the package routes in your `web` stack with `auth`
 and authorize the action on the table:
