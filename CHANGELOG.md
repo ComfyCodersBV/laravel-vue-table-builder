@@ -2,6 +2,17 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.6.1 - 2026-10-12
+
+* A bulk action posted by the http transport gets `{"performed": true}` back from the package route instead of a
+  redirect to the page, the same way reordering already answered. The `fetch()` no longer follows the redirect and
+  renders the whole page only to throw it away, and success no longer depends on how that page responds. After a
+  successful action the selection is cleared and the rows are refetched; after a failed one the selection stays and the
+  first validation error or the `message` of the response is shown instead of the generic error.
+* The filter toggle in the toolbar has an accessible name, translated through the new `filters.toggle` key.
+* Tests cover the bulk action flow of both transports: the selection is cleared and the reloaded rows render after
+  success, and the selection and the error stay after a failure.
+
 ## 1.6.0 - 2026-10-11
 
 * `total('amount')` adds a footer row with a total per column, computed on the server over every row that matches the
