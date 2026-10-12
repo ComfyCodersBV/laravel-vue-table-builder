@@ -2,6 +2,24 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.7.0 - 2026-10-12
+
+* "Select all N results" now does what the docs promised: the component posts `ids: ['*']` instead of the ids on the
+  current page, together with `state`, the sort, search and filters the table is showing as a query string. The bulk
+  action endpoint takes the table's own sort and filter keys from `state` and runs the action over the table's
+  filtered query, so it reaches every matching row on every page. Without `state` the filters of the signed page query
+  apply, as before. The selection bar shows the total while all results are selected.
+* A bulk action reads its rows in chunks of 1,000 by primary key without the table's sort. A table sorted on another
+  column, or with a default sort, skipped rows past the first chunk; it now reaches all of them. Running a bulk action
+  no longer adds the sort and eager loads to the table's own query either.
+* The `confirm` option of a bulk action is honoured by the Vue component: it asks before posting, through
+  `window.confirm()` with `confirmText` below the message, or through the component's `confirm` prop, which now gets
+  a second `details` argument with `text`, `confirmButton` and `cancelButton` for bulk actions. `confirm: true` uses
+  the new `bulk_actions.confirm` translation. Cancelling posts nothing and keeps the selection.
+* `withoutColumnToggle()` and `columnToggle(false)` hide the "Columns" menu for a small or fixed table. The payload
+  carries `columnToggle`, which is also `false` when no column can be hidden.
+* `BulkAction` and `ConfirmDetails` are exported from the package entry.
+
 ## 1.6.1 - 2026-10-12
 
 * A bulk action posted by the http transport gets `{"performed": true}` back from the package route instead of a
