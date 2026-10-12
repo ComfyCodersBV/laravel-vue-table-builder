@@ -2,6 +2,23 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.8.0 - 2026-10-12
+
+* Rows are identified by a row key instead of `row.id`. The payload carries `rowKey`: the model's `getKeyName()` by
+  default, so a model keyed by `uuid` works without configuration, or `id` for plain query and array tables.
+  `rowKey('code')` sets another column; `primaryKey()` remains as the older name. Selection, the bulk action `ids`,
+  reordering and the new `key` in the `row-click` payload use it. The endpoint matches posted ids on that column when it
+  is not the primary key, and chunks a `DB::table()` query by it.
+* The selection holds row keys instead of row positions. A selected row stays selected when the rows come back in
+  another order, and the selection is kept while paging, sorting or changing the page size, so rows of several pages are
+  posted together. Changing a filter or the search clears it, including "Select all N results". The header checkbox is
+  checked when every row on the page is selected, and its menu offers "Select this page" whenever that is not the case.
+  A row whose key is `0` is posted now instead of being dropped; a row without a key value cannot be selected.
+* Tables built on a Spatie `QueryBuilder` honour the posted `state` of a bulk action over all results: the endpoint puts
+  the sort and filters on the request and builds the table again, so `allowedFilters()` and `allowedSorts()` read them.
+  `filteredQuery($request)` on such a table class builds `for()` again with that request.
+* `AbstractTable::refresh()` forgets the built table and builds it again from the current request.
+
 ## 1.7.0 - 2026-10-12
 
 * "Select all N results" now does what the docs promised: the component posts `ids: ['*']` instead of the ids on the
