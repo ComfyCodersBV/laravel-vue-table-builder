@@ -88,6 +88,12 @@ $query = SpatieQueryBuilder::for(User::class)
 TableBuilder::for($query)->paginate(15);
 ```
 
+Spatie applies its filters and sorts while the query is built. When a table class passes a request of its own to
+`filteredQuery($request)`, the package builds `for()` again with that request in the container, so the Spatie query
+reads its sort and filters from it. Bulk actions over "all results" and the export get the posted table state this way.
+A table made with `TableBuilder::for($query)` outside a table class has no `for()` to call again and keeps the filters
+of the page request.
+
 ## Bulk Action Processing
 
 When a bulk action targets "all results", the query re-applies all active filters and search inputs before chunking:

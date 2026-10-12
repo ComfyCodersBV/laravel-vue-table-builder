@@ -326,7 +326,7 @@ class QueryBuilder extends TableBuilder
         $originalBuilder = $this->builder;
         $originalRequest = $this->request;
 
-        $this->builder = clone $originalBuilder;
+        $this->builder = $this->derivedBuilder($request);
         $this->request = $request ?? $originalRequest;
 
         try {
@@ -338,6 +338,30 @@ class QueryBuilder extends TableBuilder
         } finally {
             $this->builder = $originalBuilder;
             $this->request = $originalRequest;
+        }
+    }
+
+    private function derivedBuilder(?Request $request): BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder
+    {
+        if (! $this->builder instanceof SpatieQueryBuilder || is_null($request) || $request === $this->request || is_null($this->configurator)) {
+            return clone $this->builder;
+        }
+
+        $rebuilt = $this->resolveWithRequest($request, fn () => $this->configurator->for());
+
+        return $rebuilt instanceof SpatieQueryBuilder ? $rebuilt : clone $this->builder;
+    }
+
+    private function resolveWithRequest(Request $request, callable $resolve): mixed
+    {
+        $current = app('request');
+
+        app()->instance('request', $request);
+
+        try {
+            return $resolve();
+        } finally {
+            app()->instance('request', $current);
         }
     }
 

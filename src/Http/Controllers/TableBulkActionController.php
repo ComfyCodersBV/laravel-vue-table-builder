@@ -65,5 +65,7 @@ class TableBulkActionController extends Controller
                 Arr::only($posted, $stateKeys),
             ));
         }
+
+        $table->refresh();
     }
 }

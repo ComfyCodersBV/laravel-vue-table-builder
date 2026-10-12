@@ -156,7 +156,10 @@ sort and filter keys are taken from `state`; everything else in it is ignored.
 Without `state` (an older frontend, or your own client posting `['*']`) the filters from the page query the bulk action
 url was signed with are used, as before. Posted ids other than `['*']` are never narrowed by filters.
 
-A table built on a Spatie `QueryBuilder` applies its own filters from the page request; `state` does not change those.
+A table built on a Spatie `QueryBuilder` honours `state` too: the endpoint puts the posted sort and filters on the
+request and builds the table again, so the `allowedFilters()` and `allowedSorts()` in `for()` read them. This needs
+`for()` to build the Spatie query from the current request, which is what `SpatieQueryBuilder::for(User::class)` does
+when you pass no request of your own.
 
 If you override `performBulkAction()` on an `AbstractTable`, `$ids === ['*']` means "everything in
 `$this->filteredQuery()`", which already carries the posted state:

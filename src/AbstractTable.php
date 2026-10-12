@@ -86,6 +86,13 @@ abstract class AbstractTable
         );
     }
 
+    public function refresh(): TableBuilder
+    {
+        $this->table = null;
+
+        return $this->make();
+    }
+
     public function configure(TableBuilder $table)
     {
         //
