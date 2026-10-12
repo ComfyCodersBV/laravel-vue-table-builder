@@ -61,6 +61,30 @@ it('performs the bulk action for every row when all rows are selected', function
     expect(Product::count())->toBe(0);
 });
 
+it('answers a json request with json instead of a redirect to the page', function () {
+    $this->postJson(bulkActionUrl(EndpointProductsTable::class), ['ids' => [1]])
+        ->assertOk()
+        ->assertExactJson([
+            'performed' => true,
+        ]);
+
+    expect(Product::pluck('name')->all())->toBe(['Table']);
+});
+
+it('redirects an inertia request back to the page', function () {
+    $this->postJson(bulkActionUrl(EndpointProductsTable::class), ['ids' => [1]], [
+        'X-Inertia' => 'true',
+    ])->assertRedirect();
+});
+
+it('answers a json request without ids with a validation error', function () {
+    $this->postJson(bulkActionUrl(EndpointProductsTable::class), ['ids' => []])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('ids');
+
+    expect(Product::count())->toBe(2);
+});
+
 it('rejects an unsigned request', function () {
     $this->post(route('table.bulk-action', [
         'table' => base64_encode(EndpointProductsTable::class),

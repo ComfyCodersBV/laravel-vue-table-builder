@@ -29,6 +29,7 @@ return [
         'custom' => 'Custom range',
         'from' => 'From',
         'to' => 'To',
+        'toggle' => 'Filters',
     ],
 
     'date_presets' => [

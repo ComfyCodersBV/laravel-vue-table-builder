@@ -29,6 +29,7 @@ return [
         'custom' => 'Aangepaste periode',
         'from' => 'Van',
         'to' => 'Tot en met',
+        'toggle' => 'Filters',
     ],
 
     'date_presets' => [

@@ -140,7 +140,9 @@ export url in the query keys of the table, so the file matches what the table sh
 
 Bulk actions post `{ids: [...]}` to the action url with same-origin credentials and the
 `X-XSRF-TOKEN` header, so a Laravel web route accepts them. The url is still signed by the PHP
-builder. After a successful response the selection is cleared and the table refetches.
+builder. The package route answers such a request with `{"performed": true}` instead of a redirect back to the page.
+After a successful response the selection is cleared and the table refetches; after a failed one the selection stays
+and the first validation error or the `message` of the response is shown above the table.
 
 ## Using the Composable Directly
 

@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {router} from '@inertiajs/vue3'
 import {mount} from '@vue/test-utils'
 import {h} from 'vue'
@@ -536,5 +536,142 @@ describe('TableBuilder export', () => {
         expect(appended.has('signature')).toBe(false)
 
         window.history.replaceState({}, '', '/')
+    })
+})
+
+describe('TableBuilder bulk actions', () => {
+    const bulkUrl = '/table/bulk-action?signature=x'
+
+    beforeEach(() => {
+        vi.mocked(router.post).mockClear()
+    })
+
+    function bulkTable(rows = [{id: 'a', name: 'Open'}, {id: 'b', name: 'Second'}]): TableData {
+        return {
+            ...tableData(),
+            data: rows,
+            bulkActions: [{key: '0', label: 'Resolve', url: bulkUrl, confirm: false, confirmText: '', confirmButton: '', cancelButton: '', requirePassword: false}],
+        } as unknown as TableData
+    }
+
+    async function selectFirstRowAndRun(wrapper: ReturnType<typeof mount>) {
+        await wrapper.find('tbody [role="checkbox"]').trigger('click')
+        await flush()
+
+        const trigger = wrapper.findAll('button').find((button) => button.text() === 'title')!
+        await trigger.trigger('click')
+        await flush()
+
+        const item = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find((element) => element.textContent?.trim() === 'Resolve')!
+        item.click()
+        await flush()
+    }
+
+    function selectionBar(wrapper: ReturnType<typeof mount>) {
+        return wrapper.text().includes('selected_simple')
+    }
+
+    function postedOptions(): any {
+        return vi.mocked(router.post).mock.calls.at(-1)![2]
+    }
+
+    it('clears the selection and renders the reloaded rows after an inertia bulk action', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: bulkTable()}, attachTo: document.body})
+
+        await selectFirstRowAndRun(wrapper)
+
+        expect(router.post).toHaveBeenCalledWith(bulkUrl, {ids: ['a']}, expect.objectContaining({preserveScroll: true}))
+        expect(selectionBar(wrapper)).toBe(true)
+
+        postedOptions().onSuccess()
+        await wrapper.setProps({table: bulkTable([{id: 'a', name: 'Resolved'}, {id: 'b', name: 'Second'}])})
+
+        expect(selectionBar(wrapper)).toBe(false)
+        expect(wrapper.find('tbody').text()).toContain('Resolved')
+        expect(wrapper.find('tbody').text()).not.toContain('Open')
+
+        wrapper.unmount()
+    })
+
+    it('keeps the selection and shows the error when an inertia bulk action fails', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: bulkTable()}, attachTo: document.body})
+
+        await selectFirstRowAndRun(wrapper)
+
+        postedOptions().onError({ids: 'Pick at least one row.'})
+        await flush()
+
+        expect(selectionBar(wrapper)).toBe(true)
+        expect(wrapper.text()).toContain('Pick at least one row.')
+
+        wrapper.unmount()
+    })
+
+    describe('over http', () => {
+        const fetchMock = vi.fn()
+
+        beforeEach(() => {
+            fetchMock.mockReset()
+            vi.stubGlobal('fetch', fetchMock)
+        })
+
+        afterEach(() => {
+            vi.unstubAllGlobals()
+        })
+
+        function mountHttp(fetcher: ReturnType<typeof vi.fn>) {
+            return mount(TableBuilder, {
+                props: {table: bulkTable([]), transport: 'http', source: '/lines', fetcher},
+                attachTo: document.body,
+            })
+        }
+
+        it('clears the selection and refetches the rows after a successful bulk action', async () => {
+            const fetcher = vi.fn()
+                .mockResolvedValueOnce({data: [{id: 'a', name: 'Open'}]})
+                .mockResolvedValueOnce({data: [{id: 'a', name: 'Resolved'}]})
+            fetchMock.mockResolvedValue(new Response(JSON.stringify({performed: true}), {status: 200}))
+
+            const wrapper = mountHttp(fetcher)
+            await flush()
+
+            await selectFirstRowAndRun(wrapper)
+            await flush()
+
+            expect(fetchMock).toHaveBeenCalledWith(bulkUrl, expect.objectContaining({method: 'POST', body: JSON.stringify({ids: ['a']})}))
+            expect(fetcher).toHaveBeenCalledTimes(2)
+            expect(selectionBar(wrapper)).toBe(false)
+            expect(wrapper.find('tbody').text()).toContain('Resolved')
+
+            wrapper.unmount()
+        })
+
+        it('keeps the selection and shows the server error when the bulk action fails', async () => {
+            const fetcher = vi.fn().mockResolvedValue({data: [{id: 'a', name: 'Open'}]})
+            fetchMock.mockResolvedValue(new Response(JSON.stringify({message: 'Invalid', errors: {ids: ['Pick at least one row.']}}), {status: 422}))
+
+            const wrapper = mountHttp(fetcher)
+            await flush()
+
+            await selectFirstRowAndRun(wrapper)
+            await flush()
+
+            expect(fetcher).toHaveBeenCalledTimes(1)
+            expect(selectionBar(wrapper)).toBe(true)
+            expect(wrapper.text()).toContain('Pick at least one row.')
+
+            wrapper.unmount()
+        })
+    })
+})
+
+describe('TableBuilder toolbar', () => {
+    it('gives the filter toggle an accessible name', () => {
+        const table = tableData()
+        table.filters = [{key: 'status', label: 'Status', options: {open: 'Open'}, value: null, type: 'select'}]
+
+        const toggle = mount(TableBuilder, {props: {table}}).find('[data-filter-toggle]')
+
+        expect(toggle.attributes('aria-label')).toBe('toggle')
     })
 })

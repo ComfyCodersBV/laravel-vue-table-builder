@@ -594,6 +594,17 @@ function navigatePage(direction: -1 | 1) {
     applyPage(direction)
 }
 
+async function failureMessage(response: Response, fallback: string): Promise<string> {
+    const body = await response.json().catch(() => null)
+    const firstError = body?.errors ? Object.values(body.errors).flat()[0] : null
+
+    if (typeof firstError === 'string' && firstError) {
+        return firstError
+    }
+
+    return typeof body?.message === 'string' && body.message ? body.message : fallback
+}
+
 function performBulkAction(action: any) {
     const ids = Array.from(rowSelection.value).map(index => (table.value.data[index] as any)?.id).filter(Boolean)
     if (ids.length === 0) return
@@ -607,9 +618,9 @@ function performBulkAction(action: any) {
             headers: {'Content-Type': 'application/json', Accept: 'application/json', ...xsrfHeaders()},
             body: JSON.stringify({ids}),
         })
-            .then((response) => {
+            .then(async (response) => {
                 if (!response.ok) {
-                    throw new Error(t('vue-table-builder::table.bulk_actions.error'))
+                    throw new Error(await failureMessage(response, t('vue-table-builder::table.bulk_actions.error')))
                 }
 
                 resetRowSelection()
@@ -640,8 +651,8 @@ function performBulkAction(action: any) {
                 <DropdownMenu v-if="table.filters && Object.keys(table.filters).length > 0"
                               v-model:open="filterDropdownOpen">
                     <DropdownMenuTrigger as-child>
-                        <Button variant="outline">
-                            <Funnel class="h-4 w-4"/>
+                        <Button variant="outline" :aria-label="t('vue-table-builder::table.filters.toggle')" data-filter-toggle>
+                            <Funnel class="h-4 w-4" aria-hidden="true"/>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" class="w-64">
