@@ -17,6 +17,8 @@ trait HasColumns
 
     protected static bool $defaultColumnCanBeHidden = true;
 
+    protected bool $columnToggle = true;
+
     public static function defaultColumnCanBeHidden(bool $state = true)
     {
         static::$defaultColumnCanBeHidden = $state;
@@ -125,5 +127,22 @@ trait HasColumns
         return $this->columns
             ->filter(fn (Column $column) => $column->canBeHidden)
             ->isNotEmpty();
+    }
+
+    public function columnToggle(bool $enabled = true): self
+    {
+        $this->columnToggle = $enabled;
+
+        return $this;
+    }
+
+    public function withoutColumnToggle(): self
+    {
+        return $this->columnToggle(false);
+    }
+
+    public function showsColumnToggle(): bool
+    {
+        return $this->columnToggle && $this->hasToggleableColumns();
     }
 }

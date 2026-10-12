@@ -160,3 +160,28 @@ it('marks the default sorted column as sorted in the payload', function () {
 
     expect($table->columns()->first()->sorted)->toBe('desc');
 });
+
+it('offers the column toggle while a column can be hidden', function () {
+    $table = TableBuilder::for([]);
+    $table->column('name')->column('sku', canBeHidden: false);
+
+    expect($table->toArray()['columnToggle'])->toBeTrue();
+});
+
+it('hides the column toggle when no column can be hidden', function () {
+    $table = TableBuilder::for([]);
+    $table->column('name', canBeHidden: false)->column('sku', canBeHidden: false);
+
+    expect($table->toArray()['columnToggle'])->toBeFalse();
+});
+
+it('hides the column toggle when the table turns it off', function () {
+    $withoutToggle = TableBuilder::for([]);
+    $withoutToggle->column('name')->withoutColumnToggle();
+
+    $toggleOff = TableBuilder::for([]);
+    $toggleOff->column('name')->columnToggle(false);
+
+    expect($withoutToggle->toArray()['columnToggle'])->toBeFalse()
+        ->and($toggleOff->toArray()['columnToggle'])->toBeFalse();
+});

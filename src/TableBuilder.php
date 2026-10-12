@@ -410,6 +410,7 @@ class TableBuilder implements Arrayable, JsonSerializable
             'queryKeys' => $this->queryKeys(),
             'totals' => $totals,
             'export' => $this->exportPayload(),
+            'columnToggle' => $this->showsColumnToggle(),
         ];
     }
 
