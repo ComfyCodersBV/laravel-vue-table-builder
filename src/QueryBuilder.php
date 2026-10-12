@@ -287,14 +287,11 @@ class QueryBuilder extends TableBuilder
 
     private function applySortingAndEagerLoading(): void
     {
+        $this->applyEagerLoading();
+
         $anySorted = false;
 
         $this->columns()->each(function (Column $column) use (&$anySorted) {
-            if ($column->isNested()) {
-                // Eager load the relationship.
-                $this->builder->with($column->relationshipName());
-            }
-
             if ($column->sorted) {
                 $this->applySorting($column);
                 $anySorted = true;
@@ -308,7 +305,23 @@ class QueryBuilder extends TableBuilder
         }
     }
 
+    private function applyEagerLoading(): void
+    {
+        $this->columns()
+            ->filter(fn (Column $column) => $column->isNested())
+            ->each(fn (Column $column) => $this->builder->with($column->relationshipName()));
+    }
+
     public function filteredQuery(?Request $request = null): BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder
+    {
+        return $this->derivedQuery($request, function () {
+            $this->applyFilters();
+            $this->applySearchInputs();
+            $this->applySortingAndEagerLoading();
+        });
+    }
+
+    private function derivedQuery(?Request $request, callable $apply): BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder
     {
         $originalBuilder = $this->builder;
         $originalRequest = $this->request;
@@ -318,9 +331,7 @@ class QueryBuilder extends TableBuilder
 
         try {
             if (! $this->builder instanceof SpatieQueryBuilder) {
-                $this->applyFilters();
-                $this->applySearchInputs();
-                $this->applySortingAndEagerLoading();
+                $apply();
             }
 
             return $this->builder;
@@ -438,25 +449,34 @@ class QueryBuilder extends TableBuilder
 
     public function performBulkAction(callable $action, array $ids)
     {
-        $shouldApplyFiltersAndSearchInputs = false;
+        $query = $this->bulkActionQuery($ids);
 
-        if (! $this->builder instanceof SpatieQueryBuilder) {
-            $shouldApplyFiltersAndSearchInputs = true;
+        $chunked = $query instanceof SpatieQueryBuilder ? $query->getEloquentBuilder() : $query;
 
-            $this->applySortingAndEagerLoading();
-        }
+        $chunked->reorder()->chunkById(1000, function (Collection $results) use ($action) {
+            $results->each($action);
+        });
+    }
 
-        if ($ids === ['*']) {
-            if ($shouldApplyFiltersAndSearchInputs) {
+    private function bulkActionQuery(array $ids): BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder
+    {
+        $query = $this->derivedQuery(null, function () use ($ids) {
+            $this->applyEagerLoading();
+
+            if ($ids === ['*']) {
                 $this->applyFilters();
                 $this->applySearchInputs();
             }
-        } else {
-            $this->builder->whereKey($ids);
+        });
+
+        if ($ids === ['*']) {
+            return $query;
         }
 
-        $this->builder->chunkById(1000, function (Collection $results) use ($action) {
-            $results->each($action);
-        });
+        if ($query instanceof BaseQueryBuilder) {
+            return $query->whereIn($this->reorderKeyName(), $ids);
+        }
+
+        return $query->whereKey($ids);
     }
 }

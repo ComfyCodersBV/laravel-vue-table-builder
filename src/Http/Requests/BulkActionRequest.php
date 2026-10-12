@@ -16,6 +16,10 @@ class BulkActionRequest extends FormRequest
                 'array',
                 'min:1',
             ],
+            'state' => [
+                'nullable',
+                'string',
+            ],
         ];
     }
 }

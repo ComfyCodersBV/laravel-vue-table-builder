@@ -8,6 +8,8 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Arr;
+use TranquilTools\TableBuilder\AbstractTable;
 use TranquilTools\TableBuilder\Http\Requests\BulkActionRequest;
 use TranquilTools\TableBuilder\Routing\TableResolver;
 
@@ -27,7 +29,13 @@ class TableBulkActionController extends Controller
             abort(404);
         }
 
-        $table->performBulkAction($key, $request->input('ids', []));
+        $ids = $request->input('ids', []);
+
+        if ($ids === ['*']) {
+            $this->applyPostedTableState($request, $table);
+        }
+
+        $table->performBulkAction($key, $ids);
 
         if ($request->expectsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
@@ -36,5 +44,26 @@ class TableBulkActionController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    private function applyPostedTableState(BulkActionRequest $request, AbstractTable $table): void
+    {
+        if (! $request->has('state')) {
+            return;
+        }
+
+        parse_str(ltrim((string) $request->input('state'), '?'), $posted);
+
+        $stateKeys = array_values(Arr::only($table->make()->queryKeys(), [
+            'sort',
+            'filter',
+        ]));
+
+        foreach ([$request, request()] as $target) {
+            $target->query->replace(array_merge(
+                Arr::except($target->query->all(), $stateKeys),
+                Arr::only($posted, $stateKeys),
+            ));
+        }
     }
 }

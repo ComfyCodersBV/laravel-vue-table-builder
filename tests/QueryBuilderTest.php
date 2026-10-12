@@ -299,3 +299,46 @@ it('respects filters when a bulk action targets all rows', function () {
 
     expect($names)->toBe(['Chair', 'Bench']);
 });
+
+it('respects the global search when a bulk action targets all rows', function () {
+    $table = productTable('/?filter[global]=BBB');
+    $table->column('name')->withGlobalSearch(columns: ['name', 'sku']);
+
+    $names = [];
+
+    $table->performBulkAction(function (Product $product) use (&$names) {
+        $names[] = $product->name;
+    }, ['*']);
+
+    expect($names)->toBe(['Table']);
+});
+
+it('reaches every row of a sorted table across chunks when all rows are selected', function () {
+    Product::query()->insert(collect(range(1, 1100))
+        ->map(fn (int $number) => [
+            'name' => 'Product '.str_pad((string) (1101 - $number), 4, '0', STR_PAD_LEFT),
+            'sku' => "BULK-{$number}",
+        ])
+        ->all());
+
+    $table = productTable('/?sort=name');
+    $table->column('name', sortable: true);
+
+    $count = 0;
+
+    $table->performBulkAction(function () use (&$count) {
+        $count++;
+    }, ['*']);
+
+    expect($count)->toBe(1103);
+});
+
+it('leaves the table query untouched after a bulk action', function () {
+    $table = productTable('/?filter[is_active]=1');
+    $table->column('name')->selectFilter('is_active', ['1' => 'Active']);
+
+    $table->performBulkAction(fn () => null, ['*']);
+    $table->performBulkAction(fn () => null, [2]);
+
+    expect(tableColumn($table->toArray()['data'], 'name'))->toBe(['Chair', 'Bench']);
+});
