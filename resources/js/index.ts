@@ -10,7 +10,9 @@ export type {
     TableTransportOptions,
 } from './composables/useTableTransport'
 export type {
+    BulkAction,
     Column,
+    ConfirmDetails,
     DateRangePreset,
     EmptyState,
     ExportConfig,

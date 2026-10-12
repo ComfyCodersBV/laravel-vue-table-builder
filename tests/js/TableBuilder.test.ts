@@ -607,6 +607,98 @@ describe('TableBuilder bulk actions', () => {
         wrapper.unmount()
     })
 
+    function paginatedBulkTable(overrides: Record<string, unknown> = {}): TableData {
+        return {
+            ...bulkTable(),
+            pagination: {current_page: 1, from: 1, to: 2, total: 40, per_page: 2, last_page: 20, links: []},
+            ...overrides,
+        } as unknown as TableData
+    }
+
+    function menuItem(text: string): HTMLElement {
+        return Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find((element) => element.textContent?.trim() === text)!
+    }
+
+    async function selectAllResults(wrapper: ReturnType<typeof mount>) {
+        await wrapper.find('thead .cursor-pointer').trigger('click')
+        await flush()
+
+        menuItem('select_all_results').click()
+        await flush()
+    }
+
+    async function runAction(wrapper: ReturnType<typeof mount>, label = 'Resolve') {
+        await wrapper.findAll('button').find((button) => button.text() === 'title')!.trigger('click')
+        await flush()
+
+        menuItem(label).click()
+        await flush()
+    }
+
+    it('posts all results with the current state of the page when every result is selected', async () => {
+        window.history.replaceState({}, '', '/lines?lines_filter%5Bstatus%5D=open&signature=x')
+
+        const wrapper = mount(TableBuilder, {props: {table: paginatedBulkTable()}, attachTo: document.body})
+
+        await selectAllResults(wrapper)
+
+        expect(wrapper.text()).toContain('selected_simple')
+
+        await runAction(wrapper)
+
+        expect(router.post).toHaveBeenCalledWith(bulkUrl, {ids: ['*'], state: 'lines_filter%5Bstatus%5D=open'}, expect.anything())
+
+        wrapper.unmount()
+        window.history.replaceState({}, '', '/')
+    })
+
+    it('asks the confirm prop with the texts of the action before posting', async () => {
+        const confirm = vi.fn().mockResolvedValue(true)
+        const table = bulkTable()
+        table.bulkActions[0] = {...table.bulkActions[0], confirm: 'Resolve these errors?', confirmText: 'They disappear from the list.', confirmButton: 'Resolve', cancelButton: 'Keep'}
+
+        const wrapper = mount(TableBuilder, {props: {table, confirm}, attachTo: document.body})
+
+        await selectFirstRowAndRun(wrapper)
+
+        expect(confirm).toHaveBeenCalledWith('Resolve these errors?', {text: 'They disappear from the list.', confirmButton: 'Resolve', cancelButton: 'Keep'})
+        expect(router.post).toHaveBeenCalledWith(bulkUrl, {ids: ['a']}, expect.anything())
+
+        wrapper.unmount()
+    })
+
+    it('does not post a bulk action that is not confirmed', async () => {
+        const confirm = vi.fn().mockResolvedValue(false)
+        const table = bulkTable()
+        table.bulkActions[0] = {...table.bulkActions[0], confirm: true}
+
+        const wrapper = mount(TableBuilder, {props: {table, confirm}, attachTo: document.body})
+
+        await selectFirstRowAndRun(wrapper)
+
+        expect(confirm).toHaveBeenCalledWith('confirm', expect.anything())
+        expect(router.post).not.toHaveBeenCalled()
+        expect(selectionBar(wrapper)).toBe(true)
+
+        wrapper.unmount()
+    })
+
+    it('falls back to window.confirm with the message and its text', async () => {
+        const nativeConfirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+        const table = bulkTable()
+        table.bulkActions[0] = {...table.bulkActions[0], confirm: 'Resolve?', confirmText: 'Sure?'}
+
+        const wrapper = mount(TableBuilder, {props: {table}, attachTo: document.body})
+
+        await selectFirstRowAndRun(wrapper)
+
+        expect(nativeConfirm).toHaveBeenCalledWith('Resolve?\n\nSure?')
+        expect(router.post).not.toHaveBeenCalled()
+
+        nativeConfirm.mockRestore()
+        wrapper.unmount()
+    })
+
     describe('over http', () => {
         const fetchMock = vi.fn()
 
@@ -646,6 +738,35 @@ describe('TableBuilder bulk actions', () => {
             wrapper.unmount()
         })
 
+        it('posts all results with the sort, search and filters it is showing', async () => {
+            const fetcher = vi.fn().mockResolvedValue({
+                data: [{id: 'a', name: 'Open'}, {id: 'b', name: 'Second'}],
+                pagination: {current_page: 1, from: 1, to: 2, total: 40, per_page: 2, last_page: 20, links: []},
+            })
+            fetchMock.mockResolvedValue(new Response(JSON.stringify({performed: true}), {status: 200}))
+
+            const table = {
+                ...bulkTable([]),
+                filters: [{key: 'status', label: 'Status', options: {open: 'Open'}, value: 'open', type: 'select'}],
+            } as unknown as TableData
+
+            const wrapper = mount(TableBuilder, {
+                props: {table, transport: 'http', source: '/lines', fetcher},
+                attachTo: document.body,
+            })
+            await flush()
+
+            await selectAllResults(wrapper)
+            await runAction(wrapper)
+            await flush()
+
+            expect(fetchMock).toHaveBeenCalledWith(bulkUrl, expect.objectContaining({
+                body: JSON.stringify({ids: ['*'], state: 'lines_filter%5Bstatus%5D=open'}),
+            }))
+
+            wrapper.unmount()
+        })
+
         it('keeps the selection and shows the server error when the bulk action fails', async () => {
             const fetcher = vi.fn().mockResolvedValue({data: [{id: 'a', name: 'Open'}]})
             fetchMock.mockResolvedValue(new Response(JSON.stringify({message: 'Invalid', errors: {ids: ['Pick at least one row.']}}), {status: 422}))
@@ -673,5 +794,21 @@ describe('TableBuilder toolbar', () => {
         const toggle = mount(TableBuilder, {props: {table}}).find('[data-filter-toggle]')
 
         expect(toggle.attributes('aria-label')).toBe('toggle')
+    })
+
+    it('shows the column toggle while a column can be hidden', () => {
+        const table = tableData()
+        table.columns = [{...column('name'), can_be_hidden: true}]
+
+        expect(mount(TableBuilder, {props: {table}}).text()).toContain('columns')
+    })
+
+    it('hides the column toggle when the table turns it off or no column can be hidden', () => {
+        const turnedOff = tableData()
+        turnedOff.columns = [{...column('name'), can_be_hidden: true}]
+        turnedOff.columnToggle = false
+
+        expect(mount(TableBuilder, {props: {table: turnedOff}}).text()).not.toContain('columns')
+        expect(mount(TableBuilder, {props: {table: tableData()}}).text()).not.toContain('columns')
     })
 })

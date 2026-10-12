@@ -63,6 +63,12 @@ export interface BulkAction {
     requirePassword: boolean | string
 }
 
+export interface ConfirmDetails {
+    text: string | null
+    confirmButton: string | null
+    cancelButton: string | null
+}
+
 export type RowActionMethod = 'get' | 'post' | 'put' | 'patch' | 'delete'
 
 export type RowActionVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
@@ -131,4 +137,5 @@ export interface TableData {
     queryKeys?: QueryKeys
     totals?: Totals | null
     export?: ExportConfig | null
+    columnToggle?: boolean
 }

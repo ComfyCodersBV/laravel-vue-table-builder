@@ -15,6 +15,7 @@ return [
         'clear_selection' => 'Selectie wissen',
         'select_this_page' => 'Deze pagina selecteren (:count)',
         'select_all_results' => 'Alle :total resultaten selecteren',
+        'confirm' => 'Weet je zeker dat je deze actie op de geselecteerde rijen wilt uitvoeren?',
         'error' => 'Er is iets misgegaan bij het uitvoeren van de actie.',
     ],
 

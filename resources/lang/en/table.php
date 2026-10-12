@@ -15,6 +15,7 @@ return [
         'clear_selection' => 'Clear selection',
         'select_this_page' => 'Select this page (:count)',
         'select_all_results' => 'Select all :total results',
+        'confirm' => 'Are you sure you want to perform this action on the selected rows?',
         'error' => 'Something went wrong while performing the action.',
     ],
 

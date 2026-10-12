@@ -14,7 +14,7 @@ import {Input} from './ui/input';
 import {Checkbox} from './ui/checkbox';
 import {Button} from './ui/button';
 import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Download, Funnel, GripVertical, Search, X} from '@lucide/vue'
-import type {EmptyState, Filter, RowAction, TableData} from '../types/table-builder'
+import type {BulkAction, ConfirmDetails, EmptyState, Filter, RowAction, TableData} from '../types/table-builder'
 import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
 import {useTableTransport, xsrfHeaders, type TableAdapter, type TableFetcher, type TableTransport} from '../composables/useTableTransport'
@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<{
     reorderable?: boolean
     rowClass?: (row: any, index: number) => string | string[] | Record<string, boolean> | undefined
     emptyState?: EmptyState
-    confirm?: (message: string) => boolean | Promise<boolean>
+    confirm?: (message: string, details?: ConfirmDetails) => boolean | Promise<boolean>
 }>(), {
     transport: 'inertia',
     paginationPosition: 'bottom',
@@ -116,7 +116,7 @@ function prepareExport(event: MouseEvent): void {
 
 defineExpose({reload, currentQuery: () => ({...query.value}), exportUrl})
 
-const columnSelector = computed(() => table.value.columns.some((column) => column.can_be_hidden))
+const columnSelector = computed(() => table.value.columnToggle !== false && table.value.columns.some((column) => column.can_be_hidden))
 
 const hiddenColumns = ref<Set<string>>(new Set(
     props.table.columns.filter(column => column.hidden).map(column => column.key)
@@ -146,12 +146,16 @@ const hasActions = computed(() => Boolean(slots.actions) || hasRowActions.value)
 
 const actionRunning = ref(false)
 
-async function confirmed(message: string | null): Promise<boolean> {
+async function confirmed(message: string | null, details?: ConfirmDetails): Promise<boolean> {
     if (!message) {
         return true
     }
 
-    return props.confirm ? await props.confirm(message) : window.confirm(message)
+    if (props.confirm) {
+        return details ? await props.confirm(message, details) : await props.confirm(message)
+    }
+
+    return window.confirm(details?.text ? `${message}\n\n${details.text}` : message)
 }
 
 function opensInNewTab(event: MouseEvent): boolean {
@@ -521,7 +525,9 @@ const showsBottomPagination = computed(() => showsPagination.value && props.pagi
 
 const rowSelection = ref<Set<number>>(new Set())
 const allResultsSelected = ref(false)
-const selectedCount = computed(() => rowSelection.value.size)
+const selectedCount = computed(() =>
+    allResultsSelected.value && table.value.pagination ? table.value.pagination.total : rowSelection.value.size
+)
 const bulkActions = computed(() => table.value.bulkActions ?? [])
 const allVisibleItemsAreSelected = computed(() =>
     allResultsSelected.value ||
@@ -605,9 +611,40 @@ async function failureMessage(response: Response, fallback: string): Promise<str
     return typeof body?.message === 'string' && body.message ? body.message : fallback
 }
 
-function performBulkAction(action: any) {
+function bulkConfirmation(action: BulkAction): string | null {
+    if (!action.confirm) {
+        return null
+    }
+
+    return typeof action.confirm === 'string' ? action.confirm : t('vue-table-builder::table.bulk_actions.confirm')
+}
+
+function bulkPayload(): {ids: (string | number)[], state?: string} | null {
+    if (allResultsSelected.value) {
+        return {ids: ['*'], state: stateParams().toString()}
+    }
+
     const ids = Array.from(rowSelection.value).map(index => (table.value.data[index] as any)?.id).filter(Boolean)
-    if (ids.length === 0) return
+
+    return ids.length > 0 ? {ids} : null
+}
+
+async function performBulkAction(action: BulkAction) {
+    const payload = bulkPayload()
+
+    if (!payload) {
+        return
+    }
+
+    const confirmation = bulkConfirmation(action)
+
+    if (confirmation && !(await confirmed(confirmation, {
+        text: action.confirmText || null,
+        confirmButton: action.confirmButton || null,
+        cancelButton: action.cancelButton || null,
+    }))) {
+        return
+    }
 
     actionError.value = null
 
@@ -616,7 +653,7 @@ function performBulkAction(action: any) {
             method: 'POST',
             credentials: 'same-origin',
             headers: {'Content-Type': 'application/json', Accept: 'application/json', ...xsrfHeaders()},
-            body: JSON.stringify({ids}),
+            body: JSON.stringify(payload),
         })
             .then(async (response) => {
                 if (!response.ok) {
@@ -633,7 +670,7 @@ function performBulkAction(action: any) {
         return
     }
 
-    router.post(action.url, {ids}, {
+    router.post(action.url, payload, {
         preserveScroll: true,
         onSuccess: () => resetRowSelection(),
         onError: (errors) => {
