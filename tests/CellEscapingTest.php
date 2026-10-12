@@ -113,3 +113,23 @@ it('does not double escape a value that is already escaped by an as closure', fu
 
     expect($data[0]['name'])->toBe('&lt;b&gt;x&lt;/b&gt;');
 });
+
+it('sends the raw row key value next to the escaped cell of a column on the same key', function () {
+    $table = TableBuilder::for([['code' => 'A&B <1>', 'name' => 'Chair']])
+        ->rowKey('code')
+        ->column('code');
+
+    $row = $table->toArray()['data'][0];
+
+    expect($row['code'])->toBe('A&amp;B &lt;1&gt;')
+        ->and($row['__key'])->toBe('A&B <1>');
+});
+
+it('leaves the raw row key out of a row without a row key value', function () {
+    $data = escapingTableData(
+        [['name' => 'Chair']],
+        fn (TableBuilder $table) => $table->column('name'),
+    );
+
+    expect($data[0])->not->toHaveKey('__key');
+});

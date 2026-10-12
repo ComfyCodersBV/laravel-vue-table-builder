@@ -941,6 +941,41 @@ describe('TableBuilder row keys and selection', () => {
 
         expect(router.post).toHaveBeenCalledWith('/reorder', {id: 'u-2', to: 'u-1'}, expect.anything())
     })
+
+    const escapedRows = [
+        {code: 'A&amp;B', __key: 'A&B', name: 'First'},
+        {code: '&lt;2&gt;', __key: '<2>', name: 'Second'},
+    ]
+
+    it('posts the raw key of a row instead of its escaped cell value', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: keyedTable(escapedRows, {rowKey: 'code'})}, attachTo: document.body})
+
+        await rowCheckboxes(wrapper)[0].trigger('click')
+        await runAction(wrapper)
+
+        expect(postedIds()).toEqual(['A&B'])
+
+        wrapper.unmount()
+    })
+
+    it('emits and reorders by the raw key of a row', async () => {
+        const onRowClick = vi.fn()
+        const wrapper = mount(TableBuilder, {props: {table: keyedTable(escapedRows, {
+            rowKey: 'code',
+            bulkActions: [],
+            reorder: {column: 'sort_order', key: 'code', url: '/reorder'},
+        }), onRowClick}})
+
+        await wrapper.findAll('tbody tr')[1].find('[data-column-key="name"]').trigger('click')
+
+        expect(onRowClick.mock.calls[0][0]).toMatchObject({key: '<2>'})
+
+        await wrapper.findAll('[data-reorder-handle]')[1].trigger('dragstart', {dataTransfer: dataTransfer()})
+        await wrapper.findAll('tbody tr')[0].trigger('dragover')
+        await wrapper.findAll('tbody tr')[0].trigger('drop')
+
+        expect(router.post).toHaveBeenCalledWith('/reorder', {id: '<2>', to: 'A&B'}, expect.anything())
+    })
 })
 
 describe('TableBuilder toolbar', () => {

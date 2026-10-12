@@ -118,8 +118,16 @@ function prepareExport(event: MouseEvent): void {
 
 const rowKeyName = computed(() => table.value.rowKey || 'id')
 
+function rawRowValue(row: any, key: string): any {
+    if (key === rowKeyName.value && row !== null && typeof row === 'object' && '__key' in row) {
+        return row.__key
+    }
+
+    return row?.[key]
+}
+
 function rowKeyOf(row: any): RowKey | null {
-    const key = row?.[rowKeyName.value]
+    const key = rawRowValue(row, rowKeyName.value)
 
     return typeof key === 'string' || typeof key === 'number' ? key : null
 }
@@ -372,8 +380,8 @@ function persistReorder(from: number, to: number): void {
 
     const key = config.key || rowKeyName.value
     const payload = {
-        id: table.value.data[from]?.[key],
-        to: table.value.data[to]?.[key],
+        id: rawRowValue(table.value.data[from], key),
+        to: rawRowValue(table.value.data[to], key),
     }
 
     actionError.value = null

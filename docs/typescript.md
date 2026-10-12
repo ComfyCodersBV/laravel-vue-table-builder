@@ -27,7 +27,7 @@ The top-level prop type for `<TableBuilder>`. Matches the array returned by `Tab
 
 ```ts
 interface TableData {
-    data: any[]
+    data: any[]                         // each row carries its raw row key as __key
     columns: Column[]
     pagination?: PaginationData
     filters: Filter[]

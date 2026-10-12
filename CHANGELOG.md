@@ -2,6 +2,19 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.8.1 - 2026-10-12
+
+* The documented return type of `AbstractTable::for()` includes the Spatie `QueryBuilder` and a `DB::table()` query. A
+  table class declaring `public function for(): QueryBuilder` no longer gets a `method.childReturnType` error from
+  PHPStan. Spatie stays optional, because the type is only in the docblock. A table class fixture with such return
+  types is analysed in CI.
+* Explicitly checked ids on a table built on a Spatie `QueryBuilder` are no longer narrowed by the filters of the page
+  query, as the docs already promised and as on other query tables: the endpoint builds `for()` again without the
+  filter parameters. `ids: ['*']` still follows the posted state.
+* Each row carries its raw row key as `__key`, taken before the cells are escaped or formatted, and the component reads
+  the selection, the bulk action `ids`, the reorder ids and the `key` of `row-click` from it. A key containing HTML
+  characters, such as `A&B`, was posted escaped when a column shared the key.
+
 ## 1.8.0 - 2026-10-12
 
 * Rows are identified by a row key instead of `row.id`. The payload carries `rowKey`: the model's `getKeyName()` by

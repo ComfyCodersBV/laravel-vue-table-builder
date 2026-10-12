@@ -10,6 +10,7 @@ use Illuminate\Database\MySqlConnection;
 use Illuminate\Database\PostgresConnection;
 use Illuminate\Database\Query\Builder as BaseQueryBuilder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -499,7 +500,7 @@ class QueryBuilder extends TableBuilder
 
     private function bulkActionQuery(array $ids): BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder
     {
-        $query = $this->derivedQuery(null, function () use ($ids) {
+        $query = $this->derivedQuery($this->unfilteredRequest($ids), function () use ($ids) {
             $this->applyEagerLoading();
 
             if ($ids === ['*']) {
@@ -523,5 +524,19 @@ class QueryBuilder extends TableBuilder
         }
 
         return $query->whereIn($eloquent->qualifyColumn($this->rowKeyName()), $ids);
+    }
+
+    private function unfilteredRequest(array $ids): ?Request
+    {
+        if ($ids === ['*'] || ! $this->builder instanceof SpatieQueryBuilder) {
+            return null;
+        }
+
+        $filterKeys = array_unique([
+            $this->queryKey('filter'),
+            (string) config('query-builder.parameters.filter', 'filter'),
+        ]);
+
+        return $this->request->duplicate(Arr::except($this->request->query->all(), $filterKeys));
     }
 }

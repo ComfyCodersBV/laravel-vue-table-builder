@@ -57,7 +57,7 @@ abstract class AbstractTable
     }
 
     /**
-     * @return Builder|Relation|Model|Collection|array|string|LengthAwarePaginator
+     * @return Builder|BaseQueryBuilder|SpatieQueryBuilder|Relation|Model|Collection|array|string|LengthAwarePaginator
      */
     public function for()
     {

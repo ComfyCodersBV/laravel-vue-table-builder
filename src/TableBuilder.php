@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
@@ -311,6 +312,9 @@ class TableBuilder implements Arrayable, JsonSerializable
     protected function transformItem($item): array
     {
         $itemArray = $this->toItemArray($item);
+        $rowKeyName = $this->rowKeyName();
+        $hasRowKey = Arr::has($itemArray, $rowKeyName);
+        $rowKey = data_get($itemArray, $rowKeyName);
 
         $this->columns->each(function (Column $column) use (&$itemArray, $item) {
             if (! is_callable($column->as)) {
@@ -338,6 +342,10 @@ class TableBuilder implements Arrayable, JsonSerializable
 
             data_set($itemArray, $column->key, $transformed);
         });
+
+        if ($hasRowKey) {
+            $itemArray['__key'] = $rowKey;
+        }
 
         return $itemArray;
     }

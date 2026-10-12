@@ -129,9 +129,10 @@ $table->rowKey('code');
 ```
 
 The endpoint then matches posted ids on that column (`whereIn('code', $ids)`), and a plain `DB::table()` query is
-chunked by it. The column has to be in the row data the table sends, and unique. Do not reformat it with the `as` of a
-column on the same key, because the component reads the key from the row data: give a shortened or formatted version
-its own column key. `primaryKey()` is the older name for the same setting.
+chunked by it. The column has to be in the row data the table sends, and unique. Each row also carries the raw key
+value as `__key`, taken before the cells are escaped or formatted, and the component reads that one: a key like `A&B`
+is posted as `A&B`, even when a column on the same key shows it escaped or reformatted by its `as`. `primaryKey()` is
+the older name for the same setting.
 
 ## Selecting Rows
 
@@ -154,7 +155,8 @@ state, so it reaches exactly the rows matching what the user sees, across every 
 sort and filter keys are taken from `state`; everything else in it is ignored.
 
 Without `state` (an older frontend, or your own client posting `['*']`) the filters from the page query the bulk action
-url was signed with are used, as before. Posted ids other than `['*']` are never narrowed by filters.
+url was signed with are used, as before. Posted ids other than `['*']` are never narrowed by filters, on a Spatie
+`QueryBuilder` table neither: the endpoint builds `for()` again without the filter parameters of the page query.
 
 A table built on a Spatie `QueryBuilder` honours `state` too: the endpoint puts the posted sort and filters on the
 request and builds the table again, so the `allowedFilters()` and `allowedSorts()` in `for()` read them. This needs

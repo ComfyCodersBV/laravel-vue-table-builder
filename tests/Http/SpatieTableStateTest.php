@@ -92,3 +92,15 @@ it('builds the filtered query of a spatie table from the given request', functio
     expect($names)->toBe(['Bench', 'Table'])
         ->and($table->filteredQuery()->count())->toBe(3);
 });
+
+it('does not narrow explicitly posted ids of a spatie table by the filters of the signed page query', function () {
+    $chair = Product::query()
+        ->where('name', 'Chair')
+        ->firstOrFail();
+
+    $this->postJson(spatieBulkUrl(['filter' => ['sku' => 'B']]), [
+        'ids' => [$chair->id],
+    ])->assertOk();
+
+    expect(Product::query()->orderBy('name')->pluck('name')->all())->toBe(['Bench', 'Table']);
+});
