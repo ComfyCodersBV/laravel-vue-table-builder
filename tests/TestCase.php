@@ -64,6 +64,13 @@ class TestCase extends Orchestra
             $table->dateTime('ends_at')->nullable();
         });
 
+        Schema::create('tickets', function (Blueprint $table) {
+            $table->uuid('uuid')->primary();
+            $table->string('title');
+            $table->string('status')->default('open');
+            $table->integer('sort_order')->default(0);
+        });
+
         Schema::create('variants', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('product_id');

@@ -41,6 +41,7 @@ interface TableData {
     headClass?: string
     rowActions?: RowAction[][]          // one list per row
     emptyState?: EmptyState
+    rowKey?: string                     // the field that identifies a row, 'id' when missing
     reorder?: ReorderConfig | null
     queryKeys?: QueryKeys
     totals?: Totals | null

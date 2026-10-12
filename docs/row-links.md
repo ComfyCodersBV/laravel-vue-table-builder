@@ -116,8 +116,11 @@ The row link system needs to identify each row. For Eloquent models this is auto
 non-standard primary key, configure it explicitly:
 
 ```php
-$table->primaryKey('uuid');
+$table->rowKey('uuid');
 ```
+
+`rowKey()` and the older `primaryKey()` set the same thing: the field the component uses for selection, bulk actions,
+reordering and the `key` of `row-click`. See [Bulk Actions](bulk-actions.md#row-key).
 
 ## How It Works
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Pagination\LengthAwarePaginator;
 use TranquilTools\TableBuilder\TableBuilder;
 use TranquilTools\TableBuilder\Tests\Fixtures\Product;
+use TranquilTools\TableBuilder\Tests\Fixtures\Ticket;
 
 it('marks a row link as a modal', function () {
     $table = TableBuilder::for([['id' => 1]]);
@@ -80,4 +81,21 @@ it('collects the primary keys of every row', function () {
     $table->primaryKey('sku');
 
     expect($table->getPrimaryKeys())->toBe(['A', 'B']);
+});
+
+it('sends id as the row key of an array resource', function () {
+    expect(TableBuilder::for([['id' => 1]])->toArray()['rowKey'])->toBe('id');
+});
+
+it('sends the configured row key of an array resource', function () {
+    $table = TableBuilder::for([['code' => 'A']])->rowKey('code');
+
+    expect($table->toArray()['rowKey'])->toBe('code')
+        ->and($table->getPrimaryKeys())->toBe(['A']);
+});
+
+it('takes the row key from the models of a collection resource', function () {
+    $ticket = new Ticket(['uuid' => 'x', 'title' => 'First']);
+
+    expect(TableBuilder::for(collect([$ticket]))->toArray()['rowKey'])->toBe('uuid');
 });

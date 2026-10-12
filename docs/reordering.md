@@ -156,7 +156,7 @@ The Table class sends `reorder` to the component:
 ```ts
 interface ReorderConfig {
     column: string      // the order column
-    key: string         // the primary key name used for `id` and `to`
+    key: string         // the row key used for `id` and `to`, see rowKey()
     url: string | null  // the signed package url or your own
 }
 ```

@@ -150,7 +150,7 @@ through a `cell-{key}` slot.
 | Event       | Payload                  | Fired when                                                                 |
 |-------------|--------------------------|----------------------------------------------------------------------------|
 | `reorder`   | `{from, to, row}`        | A row is dropped on another row of a `reorderable` table                   |
-| `row-click` | `{row, index, event}`    | A row without a row link is clicked                                        |
+| `row-click` | `{row, index, key, event}` | A row without a row link is clicked; `key` is the row's [row key](bulk-actions.md#row-key) value |
 
 ### Reordering Rows
 

@@ -116,6 +116,23 @@ field name:
 > does not prompt for a password, and the package does not verify one server-side. Treat it as a hint for your own
 > frontend, and check the password yourself in `authorize()` if you depend on it.
 
+## Row Key
+
+The component identifies rows by their row key: it is what a selection holds, what `ids` contains, what a reorder posts
+and the `key` of `row-click`. The table sends it as `rowKey`. By default it is the model's `getKeyName()`, so a model
+with `protected $primaryKey = 'uuid'` works without configuration; plain query and array tables use `id`.
+
+Set it when rows are identified by another column:
+
+```php
+$table->rowKey('code');
+```
+
+The endpoint then matches posted ids on that column (`whereIn('code', $ids)`), and a plain `DB::table()` query is
+chunked by it. The column has to be in the row data the table sends, and unique. Do not reformat it with the `as` of a
+column on the same key, because the component reads the key from the row data: give a shortened or formatted version
+its own column key. `primaryKey()` is the older name for the same setting.
+
 ## Selecting Rows
 
 In the frontend, users can:
@@ -124,6 +141,11 @@ In the frontend, users can:
 - **Select all on this page** via the header checkbox
 - **Select all results** (across all pages) via the "Select all N results" prompt that appears after selecting the
   current page
+
+The selection holds row keys, not positions, so a selected row stays selected when the rows come back in another
+order. It is kept while the user pages, sorts or changes the page size, so rows from several pages can be selected
+and are posted together. Changing a filter or the search clears the selection, including "all results": the rows the
+user picked may no longer be in the list they are looking at. A row without a row key value cannot be selected.
 
 When "all results" is selected, the selection bar shows the total and the component posts `ids: ['*']` together with
 `state`: the sort, search and filters the table is showing, as a query string (`filter[status]=open&sort=-created_at`,

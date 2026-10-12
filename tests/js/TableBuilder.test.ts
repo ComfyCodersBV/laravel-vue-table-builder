@@ -786,6 +786,163 @@ describe('TableBuilder bulk actions', () => {
     })
 })
 
+describe('TableBuilder row keys and selection', () => {
+    const bulkUrl = '/table/bulk-action?signature=x'
+
+    beforeEach(() => {
+        vi.mocked(router.post).mockClear()
+    })
+
+    function keyedTable(rows: any[], overrides: Record<string, unknown> = {}): TableData {
+        return {
+            ...tableData(),
+            data: rows,
+            bulkActions: [{key: '0', label: 'Resolve', url: bulkUrl, confirm: false, confirmText: '', confirmButton: '', cancelButton: '', requirePassword: false}],
+            filters: [{key: 'status', label: 'Status', options: {}, value: 'open', type: 'select'}],
+            searchInputs: {global: {key: 'global', label: 'Search', value: ''}},
+            pagination: {current_page: 1, from: 1, to: 2, total: 4, per_page: 2, last_page: 2, links: []},
+            ...overrides,
+        } as unknown as TableData
+    }
+
+    const uuidRows = [{uuid: 'u-1', name: 'First'}, {uuid: 'u-2', name: 'Second'}]
+
+    function rowCheckboxes(wrapper: ReturnType<typeof mount>) {
+        return wrapper.findAll('tbody [role="checkbox"]')
+    }
+
+    function checkedStates(wrapper: ReturnType<typeof mount>): string[] {
+        return rowCheckboxes(wrapper).map((checkbox) => checkbox.attributes('data-state') ?? '')
+    }
+
+    function menuItem(text: string): HTMLElement {
+        return Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find((element) => element.textContent?.trim() === text)!
+    }
+
+    async function runAction(wrapper: ReturnType<typeof mount>) {
+        await wrapper.findAll('button').find((button) => button.text() === 'title')!.trigger('click')
+        await flush()
+
+        menuItem('Resolve').click()
+        await flush()
+    }
+
+    function postedIds(): unknown {
+        return (vi.mocked(router.post).mock.calls.at(-1)![1] as any).ids
+    }
+
+    it('posts the values of the row key of the table', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: keyedTable(uuidRows, {rowKey: 'uuid'})}, attachTo: document.body})
+
+        await rowCheckboxes(wrapper)[1].trigger('click')
+        await runAction(wrapper)
+
+        expect(postedIds()).toEqual(['u-2'])
+
+        wrapper.unmount()
+    })
+
+    it('posts a row whose key is zero', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: keyedTable([{id: 0, name: 'Zero'}, {id: 1, name: 'One'}])}, attachTo: document.body})
+
+        await rowCheckboxes(wrapper)[0].trigger('click')
+        await runAction(wrapper)
+
+        expect(postedIds()).toEqual([0])
+
+        wrapper.unmount()
+    })
+
+    it('keeps the selection on its row when the rows come back in another order', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: keyedTable(uuidRows, {rowKey: 'uuid'})}, attachTo: document.body})
+
+        await rowCheckboxes(wrapper)[0].trigger('click')
+        await wrapper.setProps({table: keyedTable([...uuidRows].reverse(), {rowKey: 'uuid'})})
+
+        expect(checkedStates(wrapper)).toEqual(['unchecked', 'checked'])
+
+        wrapper.unmount()
+    })
+
+    it('keeps the selection across pages and posts the rows of every page', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: keyedTable(uuidRows, {rowKey: 'uuid'})}, attachTo: document.body})
+
+        await rowCheckboxes(wrapper)[0].trigger('click')
+        await wrapper.setProps({table: keyedTable([{uuid: 'u-3', name: 'Third'}, {uuid: 'u-4', name: 'Fourth'}], {
+            rowKey: 'uuid',
+            pagination: {current_page: 2, from: 3, to: 4, total: 4, per_page: 2, last_page: 2, links: []},
+        })})
+
+        expect(checkedStates(wrapper)).toEqual(['unchecked', 'unchecked'])
+
+        await rowCheckboxes(wrapper)[1].trigger('click')
+        await runAction(wrapper)
+
+        expect(postedIds()).toEqual(['u-1', 'u-4'])
+
+        wrapper.unmount()
+    })
+
+    it('clears the selection when a filter changes', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: keyedTable(uuidRows, {rowKey: 'uuid'})}, attachTo: document.body})
+
+        await rowCheckboxes(wrapper)[0].trigger('click')
+        await wrapper.setProps({table: keyedTable(uuidRows, {
+            rowKey: 'uuid',
+            filters: [{key: 'status', label: 'Status', options: {}, value: 'closed', type: 'select'}],
+        })})
+
+        expect(checkedStates(wrapper)).toEqual(['unchecked', 'unchecked'])
+        expect(wrapper.text()).not.toContain('selected_simple')
+
+        wrapper.unmount()
+    })
+
+    it('clears all selected results when the search changes', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: keyedTable(uuidRows, {rowKey: 'uuid'})}, attachTo: document.body})
+
+        await wrapper.find('thead .cursor-pointer').trigger('click')
+        await flush()
+        menuItem('select_all_results').click()
+        await flush()
+
+        expect(checkedStates(wrapper)).toEqual(['checked', 'checked'])
+
+        await wrapper.setProps({table: keyedTable(uuidRows, {
+            rowKey: 'uuid',
+            searchInputs: {global: {key: 'global', label: 'Search', value: 'sec'}},
+        })})
+
+        expect(checkedStates(wrapper)).toEqual(['unchecked', 'unchecked'])
+        expect(wrapper.text()).not.toContain('selected_simple')
+
+        wrapper.unmount()
+    })
+
+    it('emits the row key with row-click', async () => {
+        const onRowClick = vi.fn()
+        const wrapper = mount(TableBuilder, {props: {table: keyedTable(uuidRows, {rowKey: 'uuid', bulkActions: []}), onRowClick}})
+
+        await wrapper.findAll('tbody tr')[1].find('[data-column-key="name"]').trigger('click')
+
+        expect(onRowClick.mock.calls[0][0]).toMatchObject({index: 1, key: 'u-2'})
+    })
+
+    it('posts the uuid of a moved row', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: keyedTable(uuidRows, {
+            rowKey: 'uuid',
+            bulkActions: [],
+            reorder: {column: 'sort_order', key: 'uuid', url: '/reorder'},
+        })}})
+
+        await wrapper.findAll('[data-reorder-handle]')[1].trigger('dragstart', {dataTransfer: dataTransfer()})
+        await wrapper.findAll('tbody tr')[0].trigger('dragover')
+        await wrapper.findAll('tbody tr')[0].trigger('drop')
+
+        expect(router.post).toHaveBeenCalledWith('/reorder', {id: 'u-2', to: 'u-1'}, expect.anything())
+    })
+})
+
 describe('TableBuilder toolbar', () => {
     it('gives the filter toggle an accessible name', () => {
         const table = tableData()

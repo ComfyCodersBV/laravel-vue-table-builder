@@ -179,7 +179,8 @@ the query.
 ### `performBulkAction(int $key, array $ids)`
 
 Override to handle bulk action execution. `$key` is the zero-based index of the action as registered in `configure()`.
-`$ids` is the array of selected primary keys (or `['*']` for "all results").
+`$ids` is the array of selected row keys (or `['*']` for "all results"). The row key is the model's primary key
+unless the table sets `rowKey()`; see [Bulk Actions](bulk-actions.md#row-key).
 
 ```php
 public function performBulkAction(int $key, array $ids): void

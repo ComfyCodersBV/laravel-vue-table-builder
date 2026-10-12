@@ -38,7 +38,7 @@ trait HasReordering
 
     protected function reorderKeyName(): string
     {
-        return $this->primaryKey ?: 'id';
+        return $this->rowKeyName();
     }
 
     /**

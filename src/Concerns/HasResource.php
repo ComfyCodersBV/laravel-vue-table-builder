@@ -103,6 +103,26 @@ trait HasResource
         return $this;
     }
 
+    public function rowKey(string $key): self
+    {
+        return $this->primaryKey($key);
+    }
+
+    public function rowKeyName(): string
+    {
+        if ($this->primaryKey) {
+            return $this->primaryKey;
+        }
+
+        $items = is_object($this->resource) && method_exists($this->resource, 'items')
+            ? $this->resource->items()
+            : $this->resource;
+
+        $first = Collection::make($items)->first();
+
+        return $first instanceof Model ? $first->getKeyName() : 'id';
+    }
+
     public function findPrimaryKey($item)
     {
         if ($this->primaryKey) {

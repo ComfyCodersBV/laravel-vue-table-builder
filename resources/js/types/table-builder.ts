@@ -133,6 +133,7 @@ export interface TableData {
     headClass?: string
     rowActions?: RowAction[][]
     emptyState?: EmptyState
+    rowKey?: string
     reorder?: ReorderConfig | null
     queryKeys?: QueryKeys
     totals?: Totals | null

@@ -406,6 +406,7 @@ class TableBuilder implements Arrayable, JsonSerializable
             'headClass' => $this->headClass,
             'rowActions' => $rowActions,
             'emptyState' => $this->emptyState,
+            'rowKey' => $this->rowKeyName(),
             'reorder' => $this->reorderPayload(),
             'queryKeys' => $this->queryKeys(),
             'totals' => $totals,

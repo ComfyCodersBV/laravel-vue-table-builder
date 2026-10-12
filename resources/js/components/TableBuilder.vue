@@ -41,9 +41,11 @@ const props = withDefaults(defineProps<{
     reorderable: false,
 })
 
+type RowKey = string | number
+
 const emit = defineEmits<{
     reorder: [{from: number; to: number; row: any}]
-    'row-click': [{row: any; index: number; event: MouseEvent}]
+    'row-click': [{row: any; index: number; key: RowKey | null; event: MouseEvent}]
 }>()
 
 const listensToRowClick = Boolean(getCurrentInstance()?.vnode.props?.onRowClick)
@@ -65,7 +67,7 @@ function clickRow(row: any, index: number, event: MouseEvent): void {
         return
     }
 
-    emit('row-click', {row, index, event})
+    emit('row-click', {row, index, key: rowKeyOf(row), event})
 }
 
 const tableName = computed(() => props.name || props.table?.name || 'default')
@@ -112,6 +114,18 @@ function prepareExport(event: MouseEvent): void {
     if (url) {
         (event.currentTarget as HTMLAnchorElement).href = url
     }
+}
+
+const rowKeyName = computed(() => table.value.rowKey || 'id')
+
+function rowKeyOf(row: any): RowKey | null {
+    const key = row?.[rowKeyName.value]
+
+    return typeof key === 'string' || typeof key === 'number' ? key : null
+}
+
+function rowVnodeKey(row: any, index: number): RowKey {
+    return rowKeyOf(row) ?? `row-index-${index}`
 }
 
 defineExpose({reload, currentQuery: () => ({...query.value}), exportUrl})
@@ -356,9 +370,10 @@ function persistReorder(from: number, to: number): void {
         return
     }
 
+    const key = config.key || rowKeyName.value
     const payload = {
-        id: table.value.data[from]?.[config.key],
-        to: table.value.data[to]?.[config.key],
+        id: table.value.data[from]?.[key],
+        to: table.value.data[to]?.[key],
     }
 
     actionError.value = null
@@ -523,46 +538,73 @@ const showsPagination = computed(() => Boolean(table.value.pagination && table.v
 const showsTopPagination = computed(() => showsPagination.value && props.paginationPosition !== 'bottom')
 const showsBottomPagination = computed(() => showsPagination.value && props.paginationPosition !== 'top')
 
-const rowSelection = ref<Set<number>>(new Set())
+const selectedKeys = ref<Set<RowKey>>(new Set())
 const allResultsSelected = ref(false)
 const selectedCount = computed(() =>
-    allResultsSelected.value && table.value.pagination ? table.value.pagination.total : rowSelection.value.size
+    allResultsSelected.value && table.value.pagination ? table.value.pagination.total : selectedKeys.value.size
 )
 const bulkActions = computed(() => table.value.bulkActions ?? [])
-const allVisibleItemsAreSelected = computed(() =>
-    allResultsSelected.value ||
-    (table.value.data.length > 0 && selectedCount.value > 0)
+
+const pageKeys = computed(() =>
+    (table.value.data ?? []).map((row) => rowKeyOf(row)).filter((key): key is RowKey => key !== null)
 )
 
-function isRowSelected(index: number): boolean {
-    return rowSelection.value.has(index)
+const allVisibleItemsAreSelected = computed(() =>
+    allResultsSelected.value ||
+    (pageKeys.value.length > 0 && pageKeys.value.every((key) => selectedKeys.value.has(key)))
+)
+
+function isRowSelected(row: any): boolean {
+    if (allResultsSelected.value) {
+        return true
+    }
+
+    const key = rowKeyOf(row)
+
+    return key !== null && selectedKeys.value.has(key)
 }
 
-function toggleRowSelection(index: number) {
-    allResultsSelected.value = false
-    const next = new Set(rowSelection.value)
-    if (next.has(index)) {
-        next.delete(index)
-    } else {
-        next.add(index)
+function toggleRowSelection(row: any) {
+    const key = rowKeyOf(row)
+
+    if (key === null) {
+        return
     }
-    rowSelection.value = next
+
+    const next = new Set(allResultsSelected.value ? pageKeys.value : selectedKeys.value)
+
+    allResultsSelected.value = false
+
+    if (next.has(key)) {
+        next.delete(key)
+    } else {
+        next.add(key)
+    }
+
+    selectedKeys.value = next
 }
 
 function selectCurrentPage() {
     allResultsSelected.value = false
-    rowSelection.value = new Set(table.value.data.map((_, index) => index))
+    selectedKeys.value = new Set([...selectedKeys.value, ...pageKeys.value])
 }
 
 function selectAllResults() {
     allResultsSelected.value = true
-    rowSelection.value = new Set(table.value.data.map((_, index) => index))
+    selectedKeys.value = new Set(pageKeys.value)
 }
 
 function resetRowSelection() {
     allResultsSelected.value = false
-    rowSelection.value = new Set()
+    selectedKeys.value = new Set()
 }
+
+const filterState = computed(() => JSON.stringify({
+    filters: (table.value.filters ?? []).map((filter) => [filter.key, filter.value || null]),
+    search: Object.entries(table.value.searchInputs ?? {}).map(([key, input]) => [key, input?.value || null]),
+}))
+
+watch(filterState, () => resetRowSelection())
 
 function handleRowClick(index: number) {
     if (!table.value.rowLinks || !table.value.rowLinks[index]) return
@@ -624,7 +666,7 @@ function bulkPayload(): {ids: (string | number)[], state?: string} | null {
         return {ids: ['*'], state: stateParams().toString()}
     }
 
-    const ids = Array.from(rowSelection.value).map(index => (table.value.data[index] as any)?.id).filter(Boolean)
+    const ids = Array.from(selectedKeys.value)
 
     return ids.length > 0 ? {ids} : null
 }
@@ -864,11 +906,11 @@ async function performBulkAction(action: BulkAction) {
                                     </div>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start">
-                                    <DropdownMenuItem
-                                        @click="selectedCount > 0 ? resetRowSelection() : selectCurrentPage()">
-                                        {{
-                                            selectedCount > 0 ? t('vue-table-builder::table.bulk_actions.clear_selection') : t('vue-table-builder::table.bulk_actions.select_this_page', {count: String(table.data.length)})
-                                        }}
+                                    <DropdownMenuItem v-if="selectedCount > 0" @click="resetRowSelection">
+                                        {{ t('vue-table-builder::table.bulk_actions.clear_selection') }}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem v-if="!allVisibleItemsAreSelected" @click="selectCurrentPage">
+                                        {{ t('vue-table-builder::table.bulk_actions.select_this_page', {count: String(table.data.length)}) }}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem v-if="table.pagination" @click="selectAllResults">
                                         {{
@@ -908,7 +950,7 @@ async function performBulkAction(action: BulkAction) {
                             </slot>
                         </TableCell>
                     </TableRow>
-                    <template v-for="(row, index) in table.data" :key="index">
+                    <template v-for="(row, index) in table.data" :key="rowVnodeKey(row, index)">
                         <TableRow
                             @click="clickRow(row, index, $event)"
                             @dragover="showsReorderHandles ? dragOverRow(index, $event) : undefined"
@@ -931,8 +973,9 @@ async function performBulkAction(action: BulkAction) {
                                 </span>
                             </TableCell>
                             <TableCell v-if="bulkActions.length > 0" :class="table.cellClass" @click.stop>
-                                <Checkbox :model-value="isRowSelected(index)"
-                                          @update:model-value="() => toggleRowSelection(index)" class="h-4 w-4"/>
+                                <Checkbox :model-value="isRowSelected(row)"
+                                          :disabled="rowKeyOf(row) === null"
+                                          @update:model-value="() => toggleRowSelection(row)" class="h-4 w-4"/>
                             </TableCell>
                             <TableCell v-for="column in visibleColumns" :key="column.key" :data-column-key="column.key"
                                        :class="[table.cellClass, column.class]">

@@ -434,28 +434,43 @@ class QueryBuilder extends TableBuilder
         app(ReorderRows::class)($query, $this->reorderColumn, $this->reorderKeyName(), $id, $toId);
     }
 
-    protected function reorderKeyName(): string
+    public function rowKeyName(): string
     {
         if ($this->primaryKey) {
             return $this->primaryKey;
         }
 
-        if ($this->builder instanceof EloquentBuilder) {
-            return $this->builder->getModel()->getKeyName();
+        $eloquent = $this->eloquentBuilder($this->builder);
+
+        return is_null($eloquent) ? 'id' : $eloquent->getModel()->getKeyName();
+    }
+
+    private function eloquentBuilder(BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder $query): ?EloquentBuilder
+    {
+        if ($query instanceof SpatieQueryBuilder) {
+            return $query->getEloquentBuilder();
         }
 
-        return 'id';
+        return $query instanceof EloquentBuilder ? $query : null;
     }
 
     public function performBulkAction(callable $action, array $ids)
     {
         $query = $this->bulkActionQuery($ids);
 
-        $chunked = $query instanceof SpatieQueryBuilder ? $query->getEloquentBuilder() : $query;
-
-        $chunked->reorder()->chunkById(1000, function (Collection $results) use ($action) {
+        $each = function (Collection $results) use ($action) {
             $results->each($action);
-        });
+        };
+
+        $eloquent = $this->eloquentBuilder($query);
+
+        if (is_null($eloquent)) {
+            $query->reorder()->chunkById(1000, $each, $this->rowKeyName());
+
+            return;
+        }
+
+        $eloquent->reorder()->chunkById(1000, $each);
     }
 
     private function bulkActionQuery(array $ids): BaseQueryBuilder|EloquentBuilder|SpatieQueryBuilder
@@ -473,10 +488,16 @@ class QueryBuilder extends TableBuilder
             return $query;
         }
 
-        if ($query instanceof BaseQueryBuilder) {
-            return $query->whereIn($this->reorderKeyName(), $ids);
+        $eloquent = $this->eloquentBuilder($query);
+
+        if (is_null($eloquent)) {
+            return $query->whereIn($this->rowKeyName(), $ids);
         }
 
-        return $query->whereKey($ids);
+        if ($this->rowKeyName() === $eloquent->getModel()->getKeyName()) {
+            return $query->whereKey($ids);
+        }
+
+        return $query->whereIn($eloquent->qualifyColumn($this->rowKeyName()), $ids);
     }
 }
