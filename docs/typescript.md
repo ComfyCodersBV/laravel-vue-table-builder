@@ -47,6 +47,7 @@ interface TableData {
     totals?: Totals | null
     export?: ExportConfig | null
     columnToggle?: boolean              // false hides the "Columns" menu
+    poll?: number                       // seconds between reloads, only with ->poll()
 }
 
 interface RowAction {
@@ -176,6 +177,13 @@ interface BulkAction {
     confirmButton: string
     cancelButton: string
     requirePassword: boolean | string
+    choices?: BulkActionChoice[]
+    choicesLabel?: string
+}
+
+interface BulkActionChoice {
+    value: string
+    label: string
 }
 
 interface ConfirmDetails {

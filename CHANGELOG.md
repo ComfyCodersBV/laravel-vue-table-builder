@@ -2,6 +2,35 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.9.0 - 2026-10-13
+
+* The PHP side moved to the new package `tranquil-tools/laravel-table-builder`, which this package requires, so
+  `composer require tranquil-tools/laravel-vue-table-builder` installs both. The namespace `TranquilTools\TableBuilder\`
+  is unchanged. This package keeps the Vue component and a small provider that shares the translations with Inertia.
+* Configuration now lives in `config/table-builder.php` and translations under `table-builder::`. A published
+  `config/vue-table-builder.php` or `lang/vendor/vue-table-builder` keeps working, and the old config key and
+  translation namespace keep resolving. The publish tags are now `table-builder-config` and
+  `table-builder-translations`.
+* The component checks the `schemaVersion` of the payload against `SUPPORTED_SCHEMA_VERSION`: another major throws in
+  development and warns in production, a payload without a version warns once in development.
+* The bulk-action and reorder endpoints decide between JSON and a redirect on `expectsJson()` alone. An Inertia visit
+  asks for HTML, so it still gets the redirect.
+
+* A bulk action can ask for a choice: `bulkAction(choices: [...], choicesLabel: '...')`. The component opens a dialog
+  with a select and posts the value as `choice`. The endpoint checks it against the choices of the table it builds
+  again, answers `422` on a missing or unknown choice, and passes it to `before`, `each` and `after` as an extra
+  argument. Actions without choices call their callbacks exactly as before. `AbstractTable::bulkActionChoice()` gives
+  an overridden `performBulkAction()` the validated choice.
+* The JSON of a bulk action no longer carries its `beforeCallback`, `eachCallback` and `afterCallback` keys. They were
+  always empty objects, and Inertia resolves closures it finds in serialized props.
+* `$table->poll(int $seconds)` reloads the rows on an interval, over Inertia and over http, keeping sorting, search,
+  the page and the selection. It pauses while rows are selected, a dialog is open, a request runs or the tab is
+  hidden, and catches up when the tab is visible again. `poll` is only in the payload when set.
+* `$table->rowClass(callable)` sends a class per row as `__class`, merged with the `rowClass` prop, the prop last. A
+  row that already has a `__class` value throws a `LogicException`. Tables without it send nothing extra.
+* `useTranslations` is exported from the package entry. Its `table.` prefix stripping only applies to the table
+  builder's own bundle; other bundles can pass `{group}` to strip the file name they were shared from.
+
 ## 1.8.1 - 2026-10-12
 
 * The documented return type of `AbstractTable::for()` includes the Spatie `QueryBuilder` and a `DB::table()` query. A

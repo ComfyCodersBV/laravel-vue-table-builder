@@ -175,7 +175,7 @@ On 11 October a booking stored as `2026-10-10 22:30:00` UTC (00:30 in Amsterdam)
 11th. Set it once for every date filter in the config:
 
 ```php
-// config/vue-table-builder.php
+// config/table-builder.php
 'display_timezone' => 'Europe/Amsterdam',
 ```
 

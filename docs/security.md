@@ -17,7 +17,7 @@ always names the Table class, its parameters and (for bulk actions) the action i
 Publish the config and run the routes inside your `web` stack with a logged-in user:
 
 ```php
-// config/vue-table-builder.php
+// config/table-builder.php
 'routes' => [
     'middleware' => ['web', 'auth'],
     'signature_ttl' => 720,
