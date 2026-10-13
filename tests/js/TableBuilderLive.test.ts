@@ -182,6 +182,20 @@ describe('TableBuilder polling', () => {
         expect(router.reload).toHaveBeenCalledTimes(2)
     })
 
+    it('warns once in development when an inertia table polls without only', () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        const wrapper = mount(TableBuilder, {props: {table: tableData({poll: 5, schemaVersion: '1.0'})}})
+
+        vi.advanceTimersByTime(15_000)
+
+        expect(router.reload).toHaveBeenCalledTimes(3)
+        expect(router.reload).toHaveBeenCalledWith({})
+        expect(warn.mock.calls.filter(([message]) => String(message).includes('without an `only` prop'))).toHaveLength(1)
+
+        wrapper.unmount()
+        warn.mockRestore()
+    })
+
     it('does not poll a table without a poll interval', () => {
         mount(TableBuilder, {props: {table: tableData()}})
 

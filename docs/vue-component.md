@@ -131,12 +131,20 @@ with the `rowClass` prop through `tailwind-merge`, prop last.
 ## Auto-refresh
 
 `$table->poll(30)` sends `poll: 30`, and the component reloads the rows every 30 seconds: with the `inertia`
-transport through `router.reload()` (pass `only` so only the table prop is fetched), with the `http` transport by a
-silent refetch of the current query. Sorting, search, filters, the page and the selection stay as they are.
+transport through `router.reload()`, with the `http` transport by a silent refetch of the current query. Sorting, search, filters, the page and the selection stay as they are.
 
 It pauses while rows are selected, while a confirmation or choice dialog is open, while an action or request runs
 and while the tab is hidden. A tick missed while the tab was hidden runs as soon as it is visible again. Unmounting
 stops the timer. Without `poll()` the payload has no `poll` key and nothing is scheduled.
+
+With the `inertia` transport, always pass `only` with the name of the table prop:
+
+```vue
+<TableBuilder :table="messages" :only="['messages']" />
+```
+
+Without it every tick reloads all props of the page, shared props included, and the component warns once in
+development.
 
 ## Translations
 

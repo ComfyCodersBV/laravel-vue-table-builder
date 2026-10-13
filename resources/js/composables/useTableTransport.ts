@@ -60,6 +60,20 @@ function defaultAdapter(payload: any): TableResponse {
     }
 }
 
+let warnedAboutUnscopedRefresh = false
+
+function warnAboutUnscopedRefresh(only?: string[]): void {
+    if (only?.length || warnedAboutUnscopedRefresh || !import.meta.env.DEV) {
+        return
+    }
+
+    warnedAboutUnscopedRefresh = true
+
+    console.warn(
+        '[table-builder] This table polls over the inertia transport without an `only` prop, so every tick reloads all page props. Pass `:only="[\'yourTableProp\']"` to reload only the table.',
+    )
+}
+
 export function xsrfHeaders(): Record<string, string> {
     const token = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/)
 
@@ -411,6 +425,8 @@ export function useTableTransport(options: TableTransportOptions) {
         if (isHttp.value) {
             return void load(true)
         }
+
+        warnAboutUnscopedRefresh(options.only)
 
         router.reload({...(options.only ? {only: options.only} : {})})
     }
