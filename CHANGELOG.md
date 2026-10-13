@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
-## Unreleased
+## 1.9.0 - 2026-10-13
 
 * The PHP side moved to the new package `tranquil-tools/laravel-table-builder`, which this package requires, so
   `composer require tranquil-tools/laravel-vue-table-builder` installs both. The namespace `TranquilTools\TableBuilder\`
