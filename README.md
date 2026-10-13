@@ -56,10 +56,10 @@ export default defineConfig({
 You can publish the config file with:
 
 ```bash
-php artisan vendor:publish --tag="vue-table-builder-config"
+php artisan vendor:publish --tag="table-builder-config"
 ```
 
-The content of the published config can be viewed [here](./config/vue-table-builder.php).
+The config ships with [tranquil-tools/laravel-table-builder](https://gitlab.comfycoders.nl/tranquil-tools/laravel-table-builder/-/blob/main/config/table-builder.php). An application that published `config/vue-table-builder.php` before 1.9 keeps working; rename the file when convenient.
 
 ## Usage
 

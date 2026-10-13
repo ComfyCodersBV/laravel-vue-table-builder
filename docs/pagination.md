@@ -49,7 +49,7 @@ The current `perPage` value from the query string (`?perPage=25`) is applied aut
 list are ignored.
 
 The default per-page size and available options can be set globally via the config file (
-`config/vue-table-builder.php`):
+`config/table-builder.php`):
 
 ```php
 return [

@@ -124,6 +124,7 @@ export interface ExportConfig {
 }
 
 export interface TableData {
+    schemaVersion?: string
     name?: string
     data: any[]
     columns: Column[]

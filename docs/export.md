@@ -54,7 +54,7 @@ The separators follow the app locale: `nl` writes `1250,75` in `;`-separated col
 `1250.75` in `,`-separated columns. Fix them for every table in the config:
 
 ```php
-// config/vue-table-builder.php
+// config/table-builder.php
 'export' => [
     'delimiter' => ';',
     'decimal_separator' => ',',

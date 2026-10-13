@@ -13,21 +13,27 @@
 composer require tranquil-tools/laravel-vue-table-builder
 ```
 
-The service provider registers automatically via Laravel's package discovery.
+The service provider registers automatically via Laravel's package discovery. The PHP side (table classes, endpoints,
+config and translations) lives in `tranquil-tools/laravel-table-builder`, which comes along as a dependency; this
+package adds the Vue component and shares the translations with Inertia.
 
 ## Publish Assets
 
 Publish translations (optional):
 
 ```bash
-php artisan vendor:publish --tag="vue-table-builder-translations"
+php artisan vendor:publish --tag="table-builder-translations"
 ```
 
 Publish the config (optional):
 
 ```bash
-php artisan vendor:publish --tag="vue-table-builder-config"
+php artisan vendor:publish --tag="table-builder-config"
 ```
+
+Before 1.9 these were `vue-table-builder-translations` and `vue-table-builder-config`. A published
+`config/vue-table-builder.php` or `lang/vendor/vue-table-builder` keeps working, and `config('vue-table-builder.*')` and
+`vue-table-builder::` keys keep resolving.
 
 ## NPM Dependencies
 

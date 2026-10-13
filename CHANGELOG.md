@@ -4,6 +4,18 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
 
 ## Unreleased
 
+* The PHP side moved to the new package `tranquil-tools/laravel-table-builder`, which this package requires, so
+  `composer require tranquil-tools/laravel-vue-table-builder` installs both. The namespace `TranquilTools\TableBuilder\`
+  is unchanged. This package keeps the Vue component and a small provider that shares the translations with Inertia.
+* Configuration now lives in `config/table-builder.php` and translations under `table-builder::`. A published
+  `config/vue-table-builder.php` or `lang/vendor/vue-table-builder` keeps working, and the old config key and
+  translation namespace keep resolving. The publish tags are now `table-builder-config` and
+  `table-builder-translations`.
+* The component checks the `schemaVersion` of the payload against `SUPPORTED_SCHEMA_VERSION`: another major throws in
+  development and warns in production, a payload without a version warns once in development.
+* The bulk-action and reorder endpoints decide between JSON and a redirect on `expectsJson()` alone. An Inertia visit
+  asks for HTML, so it still gets the redirect.
+
 * A bulk action can ask for a choice: `bulkAction(choices: [...], choicesLabel: '...')`. The component opens a dialog
   with a select and posts the value as `choice`. The endpoint checks it against the choices of the table it builds
   again, answers `422` on a missing or unknown choice, and passes it to `before`, `each` and `after` as an extra

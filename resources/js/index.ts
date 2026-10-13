@@ -1,5 +1,6 @@
 export { default as TableBuilder } from './components/TableBuilder.vue'
 export { TableCell, TableRow } from './components/ui/table'
+export { SUPPORTED_SCHEMA_VERSION, assertSupportedSchemaVersion } from './lib/schema-version'
 export { useTablePolling } from './composables/useTablePolling'
 export type { TablePollingOptions } from './composables/useTablePolling'
 export { useTableTransport } from './composables/useTableTransport'

@@ -19,6 +19,7 @@ import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
 import {useTablePolling} from '../composables/useTablePolling'
 import {cn} from '../lib/utils'
+import {assertSupportedSchemaVersion} from '../lib/schema-version'
 import {DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogRoot, DialogTitle} from 'reka-ui'
 import {useTableTransport, xsrfHeaders, type TableAdapter, type TableFetcher, type TableTransport} from '../composables/useTableTransport'
 import TablePagination from './TablePagination.vue'
@@ -43,6 +44,8 @@ const props = withDefaults(defineProps<{
     paginationPosition: 'bottom',
     reorderable: false,
 })
+
+assertSupportedSchemaVersion(props.table.schemaVersion)
 
 type RowKey = string | number
 
