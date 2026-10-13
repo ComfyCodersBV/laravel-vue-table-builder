@@ -26,9 +26,11 @@ use TranquilTools\TableBuilder\Concerns\HasColumns;
 use TranquilTools\TableBuilder\Concerns\HasEmptyState;
 use TranquilTools\TableBuilder\Concerns\HasExport;
 use TranquilTools\TableBuilder\Concerns\HasFilters;
+use TranquilTools\TableBuilder\Concerns\HasPolling;
 use TranquilTools\TableBuilder\Concerns\HasReordering;
 use TranquilTools\TableBuilder\Concerns\HasResource;
 use TranquilTools\TableBuilder\Concerns\HasRowActions;
+use TranquilTools\TableBuilder\Concerns\HasRowClass;
 use TranquilTools\TableBuilder\Concerns\HasSearchInputs;
 use TranquilTools\TableBuilder\Concerns\HasTotals;
 use TranquilTools\TableBuilder\Exceptions\PaginationException;
@@ -41,9 +43,11 @@ class TableBuilder implements Arrayable, JsonSerializable
     use HasEmptyState;
     use HasExport;
     use HasFilters;
+    use HasPolling;
     use HasReordering;
     use HasResource;
     use HasRowActions;
+    use HasRowClass;
     use HasSearchInputs;
     use HasTotals;
 
@@ -347,7 +351,7 @@ class TableBuilder implements Arrayable, JsonSerializable
             $itemArray['__key'] = $rowKey;
         }
 
-        return $itemArray;
+        return $this->applyRowClass($itemArray, $item);
     }
 
     public function jsonSerialize(): array
@@ -420,6 +424,7 @@ class TableBuilder implements Arrayable, JsonSerializable
             'totals' => $totals,
             'export' => $this->exportPayload(),
             'columnToggle' => $this->showsColumnToggle(),
+            ...$this->pollPayload(),
         ];
     }
 

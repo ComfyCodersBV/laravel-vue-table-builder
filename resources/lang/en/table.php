@@ -17,6 +17,9 @@ return [
         'select_all_results' => 'Select all :total results',
         'confirm' => 'Are you sure you want to perform this action on the selected rows?',
         'error' => 'Something went wrong while performing the action.',
+        'choose' => 'Choose an option',
+        'apply' => 'Apply',
+        'cancel' => 'Cancel',
     ],
 
     'export' => [

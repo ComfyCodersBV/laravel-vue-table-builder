@@ -142,7 +142,7 @@ export function useTableTransport(options: TableTransportOptions) {
 
     let latestRequest = 0
 
-    async function load(): Promise<void> {
+    async function load(silent = false): Promise<void> {
         if (!source.value) {
             error.value = 'A source url is required when using the http transport.'
 
@@ -151,8 +151,10 @@ export function useTableTransport(options: TableTransportOptions) {
 
         const request = ++latestRequest
 
-        loading.value = true
-        error.value = null
+        if (!silent) {
+            loading.value = true
+            error.value = null
+        }
 
         try {
             const adapter = options.adapter ?? defaultAdapter
@@ -165,6 +167,7 @@ export function useTableTransport(options: TableTransportOptions) {
             }
 
             fetched.value = adapter(payload)
+            error.value = null
         } catch (exception) {
             if (request !== latestRequest) {
                 return
@@ -404,6 +407,14 @@ export function useTableTransport(options: TableTransportOptions) {
         router.reload({preserveScroll: true, ...(options.only ? {only: options.only} : {})} as Parameters<typeof router.reload>[0])
     }
 
+    function refresh(): void {
+        if (isHttp.value) {
+            return void load(true)
+        }
+
+        router.reload({...(options.only ? {only: options.only} : {})})
+    }
+
     if (isHttp.value) {
         void load()
     }
@@ -428,6 +439,7 @@ export function useTableTransport(options: TableTransportOptions) {
         applyPage,
         resetFilters,
         reload,
+        refresh,
         stateParams,
     }
 }

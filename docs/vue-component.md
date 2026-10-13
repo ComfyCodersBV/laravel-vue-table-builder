@@ -31,7 +31,7 @@ The component is exported from the package's `resources/js/components/` director
 | `fetcher` | `TableFetcher` | No  | Replaces the built-in request of the `http` transport                                                                                                                                                                                                                               |
 | `adapter` | `TableAdapter` | No  | Maps a non-standard response body onto `{data, pagination}`                                                                                                                                                                                                                         |
 | `reorderable` | `boolean` | No   | Adds a drag handle in front of every row. See [Reordering](reordering.md)                                                                                                                                                                                                  |
-| `rowClass` | `(row, index) => string \| string[] \| Record<string, boolean>` | No | Extra classes per row, for status colours and similar                                                                                                                                                                     |
+| `rowClass` | `(row, index) => string \| string[] \| Record<string, boolean>` | No | Extra classes per row, for status colours and similar. Merged with the classes of `$table->rowClass()`, the prop last so it wins a conflicting Tailwind class. See [Row classes](#row-classes)                                       |
 | `emptyState` | `EmptyState` | No | Texts for an empty table, overriding the ones from the Table class. See [Empty State](empty-state.md)                                                                                                                                                              |
 | `confirm` | `(message, details?) => boolean \| Promise<boolean>` | No | Asks the confirmation of a row or bulk action. Defaults to `window.confirm()`. A bulk action passes `details` with its `text`, `confirmButton` and `cancelButton`. See [Row Actions](row-actions.md) and [Bulk Actions](bulk-actions.md)                                                                                                                                       |
 
@@ -111,6 +111,55 @@ The package uses shadcn/ui-style CSS variables. Override in your `app.css`:
     /* ... */
 }
 ```
+
+### Row classes
+
+Style rows from the table class with `rowClass()`. The callback gets the original row (the model, not the formatted
+array) and returns a string, a list of classes or a `class => bool` array:
+
+```php
+$table->rowClass(fn (Message $message): array => [
+    'font-semibold' => ! $message->is_seen,
+    'text-muted-foreground' => $message->is_archived,
+]);
+```
+
+The result travels as `__class` on each row, only for rows with a class and only when `rowClass()` is set. A row that
+already has a `__class` value throws a `LogicException`; alias that column in the query. The component merges it
+with the `rowClass` prop through `tailwind-merge`, prop last.
+
+## Auto-refresh
+
+`$table->poll(30)` sends `poll: 30`, and the component reloads the rows every 30 seconds: with the `inertia`
+transport through `router.reload()` (pass `only` so only the table prop is fetched), with the `http` transport by a
+silent refetch of the current query. Sorting, search, filters, the page and the selection stay as they are.
+
+It pauses while rows are selected, while a confirmation or choice dialog is open, while an action or request runs
+and while the tab is hidden. A tick missed while the tab was hidden runs as soon as it is visible again. Unmounting
+stops the timer. Without `poll()` the payload has no `poll` key and nothing is scheduled.
+
+## Translations
+
+The component reads its texts from the shared Inertia prop `vue_table_builder_table_translations`. `useTranslations` is
+exported from the package entry `resources/js/index.ts`, here aliased as `@table-builder`:
+
+```ts
+import {useTranslations} from '@table-builder'
+
+const {t} = useTranslations('vue_mailbox_translations', {group: 'mailbox'})
+
+t('mailbox::mailbox.compose.title')
+t('compose.title')
+```
+
+Share the bundle from your own service provider, for the current locale:
+
+```php
+Inertia::share('vue_mailbox_translations', fn () => trans('mailbox::mailbox'));
+```
+
+A `vendor::` prefix is always stripped. `group` strips the file name the bundle was shared from; it defaults to
+`table` for the table builder's own bundle and to nothing for any other.
 
 ## Slots
 

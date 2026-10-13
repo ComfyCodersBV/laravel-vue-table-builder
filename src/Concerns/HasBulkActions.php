@@ -8,6 +8,9 @@ use TranquilTools\TableBuilder\Components\BulkAction;
 
 trait HasBulkActions
 {
+    /**
+     * @var array<int, BulkAction>
+     */
     protected array $bulkActions = [];
 
     public function getBulkActions(): array
@@ -20,6 +23,9 @@ trait HasBulkActions
         return ! empty($this->bulkActions);
     }
 
+    /**
+     * @param  array<string|int, string>  $choices
+     */
     public function bulkAction(
         string $label,
         ?callable $each = null,
@@ -30,6 +36,8 @@ trait HasBulkActions
         string $confirmButton = '',
         string $cancelButton = '',
         bool|string $requirePassword = false,
+        array $choices = [],
+        string $choicesLabel = '',
     ): self {
         $key = count($this->bulkActions);
 
@@ -46,6 +54,8 @@ trait HasBulkActions
             cancelButton: $cancelButton,
             requirePassword: $requirePassword,
             tableParameters: $this->configurator->signedParameters(),
+            choices: $choices,
+            choicesLabel: $choicesLabel,
         );
 
         return $this;

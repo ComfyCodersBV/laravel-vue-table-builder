@@ -9,7 +9,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\Rule;
 use TranquilTools\TableBuilder\AbstractTable;
+use TranquilTools\TableBuilder\Components\BulkAction;
 use TranquilTools\TableBuilder\Http\Requests\BulkActionRequest;
 use TranquilTools\TableBuilder\Routing\TableResolver;
 
@@ -29,13 +31,15 @@ class TableBulkActionController extends Controller
             abort(404);
         }
 
+        $choice = $this->validatedChoice($request, $table->make()->getBulkActions()[$key]);
+
         $ids = $request->input('ids', []);
 
         if ($ids === ['*']) {
             $this->applyPostedTableState($request, $table);
         }
 
-        $table->performBulkAction($key, $ids);
+        $table->withBulkActionChoice($choice)->performBulkAction($key, $ids);
 
         if ($request->expectsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
@@ -44,6 +48,22 @@ class TableBulkActionController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    private function validatedChoice(BulkActionRequest $request, BulkAction $bulkAction): ?string
+    {
+        if (! $bulkAction->hasChoices()) {
+            return null;
+        }
+
+        $validated = $request->validate([
+            'choice' => [
+                'required',
+                Rule::in($bulkAction->choiceValues()),
+            ],
+        ]);
+
+        return (string) $validated['choice'];
     }
 
     private function applyPostedTableState(BulkActionRequest $request, AbstractTable $table): void

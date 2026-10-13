@@ -6,11 +6,13 @@ namespace TranquilTools\TableBuilder\Components;
 
 use Closure;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use JsonSerializable;
 use TranquilTools\TableBuilder\Http\Controllers\TableBulkActionController;
 use TranquilTools\TableBuilder\Routing\SignedTableUrl;
 
-class BulkAction
+class BulkAction implements JsonSerializable
 {
     public bool|string $requirePassword = false;
 
@@ -29,6 +31,8 @@ class BulkAction
         public string $cancelButton = '',
         bool|string $requirePassword = false,
         public array $tableParameters = [],
+        public array $choices = [],
+        public string $choicesLabel = '',
     ) {
         if ($requirePassword === true) {
             $this->requirePassword = 'password';
@@ -39,6 +43,19 @@ class BulkAction
         }
 
         $this->url = $this->getUrl();
+    }
+
+    public function hasChoices(): bool
+    {
+        return $this->choices !== [];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function choiceValues(): array
+    {
+        return array_map(fn (string|int $value): string => (string) $value, array_keys($this->choices));
     }
 
     public function getSlug(): string
@@ -64,7 +81,7 @@ class BulkAction
 
     public function toArray(): array
     {
-        return [
+        $payload = [
             'key' => $this->key,
             'label' => $this->label,
             'url' => $this->getUrl(),
@@ -73,6 +90,47 @@ class BulkAction
             'confirmButton' => $this->confirmButton,
             'cancelButton' => $this->cancelButton,
             'requirePassword' => $this->requirePassword,
+        ];
+
+        return [
+            ...$payload,
+            ...$this->choicesPayload(),
+        ];
+    }
+
+    public function jsonSerialize(): array
+    {
+        return [
+            ...Arr::except(get_object_vars($this), [
+                'beforeCallback',
+                'eachCallback',
+                'afterCallback',
+                'choices',
+                'choicesLabel',
+            ]),
+            ...$this->choicesPayload(),
+        ];
+    }
+
+    /**
+     * @return array{choices?: list<array{value: string, label: string}>, choicesLabel?: string}
+     */
+    private function choicesPayload(): array
+    {
+        if (! $this->hasChoices()) {
+            return [];
+        }
+
+        return [
+            'choices' => array_map(
+                fn (string|int $value, string $label): array => [
+                    'value' => (string) $value,
+                    'label' => $label,
+                ],
+                array_keys($this->choices),
+                $this->choices,
+            ),
+            'choicesLabel' => $this->choicesLabel,
         ];
     }
 }

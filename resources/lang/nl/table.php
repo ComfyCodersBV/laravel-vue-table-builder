@@ -17,6 +17,9 @@ return [
         'select_all_results' => 'Alle :total resultaten selecteren',
         'confirm' => 'Weet je zeker dat je deze actie op de geselecteerde rijen wilt uitvoeren?',
         'error' => 'Er is iets misgegaan bij het uitvoeren van de actie.',
+        'choose' => 'Maak een keuze',
+        'apply' => 'Toepassen',
+        'cancel' => 'Annuleren',
     ],
 
     'export' => [

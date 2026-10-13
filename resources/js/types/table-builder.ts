@@ -61,6 +61,13 @@ export interface BulkAction {
     confirmButton: string
     cancelButton: string
     requirePassword: boolean | string
+    choices?: BulkActionChoice[]
+    choicesLabel?: string
+}
+
+export interface BulkActionChoice {
+    value: string
+    label: string
 }
 
 export interface ConfirmDetails {
@@ -139,4 +146,5 @@ export interface TableData {
     totals?: Totals | null
     export?: ExportConfig | null
     columnToggle?: boolean
+    poll?: number
 }

@@ -25,6 +25,8 @@ bulkAction(
     string $confirmButton = '',
     string $cancelButton = '',
     bool|string $requirePassword = false,
+    array $choices = [],
+    string $choicesLabel = '',
 ): self
 ```
 
@@ -41,6 +43,8 @@ bulkAction(
 | `confirmButton`   | `string`         | `''`    | Confirm button label                                                     |
 | `cancelButton`    | `string`         | `''`    | Cancel button label                                                      |
 | `requirePassword` | `bool\|string`   | `false` | Password field name to send along; `true` becomes `password` (see below) |
+| `choices`         | `array`          | `[]`    | Value => label options the user picks one from before posting (see below) |
+| `choicesLabel`    | `string`         | `''`    | Label of the select in the choice dialog; falls back to `label`          |
 
 ## Callbacks
 
@@ -92,6 +96,43 @@ message and the other texts:
 
 `details` is only passed for bulk actions; a row action calls the prop with the message alone. Cancelling keeps the
 selection and posts nothing.
+
+## Choices
+
+A bulk action can ask for one value before it runs, such as a folder, a status or a user:
+
+```php
+->bulkAction(
+    label: 'Move to',
+    before: fn (array $ids, string $folderId) => $move->handle($ids, $folderId),
+    choices: $folders->pluck('name', 'id')->all(),
+    choicesLabel: 'Folder',
+    confirmButton: 'Move',
+)
+```
+
+The Vue component opens a dialog with a select instead of the confirmation: its title is the `confirm` string or the
+label, `confirmText` goes below it, and `confirmButton` and `cancelButton` label its buttons. The request carries the
+picked value as `choice`, always as a string.
+
+The endpoint builds the table again and checks `choice` against the keys of its `choices`, so a value the table does
+not offer, or no value, answers `422` with an error on `choice`. Choices are never taken from the client.
+
+The callbacks of an action with choices get the choice as an extra argument:
+
+| Callback | Arguments                |
+|----------|--------------------------|
+| `before` | `array $ids, string $choice` |
+| `each`   | `$row, string $choice`       |
+| `after`  | `array $ids, string $choice` |
+
+An action without choices calls its callbacks exactly as before: `before` and `after` with `$ids`, `each` through
+`Collection::each()`. A posted `choice` is ignored for such an action.
+
+The callbacks are stored as `Closure`, so pass closures or first-class callables such as `$this->move(...)`. A string
+naming a built-in function, such as `'strtoupper'`, would not work anyway: it refuses the extra argument.
+
+If you override `performBulkAction()`, read the validated choice with `$this->bulkActionChoice()`.
 
 ## Password Confirmation
 

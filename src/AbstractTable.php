@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TranquilTools\TableBuilder;
 
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -19,6 +20,8 @@ use TranquilTools\TableBuilder\Components\BulkAction;
 abstract class AbstractTable
 {
     private ?TableBuilder $table = null;
+
+    private ?string $bulkActionChoice = null;
 
     public function authorize(Request $request): bool
     {
@@ -113,25 +116,54 @@ abstract class AbstractTable
         $this->make()->moveRow($id, $toId);
     }
 
+    public function withBulkActionChoice(?string $choice): static
+    {
+        $this->bulkActionChoice = $choice;
+
+        return $this;
+    }
+
+    public function bulkActionChoice(): ?string
+    {
+        return $this->bulkActionChoice;
+    }
+
     public function performBulkAction(int $key, array $ids)
     {
         $table = $this->make();
 
-        if ($table instanceof QueryBuilder) {
-            /** @var BulkAction $bulkAction */
-            $bulkAction = $table->getBulkActions()[$key];
-
-            if ($bulkAction->beforeCallback) {
-                call_user_func($bulkAction->beforeCallback, $ids);
-            }
-
-            if ($bulkAction->eachCallback) {
-                $table->performBulkAction($bulkAction->eachCallback, $ids);
-            }
-
-            if ($bulkAction->afterCallback) {
-                call_user_func($bulkAction->afterCallback, $ids);
-            }
+        if (! $table instanceof QueryBuilder) {
+            return;
         }
+
+        /** @var BulkAction $bulkAction */
+        $bulkAction = $table->getBulkActions()[$key];
+
+        $arguments = $bulkAction->hasChoices() ? [$ids, $this->bulkActionChoice] : [$ids];
+
+        if ($bulkAction->beforeCallback) {
+            call_user_func($bulkAction->beforeCallback, ...$arguments);
+        }
+
+        if ($bulkAction->eachCallback) {
+            $table->performBulkAction($this->eachCallback($bulkAction), $ids);
+        }
+
+        if ($bulkAction->afterCallback) {
+            call_user_func($bulkAction->afterCallback, ...$arguments);
+        }
+    }
+
+    private function eachCallback(BulkAction $bulkAction): Closure
+    {
+        $each = $bulkAction->eachCallback;
+
+        if (! $bulkAction->hasChoices()) {
+            return $each;
+        }
+
+        $choice = $this->bulkActionChoice;
+
+        return fn (mixed $row): mixed => $each($row, $choice);
     }
 }

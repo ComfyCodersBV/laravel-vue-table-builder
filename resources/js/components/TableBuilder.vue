@@ -17,6 +17,9 @@ import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Download, Funnel, G
 import type {BulkAction, ConfirmDetails, EmptyState, Filter, RowAction, TableData} from '../types/table-builder'
 import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
+import {useTablePolling} from '../composables/useTablePolling'
+import {cn} from '../lib/utils'
+import {DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogRoot, DialogTitle} from 'reka-ui'
 import {useTableTransport, xsrfHeaders, type TableAdapter, type TableFetcher, type TableTransport} from '../composables/useTableTransport'
 import TablePagination from './TablePagination.vue'
 
@@ -85,6 +88,7 @@ const {
     applyPage,
     resetFilters,
     reload,
+    refresh,
     stateParams,
 } = useTableTransport({
     table: computed(() => props.table),
@@ -168,16 +172,24 @@ const hasActions = computed(() => Boolean(slots.actions) || hasRowActions.value)
 
 const actionRunning = ref(false)
 
+const awaitingConfirmation = ref(false)
+
 async function confirmed(message: string | null, details?: ConfirmDetails): Promise<boolean> {
     if (!message) {
         return true
     }
 
-    if (props.confirm) {
-        return details ? await props.confirm(message, details) : await props.confirm(message)
-    }
+    awaitingConfirmation.value = true
 
-    return window.confirm(details?.text ? `${message}\n\n${details.text}` : message)
+    try {
+        if (props.confirm) {
+            return details ? await props.confirm(message, details) : await props.confirm(message)
+        }
+
+        return window.confirm(details?.text ? `${message}\n\n${details.text}` : message)
+    } finally {
+        awaitingConfirmation.value = false
+    }
 }
 
 function opensInNewTab(event: MouseEvent): boolean {
@@ -669,7 +681,9 @@ function bulkConfirmation(action: BulkAction): string | null {
     return typeof action.confirm === 'string' ? action.confirm : t('vue-table-builder::table.bulk_actions.confirm')
 }
 
-function bulkPayload(): {ids: (string | number)[], state?: string} | null {
+type BulkPayload = {ids: (string | number)[], state?: string, choice?: string}
+
+function bulkPayload(): BulkPayload | null {
     if (allResultsSelected.value) {
         return {ids: ['*'], state: stateParams().toString()}
     }
@@ -679,10 +693,46 @@ function bulkPayload(): {ids: (string | number)[], state?: string} | null {
     return ids.length > 0 ? {ids} : null
 }
 
+const choiceAction = ref<BulkAction | null>(null)
+const chosenValue = ref('')
+
+const choiceDialogOpen = computed({
+    get: () => choiceAction.value !== null,
+    set: (open: boolean) => {
+        if (!open) {
+            choiceAction.value = null
+        }
+    },
+})
+
+function choiceDialogTitle(action: BulkAction): string {
+    return typeof action.confirm === 'string' && action.confirm ? action.confirm : action.label
+}
+
+function submitChoice(): void {
+    const action = choiceAction.value
+    const payload = bulkPayload()
+
+    if (!action || !payload || !chosenValue.value) {
+        return
+    }
+
+    choiceAction.value = null
+
+    postBulkAction(action, {...payload, choice: chosenValue.value})
+}
+
 async function performBulkAction(action: BulkAction) {
     const payload = bulkPayload()
 
     if (!payload) {
+        return
+    }
+
+    if (action.choices?.length) {
+        chosenValue.value = ''
+        choiceAction.value = action
+
         return
     }
 
@@ -696,6 +746,10 @@ async function performBulkAction(action: BulkAction) {
         return
     }
 
+    postBulkAction(action, payload)
+}
+
+function postBulkAction(action: BulkAction, payload: BulkPayload): void {
     actionError.value = null
 
     if (props.transport === 'http') {
@@ -728,6 +782,19 @@ async function performBulkAction(action: BulkAction) {
         },
     })
 }
+
+useTablePolling({
+    seconds: computed(() => table.value.poll),
+    paused: computed(() =>
+        selectedCount.value > 0
+        || choiceAction.value !== null
+        || awaitingConfirmation.value
+        || actionRunning.value
+        || loading.value
+        || draggedIndex.value !== null
+    ),
+    refresh,
+})
 </script>
 
 <template>
@@ -965,7 +1032,7 @@ async function performBulkAction(action: BulkAction) {
                             @drop="showsReorderHandles ? dropOnRow(index, $event) : undefined"
                             :class="[
                                 (table.rowLinks && table.rowLinks[index]) || listensToRowClick ? 'cursor-pointer hover:bg-muted/50' : '',
-                                rowClass ? rowClass(row, index) : '',
+                                cn(row?.__class, rowClass ? rowClass(row, index) : undefined),
                                 draggedIndex === index ? 'opacity-50' : '',
                                 overIndex === index && draggedIndex !== index ? 'border-t-2 border-t-primary' : '',
                             ]">
@@ -1083,5 +1150,46 @@ async function performBulkAction(action: BulkAction) {
             @update:per-page="handlePerPageChange"
             @navigate="navigatePage"
         />
+        <DialogRoot v-model:open="choiceDialogOpen">
+            <DialogPortal>
+                <DialogOverlay class="fixed inset-0 z-50 bg-black/50"/>
+                <DialogContent
+                    v-if="choiceAction"
+                    data-bulk-choice-dialog
+                    class="fixed top-1/2 left-1/2 z-50 grid w-full max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border bg-background p-6 shadow-lg"
+                >
+                    <form class="grid gap-4" @submit.prevent="submitChoice">
+                        <div class="grid gap-1.5">
+                            <DialogTitle class="text-lg font-semibold">{{ choiceDialogTitle(choiceAction) }}</DialogTitle>
+                            <DialogDescription v-if="choiceAction.confirmText" class="text-sm text-muted-foreground">
+                                {{ choiceAction.confirmText }}
+                            </DialogDescription>
+                        </div>
+                        <label class="grid gap-1.5 text-sm font-medium">
+                            <span>{{ choiceAction.choicesLabel || choiceAction.label }}</span>
+                            <select
+                                v-model="chosenValue"
+                                name="choice"
+                                required
+                                class="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+                            >
+                                <option value="" disabled>{{ t('vue-table-builder::table.bulk_actions.choose') }}</option>
+                                <option v-for="choice in choiceAction.choices" :key="choice.value" :value="choice.value">
+                                    {{ choice.label }}
+                                </option>
+                            </select>
+                        </label>
+                        <div class="flex justify-end gap-2">
+                            <Button type="button" variant="outline" @click="choiceDialogOpen = false">
+                                {{ choiceAction.cancelButton || t('vue-table-builder::table.bulk_actions.cancel') }}
+                            </Button>
+                            <Button type="submit" :disabled="!chosenValue">
+                                {{ choiceAction.confirmButton || t('vue-table-builder::table.bulk_actions.apply') }}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </DialogPortal>
+        </DialogRoot>
     </div>
 </template>

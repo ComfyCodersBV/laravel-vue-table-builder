@@ -2,6 +2,23 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## Unreleased
+
+* A bulk action can ask for a choice: `bulkAction(choices: [...], choicesLabel: '...')`. The component opens a dialog
+  with a select and posts the value as `choice`. The endpoint checks it against the choices of the table it builds
+  again, answers `422` on a missing or unknown choice, and passes it to `before`, `each` and `after` as an extra
+  argument. Actions without choices call their callbacks exactly as before. `AbstractTable::bulkActionChoice()` gives
+  an overridden `performBulkAction()` the validated choice.
+* The JSON of a bulk action no longer carries its `beforeCallback`, `eachCallback` and `afterCallback` keys. They were
+  always empty objects, and Inertia resolves closures it finds in serialized props.
+* `$table->poll(int $seconds)` reloads the rows on an interval, over Inertia and over http, keeping sorting, search,
+  the page and the selection. It pauses while rows are selected, a dialog is open, a request runs or the tab is
+  hidden, and catches up when the tab is visible again. `poll` is only in the payload when set.
+* `$table->rowClass(callable)` sends a class per row as `__class`, merged with the `rowClass` prop, the prop last. A
+  row that already has a `__class` value throws a `LogicException`. Tables without it send nothing extra.
+* `useTranslations` is exported from the package entry. Its `table.` prefix stripping only applies to the table
+  builder's own bundle; other bundles can pass `{group}` to strip the file name they were shared from.
+
 ## 1.8.1 - 2026-10-12
 
 * The documented return type of `AbstractTable::for()` includes the Spatie `QueryBuilder` and a `DB::table()` query. A
