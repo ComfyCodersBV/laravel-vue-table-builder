@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {computed} from 'vue'
 import {ChevronDown, ChevronLeft, ChevronRight} from '@lucide/vue'
 import {Button} from './ui/button'
 import {
@@ -12,13 +13,15 @@ import {useTranslations} from '../composables/useTranslations'
 
 const {t} = useTranslations('vue_table_builder_table_translations')
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
     pagination: PaginationData
     perPageOptions?: number[]
     compact?: boolean
 }>(), {
     compact: false,
 })
+
+const testIdPrefix = computed(() => props.compact ? 'table-top-' : 'table-')
 
 const emit = defineEmits<{
     'update:perPage': [string]
@@ -35,7 +38,7 @@ const emit = defineEmits<{
                 </span>
                 <DropdownMenu>
                     <DropdownMenuTrigger as-child>
-                        <Button variant="outline" size="sm" class="cursor-pointer">
+                        <Button variant="outline" size="sm" class="cursor-pointer" :data-testid="`${testIdPrefix}per-page`">
                             {{ pagination.per_page }}
                             <ChevronDown class="ml-1 h-3.5 w-3.5"/>
                         </Button>
@@ -53,7 +56,7 @@ const emit = defineEmits<{
                 </DropdownMenu>
             </div>
 
-            <span class="text-sm text-muted-foreground">
+            <span class="text-sm text-muted-foreground" :data-testid="`${testIdPrefix}count`">
                 {{
                     t('vue-table-builder::table.pagination.showing', {
                         from: pagination.from ?? 0,
@@ -68,6 +71,7 @@ const emit = defineEmits<{
             <button
                 type="button"
                 class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-background enabled:cursor-pointer"
+                :data-testid="`${testIdPrefix}previous`"
                 :disabled="pagination.current_page <= 1"
                 @click="emit('navigate', -1)"
             >
@@ -87,6 +91,7 @@ const emit = defineEmits<{
             <button
                 type="button"
                 class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-background enabled:cursor-pointer"
+                :data-testid="`${testIdPrefix}next`"
                 :disabled="pagination.current_page >= pagination.last_page"
                 @click="emit('navigate', 1)"
             >
