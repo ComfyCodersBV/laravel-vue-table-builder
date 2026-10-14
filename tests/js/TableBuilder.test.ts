@@ -5,9 +5,11 @@ import {h} from 'vue'
 import TableBuilder from '../../resources/js/components/TableBuilder.vue'
 import type {Column, RowAction, TableData} from '../../resources/js/types/table-builder'
 
+const page = vi.hoisted(() => ({props: {} as Record<string, unknown>}))
+
 vi.mock('@inertiajs/vue3', () => ({
     router: {get: vi.fn(), reload: vi.fn(), post: vi.fn(), visit: vi.fn()},
-    usePage: () => ({props: {}}),
+    usePage: () => page,
 }))
 
 function column(key: string): Column {
@@ -1002,5 +1004,25 @@ describe('TableBuilder toolbar', () => {
 
         expect(mount(TableBuilder, {props: {table: turnedOff}}).text()).not.toContain('columns')
         expect(mount(TableBuilder, {props: {table: tableData()}}).text()).not.toContain('columns')
+    })
+})
+
+describe('TableBuilder boolean columns', () => {
+    afterEach(() => {
+        page.props = {}
+    })
+
+    it('names the boolean icons with the translated yes and no', () => {
+        page.props = {vue_table_builder_table_translations: {export: {yes: 'Ja', no: 'Nee'}}}
+
+        const table = tableData()
+        table.data = [{id: 'a', name: 'First', done: true}, {id: 'b', name: 'Second', done: false}]
+        table.columns = [{...column('done'), boolean: true}]
+
+        const labels = mount(TableBuilder, {props: {table}})
+            .findAll('tbody [role="img"]')
+            .map((icon) => icon.attributes('aria-label'))
+
+        expect(labels).toEqual(['Ja', 'Nee'])
     })
 })
