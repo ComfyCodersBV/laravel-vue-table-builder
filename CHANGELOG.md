@@ -3,7 +3,6 @@
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
 ## 1.9.1 - 2026-10-14
-
 * The check and cross of a boolean column are named with the translated `export.yes` and `export.no` (`Yes`/`No`,
   `Ja`/`Nee`) instead of `true` and `false`, so screen readers read a word instead of a boolean.
 
