@@ -1068,13 +1068,13 @@ useTablePolling({
                                         v-if="column.boolean && isTruthy(getCellValue(row, column.key))"
                                         class="size-4 text-emerald-600"
                                         role="img"
-                                        aria-label="true"
+                                        :aria-label="t('export.yes')"
                                     />
                                     <X
                                         v-else-if="column.boolean"
                                         class="size-4 text-muted-foreground"
                                         role="img"
-                                        aria-label="false"
+                                        :aria-label="t('export.no')"
                                     />
                                     <span v-else v-html="getCellValue(row, column.key)"></span>
                                 </slot>
