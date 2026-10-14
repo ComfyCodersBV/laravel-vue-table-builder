@@ -7,7 +7,6 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
   `Ja`/`Nee`) instead of `true` and `false`, so screen readers read a word instead of a boolean.
 
 ## 1.9.0 - 2026-10-13
-
 * The PHP side moved to the new package `tranquil-tools/laravel-table-builder`, which this package requires, so
   `composer require tranquil-tools/laravel-vue-table-builder` installs both. The namespace `TranquilTools\TableBuilder\`
   is unchanged. This package keeps the Vue component and a small provider that shares the translations with Inertia.
@@ -36,7 +35,6 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
   builder's own bundle; other bundles can pass `{group}` to strip the file name they were shared from.
 
 ## 1.8.1 - 2026-10-12
-
 * The documented return type of `AbstractTable::for()` includes the Spatie `QueryBuilder` and a `DB::table()` query. A
   table class declaring `public function for(): QueryBuilder` no longer gets a `method.childReturnType` error from
   PHPStan. Spatie stays optional, because the type is only in the docblock. A table class fixture with such return
@@ -49,7 +47,6 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
   characters, such as `A&B`, was posted escaped when a column shared the key.
 
 ## 1.8.0 - 2026-10-12
-
 * Rows are identified by a row key instead of `row.id`. The payload carries `rowKey`: the model's `getKeyName()` by
   default, so a model keyed by `uuid` works without configuration, or `id` for plain query and array tables.
   `rowKey('code')` sets another column; `primaryKey()` remains as the older name. Selection, the bulk action `ids`,
@@ -66,7 +63,6 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
 * `AbstractTable::refresh()` forgets the built table and builds it again from the current request.
 
 ## 1.7.0 - 2026-10-12
-
 * "Select all N results" now does what the docs promised: the component posts `ids: ['*']` instead of the ids on the
   current page, together with `state`, the sort, search and filters the table is showing as a query string. The bulk
   action endpoint takes the table's own sort and filter keys from `state` and runs the action over the table's
@@ -84,7 +80,6 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
 * `BulkAction` and `ConfirmDetails` are exported from the package entry.
 
 ## 1.6.1 - 2026-10-12
-
 * A bulk action posted by the http transport gets `{"performed": true}` back from the package route instead of a
   redirect to the page, the same way reordering already answered. The `fetch()` no longer follows the redirect and
   renders the whole page only to throw it away, and success no longer depends on how that page responds. After a
@@ -95,7 +90,6 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
   success, and the selection and the error stay after a failure.
 
 ## 1.6.0 - 2026-10-11
-
 * `total('amount')` adds a footer row with a total per column, computed on the server over every row that matches the
   search and filters, not only the current page. `using` takes `sum`, `count`, `avg`, `min`, `max` or a callback
   receiving the filtered query; `pageOnly: true` totals the current page; `format` turns the value into text and
@@ -141,7 +135,6 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
   middleware stays empty so existing applications keep working.
 
 ## 1.5.0 - 2026-10-11
-
 * `rowAction()` defines the buttons of every row in the Table class: a label, a url (string or
   callback) or route name, a method (`get`, `post`, `put`, `patch`, `delete`), an optional
   confirmation and a button variant. `visible` leaves an action out for a row, so policy checks
@@ -165,7 +158,6 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
 * Fix three type errors when the Vue sources are type-checked with `vue-tsc`.
 
 ## 1.4.0 - 2026-10-01
-
 * `reorderable` adds a leading drag handle to every row. Dropping a row on another emits
   `reorder` with `{from, to, row}`; the indexes are positions within the rows currently shown, and
   the component does not move anything itself, so the owner persists the new order and reloads.
@@ -183,11 +175,9 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
   ignored the row link.
 
 ## 1.3.1 - 2026-09-17
-
 * Allow @vueuse/core 15 in the peer range
 
 ## 1.3.0 - 2026-09-17
-
 * `TableBuilder` takes a `transport` prop. The default `inertia` behaves exactly as before. With
   `transport="http"` and a `source` url the component fetches its own rows over `fetch()` and keeps
   sort, filter, search, per-page and page state in memory, so a table can be driven by an API that
