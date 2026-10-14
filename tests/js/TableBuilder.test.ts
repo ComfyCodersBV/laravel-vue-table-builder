@@ -1026,3 +1026,20 @@ describe('TableBuilder boolean columns', () => {
         expect(labels).toEqual(['Ja', 'Nee'])
     })
 })
+
+describe('TableBuilder test hooks', () => {
+    it('marks every data row and the empty state', () => {
+        const filled = mount(TableBuilder, {props: {table: tableData()}})
+        const empty = mount(TableBuilder, {props: {table: {...tableData(), data: []}}})
+
+        expect(filled.findAll('[data-testid="table-row"]')).toHaveLength(3)
+        expect(empty.find('[data-testid="table-empty"]').exists()).toBe(true)
+    })
+
+    it('gives each text filter a test id behind the filter toggle', () => {
+        const table = {...tableData(), filters: [{key: 'name', label: 'Name', type: 'text', value: ''}]}
+        const wrapper = mount(TableBuilder, {props: {table}})
+
+        expect(wrapper.find('[data-testid="table-filter"]').exists()).toBe(true)
+    })
+})

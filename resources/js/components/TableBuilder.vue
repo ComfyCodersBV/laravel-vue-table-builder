@@ -808,7 +808,7 @@ useTablePolling({
                 <DropdownMenu v-if="table.filters && Object.keys(table.filters).length > 0"
                               v-model:open="filterDropdownOpen">
                     <DropdownMenuTrigger as-child>
-                        <Button variant="outline" :aria-label="t('vue-table-builder::table.filters.toggle')" data-filter-toggle>
+                        <Button variant="outline" :aria-label="t('vue-table-builder::table.filters.toggle')" data-filter-toggle data-testid="table-filter">
                             <Funnel class="h-4 w-4" aria-hidden="true"/>
                         </Button>
                     </DropdownMenuTrigger>
@@ -821,6 +821,7 @@ useTablePolling({
                                 class="w-full"
                                 :model-value="textFilterValues[filter.key] ?? ''"
                                 :placeholder="filter.label"
+                                :data-testid="`table-filter-${filter.key}`"
                                 @update:model-value="(value: string | number) => handleTextFilterInput(filter.key, String(value))"
                             />
 
@@ -870,6 +871,7 @@ useTablePolling({
                                 v-else
                                 class="w-full rounded-md border bg-white px-3 py-2 dark:bg-gray-800"
                                 :value="filter.value || ''"
+                                :data-testid="`table-filter-${filter.key}`"
                                 @change="(e) => handleFilterChange(filter.key, (e.target as HTMLSelectElement).value)">
                                 <option v-for="(optionLabel, optionValue) in filter.options" :key="optionValue"
                                         :value="optionValue">
@@ -882,7 +884,7 @@ useTablePolling({
                 <!-- Search Input -->
                 <div v-if="table.searchInputs?.global" class="relative flex-1">
                     <Search class="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-muted-foreground"/>
-                    <Input ref="searchInput" v-model="searchValue" :placeholder="table.searchInputs?.global?.label"
+                    <Input ref="searchInput" v-model="searchValue" data-testid="table-search" :placeholder="table.searchInputs?.global?.label"
                            class="pl-8"/>
                 </div>
             </div>
@@ -907,7 +909,7 @@ useTablePolling({
 
                 <DropdownMenu v-if="columnSelector">
                     <DropdownMenuTrigger as-child>
-                        <Button variant="outline" class="ml-auto">
+                        <Button variant="outline" class="ml-auto" data-testid="table-columns">
                             {{ t('vue-table-builder::table.columns') }}
                             <ChevronDown class="ml-2 h-4 w-4"/>
                         </Button>
@@ -1014,7 +1016,7 @@ useTablePolling({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableRow v-if="!table.data || table.data.length === 0">
+                    <TableRow v-if="!table.data || table.data.length === 0" data-testid="table-empty">
                         <TableCell :colspan="rowColspan" class="text-center text-muted-foreground" data-empty-state>
                             <slot
                                 name="empty"
@@ -1030,6 +1032,7 @@ useTablePolling({
                     </TableRow>
                     <template v-for="(row, index) in table.data" :key="rowVnodeKey(row, index)">
                         <TableRow
+                            data-testid="table-row"
                             @click="clickRow(row, index, $event)"
                             @dragover="showsReorderHandles ? dragOverRow(index, $event) : undefined"
                             @drop="showsReorderHandles ? dropOnRow(index, $event) : undefined"

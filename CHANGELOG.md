@@ -2,6 +2,13 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## Unreleased
+* Test hooks for browser recordings, next to the existing `data-filter-*` attributes: the filter toggle is
+  `data-testid="table-filter"`, each text and select filter `table-filter-<key>`, plus `table-search`, `table-columns`,
+  `table-row` on every data row and `table-empty` on the empty state. The pagination carries `table-count`,
+  `table-previous`, `table-next` and `table-per-page`; the compact pagination above the table uses the `table-top-`
+  prefix so both stay unique.
+
 ## 1.9.1 - 2026-10-14
 * The check and cross of a boolean column are named with the translated `export.yes` and `export.no` (`Yes`/`No`,
   `Ja`/`Nee`) instead of `true` and `false`, so screen readers read a word instead of a boolean.
