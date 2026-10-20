@@ -162,6 +162,9 @@ $table
         disabled: fn (Room $room) => $room->units_count > 0 ? 'The room still has units' : false);
 ```
 
+`confirm` also takes a callback that gets the row, for a question that names it:
+`confirm: fn (Room $room) => "Delete {$room->name}?"`.
+
 See [docs/row-actions.md](docs/row-actions.md).
 
 ### Empty State

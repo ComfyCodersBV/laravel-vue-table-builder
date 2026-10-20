@@ -25,7 +25,7 @@ rowAction(
     string|Closure|null $url = null,
     ?string $route = null,
     string $method = 'get',
-    ?string $confirm = null,
+    string|Closure|null $confirm = null,
     string $variant = 'outline',
     bool|Closure $visible = true,
     bool|string|Closure $disabled = false,
@@ -40,7 +40,7 @@ rowAction(
 | `url`      | A fixed url, or a callback receiving the row item. Returning `null` hides the action for that row            |
 | `route`    | A route name resolved as `route($route, $item)`; use `url` when the route needs more parameters              |
 | `method`   | `get`, `post`, `put`, `patch` or `delete`                                                                     |
-| `confirm`  | Question asked before the action runs                                                                        |
+| `confirm`  | Question asked before the action runs, or a callback receiving the row item. `null` or `''` asks nothing     |
 | `variant`  | Button variant: `default`, `destructive`, `outline`, `secondary`, `ghost` or `link`                          |
 | `visible`  | `false` or a callback returning `false` leaves the action out of the payload for that row                    |
 | `disabled` | `true`, or a callback returning `true` or a reason string. The reason is shown as the button's tooltip      |
@@ -48,6 +48,23 @@ rowAction(
 | `download` | `true` or a file name: the action downloads a file instead of visiting a page. Only with the `get` method    |
 
 `url` or `route` is required.
+
+## Confirmation Per Row
+
+A callback for `confirm` gets the row item, like `url`, `visible` and `disabled`, so the question can
+name the row. It is resolved on the server, the payload carries the resulting string:
+
+```php
+$table->rowAction(
+    'Disconnect',
+    url: fn (App $app) => route('apps.disconnect', $app),
+    method: 'delete',
+    confirm: fn (App $app) => "Disconnect {$app->name}?",
+);
+```
+
+Return `null` or an empty string to run the action on that row without asking. Requires
+`tranquil-tools/laravel-table-builder` 1.1.
 
 ## Authorization
 

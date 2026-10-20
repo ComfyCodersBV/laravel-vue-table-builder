@@ -55,7 +55,7 @@ interface RowAction {
     label: string
     url: string
     method: 'get' | 'post' | 'put' | 'patch' | 'delete'
-    confirm: string | null
+    confirm: string | null              // already resolved for this row
     variant: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
     disabled: boolean
     disabledReason: string | null

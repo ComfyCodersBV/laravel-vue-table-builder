@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## Unreleased
+* A row action's `confirm` can be a closure that gets the row, so the question can name it:
+  `confirm: fn (App $app) => "Disconnect {$app->name}?"`. The core resolves it per row and the component asks the
+  text of the row that was clicked. A row without a text runs without asking. Requires
+  `tranquil-tools/laravel-table-builder` 1.1, which this package now requires.
+
 ## 1.9.2 - 2026-10-14
 * Test hooks for browser recordings, next to the existing `data-filter-*` attributes: the filter toggle is
   `data-testid="table-filter"`, each text and select filter `table-filter-<key>`, plus `table-search`, `table-columns`,

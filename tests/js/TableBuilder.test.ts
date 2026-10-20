@@ -207,6 +207,31 @@ describe('TableBuilder row actions', () => {
         expect(router.visit).toHaveBeenCalledWith('/lines/a', expect.objectContaining({method: 'delete'}))
     })
 
+    it('asks each row the confirm text resolved for that row', async () => {
+        const confirm = vi.fn(() => true)
+        const table = tableData()
+
+        table.rowActions = [
+            [rowAction({key: 'disconnect', label: 'Disconnect', url: '/apps/claude', method: 'delete', confirm: 'Disconnect Claude?'})],
+            [rowAction({key: 'disconnect', label: 'Disconnect', url: '/apps/chatgpt', method: 'delete', confirm: 'Disconnect ChatGPT?'})],
+            [rowAction({key: 'disconnect', label: 'Disconnect', url: '/apps/local', method: 'delete'})],
+        ]
+
+        const wrapper = mount(TableBuilder, {props: {table, confirm}})
+        const rows = wrapper.findAll('tbody tr')
+
+        await rows[1].find('button[data-row-action="disconnect"]').trigger('click')
+        await flush()
+
+        expect(confirm).toHaveBeenCalledWith('Disconnect ChatGPT?')
+
+        await rows[2].find('button[data-row-action="disconnect"]').trigger('click')
+        await flush()
+
+        expect(confirm).toHaveBeenCalledTimes(1)
+        expect(router.visit).toHaveBeenLastCalledWith('/apps/local', expect.objectContaining({method: 'delete'}))
+    })
+
     it('does not run an action that is not confirmed', async () => {
         const wrapper = mount(TableBuilder, {props: {table: tableWithActions(), confirm: () => false}})
 
