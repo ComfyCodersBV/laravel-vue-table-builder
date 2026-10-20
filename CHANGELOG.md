@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
-## Unreleased
+## 1.10.0 - 2026-10-20
 * A row action's `confirm` can be a closure that gets the row, so the question can name it:
   `confirm: fn (App $app) => "Disconnect {$app->name}?"`. The core resolves it per row and the component asks the
   text of the row that was clicked. A row without a text runs without asking. Requires
