@@ -94,8 +94,9 @@ message and the other texts:
 />
 ```
 
-`details` is only passed for bulk actions; a row action calls the prop with the message alone. Cancelling keeps the
-selection and posts nothing.
+`details` is only passed for bulk actions; a row action calls the prop with the message alone, already resolved for
+the clicked row when its `confirm` is a closure ([Confirmation Per Row](row-actions.md#confirmation-per-row)).
+Cancelling keeps the selection and posts nothing.
 
 ## Choices
 
