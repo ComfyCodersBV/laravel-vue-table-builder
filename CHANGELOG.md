@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
-## Unreleased
+## 1.9.2 - 2026-10-14
 * Test hooks for browser recordings, next to the existing `data-filter-*` attributes: the filter toggle is
   `data-testid="table-filter"`, each text and select filter `table-filter-<key>`, plus `table-search`, `table-columns`,
   `table-row` on every data row and `table-empty` on the empty state. The pagination carries `table-count`,
