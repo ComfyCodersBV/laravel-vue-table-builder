@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
-## Unreleased
+## 1.11.0 - 2026-10-24
 * Holding Shift while clicking a row checkbox selects or unselects every row between the last clicked row and this
   one, like Gmail: the range gets the new state of the clicked row. Only rows of the current page are in a range; when
   the last clicked row is not on it, only the clicked row changes. Shift-clicking no longer selects the text of the
