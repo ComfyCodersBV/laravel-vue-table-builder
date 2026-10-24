@@ -60,6 +60,7 @@ interface RowAction {
     disabled: boolean
     disabledReason: string | null
     download?: boolean | string         // only on download actions
+    icon?: string                       // only on actions with an icon
 }
 
 interface Totals {

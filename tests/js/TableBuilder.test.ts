@@ -1,8 +1,9 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {router} from '@inertiajs/vue3'
 import {mount} from '@vue/test-utils'
-import {h} from 'vue'
+import {defineComponent, h} from 'vue'
 import TableBuilder from '../../resources/js/components/TableBuilder.vue'
+import {registerRowActionIcons} from '../../resources/js/lib/row-action-icons'
 import type {Column, RowAction, TableData} from '../../resources/js/types/table-builder'
 
 const page = vi.hoisted(() => ({props: {} as Record<string, unknown>}))
@@ -279,6 +280,59 @@ describe('TableBuilder row actions', () => {
         expect(router.visit).not.toHaveBeenCalled()
 
         click.mockRestore()
+    })
+
+    function icon(name: string) {
+        return defineComponent({render: () => h('svg', {'data-icon': name})})
+    }
+
+    it('renders a registered icon before the label and hides it from screen readers', () => {
+        registerRowActionIcons({'test-power': icon('test-power')})
+        const table = tableData()
+        table.rowActions = [
+            [
+                rowAction({icon: 'test-power'}),
+                rowAction({key: 'enable', label: 'Enable', url: '/lines/a', method: 'put', icon: 'test-power'}),
+                rowAction({key: 'stop', label: 'Stop', url: '/lines/a', method: 'put', icon: 'test-power', disabled: true, disabledReason: 'Busy'}),
+                rowAction({key: 'pdf', label: 'PDF', url: '/lines/a/pdf', download: true, icon: 'test-power'}),
+            ],
+            [],
+            [],
+        ]
+
+        const wrapper = mount(TableBuilder, {props: {table}})
+
+        for (const key of ['edit', 'enable', 'stop', 'pdf']) {
+            const action = wrapper.find(`[data-row-action="${key}"]`)
+            const svg = action.find('svg[data-icon="test-power"]')
+
+            expect(svg.exists()).toBe(true)
+            expect(svg.attributes('aria-hidden')).toBe('true')
+            expect(action.element.firstElementChild).toBe(svg.element)
+        }
+
+        expect(wrapper.find('[data-row-action="enable"]').text()).toBe('Enable')
+    })
+
+    it('takes the icons of the rowActionIcons prop over the registered ones', () => {
+        registerRowActionIcons({'test-toggle': icon('registered')})
+        const table = tableData()
+        table.rowActions = [[rowAction({icon: 'test-toggle'})], [], []]
+
+        const wrapper = mount(TableBuilder, {props: {table, rowActionIcons: {'test-toggle': icon('from-prop')}}})
+
+        expect(wrapper.find('[data-row-action="edit"] svg').attributes('data-icon')).toBe('from-prop')
+    })
+
+    it('renders only the label for an action without an icon or with an unknown one', () => {
+        const table = tableData()
+        table.rowActions = [[rowAction(), rowAction({key: 'other', label: 'Other', icon: 'test-unknown'})], [], []]
+
+        const wrapper = mount(TableBuilder, {props: {table}})
+
+        expect(wrapper.find('[data-row-action="edit"] svg').exists()).toBe(false)
+        expect(wrapper.find('[data-row-action="other"] svg').exists()).toBe(false)
+        expect(wrapper.find('[data-row-action="other"]').text()).toBe('Other')
     })
 
     it('lets the actions slot override the rendering and receive the actions', () => {
@@ -857,6 +911,103 @@ describe('TableBuilder row keys and selection', () => {
     function postedIds(): unknown {
         return (vi.mocked(router.post).mock.calls.at(-1)![1] as any).ids
     }
+
+    describe('with shift held', () => {
+        const rows = [{id: 'a'}, {id: 'b'}, {id: 'c'}, {id: 'd'}, {id: 'e'}]
+
+        function rangeTable(overrides: Record<string, unknown> = {}): TableData {
+            return keyedTable(rows, {pagination: {current_page: 1, from: 1, to: 5, total: 10, per_page: 5, last_page: 2, links: []}, ...overrides})
+        }
+
+        it('selects every row between the last clicked row and this one', async () => {
+            const wrapper = mount(TableBuilder, {props: {table: rangeTable()}, attachTo: document.body})
+
+            await rowCheckboxes(wrapper)[1].trigger('click')
+            await rowCheckboxes(wrapper)[3].trigger('click', {shiftKey: true})
+
+            expect(checkedStates(wrapper)).toEqual(['unchecked', 'checked', 'checked', 'checked', 'unchecked'])
+
+            await rowCheckboxes(wrapper)[0].trigger('click', {shiftKey: true})
+
+            expect(checkedStates(wrapper)).toEqual(['checked', 'checked', 'checked', 'checked', 'unchecked'])
+
+            wrapper.unmount()
+        })
+
+        it('unselects the range when the clicked row was selected', async () => {
+            const wrapper = mount(TableBuilder, {props: {table: rangeTable()}, attachTo: document.body})
+
+            for (const index of [0, 1, 2, 3, 4]) {
+                await rowCheckboxes(wrapper)[index].trigger('click')
+            }
+
+            await rowCheckboxes(wrapper)[3].trigger('click')
+            await rowCheckboxes(wrapper)[1].trigger('click', {shiftKey: true})
+
+            expect(checkedStates(wrapper)).toEqual(['checked', 'unchecked', 'unchecked', 'unchecked', 'checked'])
+
+            wrapper.unmount()
+        })
+
+        it('toggles only the clicked row without an earlier click', async () => {
+            const wrapper = mount(TableBuilder, {props: {table: rangeTable()}, attachTo: document.body})
+
+            await rowCheckboxes(wrapper)[2].trigger('click', {shiftKey: true})
+
+            expect(checkedStates(wrapper)).toEqual(['unchecked', 'unchecked', 'checked', 'unchecked', 'unchecked'])
+
+            wrapper.unmount()
+        })
+
+        it('toggles only the clicked row when the last clicked row is on another page', async () => {
+            const wrapper = mount(TableBuilder, {props: {table: rangeTable()}, attachTo: document.body})
+
+            await rowCheckboxes(wrapper)[0].trigger('click')
+            await wrapper.setProps({table: rangeTable({
+                data: [{id: 'f'}, {id: 'g'}, {id: 'h'}, {id: 'i'}, {id: 'j'}],
+                pagination: {current_page: 2, from: 6, to: 10, total: 10, per_page: 5, last_page: 2, links: []},
+            })})
+            await rowCheckboxes(wrapper)[3].trigger('click', {shiftKey: true})
+
+            expect(checkedStates(wrapper)).toEqual(['unchecked', 'unchecked', 'unchecked', 'checked', 'unchecked'])
+
+            await runAction(wrapper)
+
+            expect(postedIds()).toEqual(['a', 'i'])
+
+            wrapper.unmount()
+        })
+
+        it('unselects a range from all selected results and keeps the rest of the page', async () => {
+            const wrapper = mount(TableBuilder, {props: {table: rangeTable()}, attachTo: document.body})
+
+            await wrapper.find('thead .cursor-pointer').trigger('click')
+            await flush()
+            menuItem('select_all_results').click()
+            await flush()
+
+            expect(checkedStates(wrapper)).toEqual(['checked', 'checked', 'checked', 'checked', 'checked'])
+
+            await rowCheckboxes(wrapper)[1].trigger('click')
+            await rowCheckboxes(wrapper)[3].trigger('click', {shiftKey: true})
+
+            expect(checkedStates(wrapper)).toEqual(['checked', 'unchecked', 'unchecked', 'unchecked', 'checked'])
+
+            wrapper.unmount()
+        })
+
+        it('posts the rows of a selected range', async () => {
+            const wrapper = mount(TableBuilder, {props: {table: rangeTable()}, attachTo: document.body})
+
+            await rowCheckboxes(wrapper)[4].trigger('click')
+            await rowCheckboxes(wrapper)[2].trigger('click', {shiftKey: true})
+            await runAction(wrapper)
+
+            expect(postedIds()).toEqual(['e', 'c', 'd'])
+
+            wrapper.unmount()
+        })
+    })
 
     it('posts the values of the row key of the table', async () => {
         const wrapper = mount(TableBuilder, {props: {table: keyedTable(uuidRows, {rowKey: 'uuid'})}, attachTo: document.body})

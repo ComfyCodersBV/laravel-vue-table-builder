@@ -31,6 +31,7 @@ rowAction(
     bool|string|Closure $disabled = false,
     ?string $key = null,
     bool|string $download = false,
+    string|Closure|null $icon = null,
 ): self
 ```
 
@@ -46,6 +47,7 @@ rowAction(
 | `disabled` | `true`, or a callback returning `true` or a reason string. The reason is shown as the button's tooltip      |
 | `key`      | Identifier of the action, defaults to the slug of the label. Registering a key again replaces the action     |
 | `download` | `true` or a file name: the action downloads a file instead of visiting a page. Only with the `get` method    |
+| `icon`     | Name of an icon shown before the label, or a callback receiving the row item. `null` or `''` shows none       |
 
 `url` or `route` is required.
 
@@ -65,6 +67,32 @@ $table->rowAction(
 
 Return `null` or an empty string to run the action on that row without asking. Requires
 `tranquil-tools/laravel-table-builder` 1.1.
+
+## Icons
+
+An action can show an icon before its label. PHP sends only a name; the page decides which component it stands for,
+so the bundle only holds the icons you use. Register them once, for example with the Lucide names, before the app
+mounts:
+
+```php
+$table
+    ->rowAction('Enable', url: fn (Tool $tool) => route('tools.enable', $tool), method: 'put', icon: 'power')
+    ->rowAction('Edit', url: fn (Tool $tool) => route('tools.edit', $tool), icon: fn (Tool $tool) => $tool->locked ? 'lock' : 'pencil');
+```
+
+```ts
+import {Lock, Pencil, Power} from '@lucide/vue'
+import {registerRowActionIcons} from '@table-builder'
+
+registerRowActionIcons({power: Power, lock: Lock, pencil: Pencil})
+```
+
+A single table can pass or override icons with the `rowActionIcons` prop:
+`<TableBuilder :table="table" :row-action-icons="{power: Power}"/>`. The icon is `aria-hidden` and the label stays,
+so screen readers read the same button as before. An unknown name renders the label only. A custom `#actions` slot
+can look an icon up with `resolveRowActionIcon(action.icon)`.
+
+The resolved action carries `icon` only when it has one. Requires `tranquil-tools/laravel-table-builder` 1.2.
 
 ## Authorization
 

@@ -90,6 +90,7 @@ export interface RowAction {
     disabled: boolean
     disabledReason: string | null
     download?: boolean | string
+    icon?: string
 }
 
 export interface EmptyState {
