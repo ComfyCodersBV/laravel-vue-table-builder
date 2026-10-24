@@ -184,7 +184,7 @@ In the frontend, users can:
 - **Select a range** by holding Shift while clicking a row checkbox: every row between the last clicked row and this
   one gets the new state of this row, so a Shift-click selects or unselects the whole range, like Gmail. The range only
   covers the rows of the current page; when the last clicked row is on another page, or there is none yet, only the
-  clicked row changes. Keyboard use is unchanged
+  clicked row changes. Rows without a row key are skipped. Keyboard use is unchanged
 - **Select all on this page** via the header checkbox
 - **Select all results** (across all pages) via the "Select all N results" prompt that appears after selecting the
   current page

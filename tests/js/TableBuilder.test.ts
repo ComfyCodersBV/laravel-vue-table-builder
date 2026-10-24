@@ -978,6 +978,24 @@ describe('TableBuilder row keys and selection', () => {
             wrapper.unmount()
         })
 
+        it('unselects a range from all selected results and keeps the rest of the page', async () => {
+            const wrapper = mount(TableBuilder, {props: {table: rangeTable()}, attachTo: document.body})
+
+            await wrapper.find('thead .cursor-pointer').trigger('click')
+            await flush()
+            menuItem('select_all_results').click()
+            await flush()
+
+            expect(checkedStates(wrapper)).toEqual(['checked', 'checked', 'checked', 'checked', 'checked'])
+
+            await rowCheckboxes(wrapper)[1].trigger('click')
+            await rowCheckboxes(wrapper)[3].trigger('click', {shiftKey: true})
+
+            expect(checkedStates(wrapper)).toEqual(['checked', 'unchecked', 'unchecked', 'unchecked', 'checked'])
+
+            wrapper.unmount()
+        })
+
         it('posts the rows of a selected range', async () => {
             const wrapper = mount(TableBuilder, {props: {table: rangeTable()}, attachTo: document.body})
 
