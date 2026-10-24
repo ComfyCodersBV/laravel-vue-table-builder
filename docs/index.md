@@ -9,13 +9,13 @@ table once in PHP - columns, filters, search, sorting, pagination, and bulk acti
 - **Inertia.js integration** - seamless SPA experience without custom AJAX code
 - **Column visibility** - users can show/hide columns via a dropdown
 - **Filters** - select, free text, date, date range and callback-based filters
-- **Row actions** - per-row buttons defined in PHP, hidden or disabled per row, with a confirm question per row, including file downloads
+- **Row actions** - per-row buttons defined in PHP, hidden or disabled per row, with a confirm question and an icon per row, including file downloads
 - **Totals** - a footer row with sums, averages or your own aggregates over the filtered rows
 - **CSV export** - a streamed, spreadsheet-safe export of the filtered and sorted rows
 - **Reordering** - drag rows into a new order that the package stores itself
 - **Empty states** - own texts for an empty and for a filtered table, or an `#empty` slot
 - **Global & per-column search** - with configurable wildcard modes
-- **Bulk actions** - with optional confirmation dialogs and password prompts
+- **Bulk actions** - with optional confirmation dialogs and password prompts, and Shift-click to select a range of rows
 - **Row links & modals** - make any row clickable
 - **Slots** - override any cell, add a row action column or extra toolbar controls
 - **HTTP transport** - point a table at an API instead of the current Inertia page

@@ -33,6 +33,7 @@ The component is exported from the package's `resources/js/components/` director
 | `reorderable` | `boolean` | No   | Adds a drag handle in front of every row. See [Reordering](reordering.md)                                                                                                                                                                                                  |
 | `rowClass` | `(row, index) => string \| string[] \| Record<string, boolean>` | No | Extra classes per row, for status colours and similar. Merged with the classes of `$table->rowClass()`, the prop last so it wins a conflicting Tailwind class. See [Row classes](#row-classes)                                       |
 | `emptyState` | `EmptyState` | No | Texts for an empty table, overriding the ones from the Table class. See [Empty State](empty-state.md)                                                                                                                                                              |
+| `rowActionIcons` | `Record<string, Component>` | No | Icon components per icon name for the row actions of this table, over the ones from `registerRowActionIcons()`. See [Row Actions](row-actions.md#icons) |
 | `confirm` | `(message, details?) => boolean \| Promise<boolean>` | No | Asks the confirmation of a row or bulk action. Defaults to `window.confirm()`. A row action passes its text as resolved for that row, so a `confirm` closure in PHP can name the row. A bulk action passes `details` with its `text`, `confirmButton` and `cancelButton`. See [Row Actions](row-actions.md) and [Bulk Actions](bulk-actions.md)                                                                                                                                       |
 
 ## Features Rendered
@@ -70,6 +71,7 @@ in-memory query and refetch from `source` instead; the url is left alone. See [H
 | Change page                   | `{name}_page=N` (or `page=N`)       |
 | Change per-page               | `{name}_perPage=N` (or `perPage=N`) |
 | Select rows + run bulk action | POST to signed URL                  |
+| Shift-click a row checkbox    | none: selects or unselects the range since the last clicked row |
 
 ## Search Debounce
 
