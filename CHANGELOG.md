@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.11.1 - 2026-10-26
+* Updates the development dependencies in the lockfile for security advisories: undici 7.30.1 (denial of service via
+  excessive content-encodings) and vite 8.3.5 (launch-editor path checks on Windows). The published package is unchanged.
+
 ## 1.11.0 - 2026-10-24
 * Holding Shift while clicking a row checkbox selects or unselects every row between the last clicked row and this
   one, like Gmail: the range gets the new state of the clicked row. Only rows of the current page are in a range; when
