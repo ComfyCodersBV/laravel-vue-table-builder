@@ -116,6 +116,20 @@ Use `disabled` with a reason when the user should see that the action exists but
 The prop may return a boolean or a promise of one. Bulk actions use the same prop and pass a second `details` argument; see
 [Bulk Actions](bulk-actions.md#confirmation-dialog).
 
+## While an Action Runs
+
+A table runs one row action at a time, so a double click sends one request:
+
+- From the click until the request is done, every row action of the table is disabled: the buttons get `disabled`,
+  the `get` and download links get `aria-disabled="true"` and ignore clicks. That includes the time the confirm
+  question is open, so a second click does not ask twice.
+- While the request of a non-`get` action runs, the clicked button gets `aria-busy="true"` and a spinning icon
+  (`data-row-action-spinner`) in place of its own icon.
+- The actions are enabled again when the Inertia visit finishes, fails or is cancelled, or when the `fetch()` of the
+  `http` transport settles. A cancelled or failed confirm question enables them right away.
+- A `get` action and a download hold the guard only while their confirm question is open: the visit leaves the page,
+  and a second Inertia visit replaces the first.
+
 ## Downloads
 
 A file download, such as an invoice PDF, must not go through an Inertia visit: Inertia expects a page
@@ -160,5 +174,8 @@ row and a `run` function, so you can restyle them and keep the behaviour:
     </template>
 </TableBuilder>
 ```
+
+`run` keeps the guard of [While an Action Runs](#while-an-action-runs): it does nothing while another row action of
+the table runs. The slot gets no busy state, so a custom rendering shows none.
 
 The resolved actions are also in `table.rowActions`, an array with one list of actions per row.

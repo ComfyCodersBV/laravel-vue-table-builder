@@ -164,6 +164,8 @@ $table
 
 `confirm` also takes a callback that gets the row, for a question that names it:
 `confirm: fn (Room $room) => "Delete {$room->name}?"`. `icon: 'pencil'` shows a registered icon before the label.
+While an action runs, the row actions of the table are disabled and the clicked button shows a spinner, so a double
+click sends one request.
 
 See [docs/row-actions.md](docs/row-actions.md).
 

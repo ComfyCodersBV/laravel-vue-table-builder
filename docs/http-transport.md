@@ -127,7 +127,8 @@ Escape them on the server, or render the column through a `cell-{key}` slot.
 
 When the response carries a `rowActions` array next to `data` (the shape `TableBuilder::toArray()`
 returns), the default adapter passes it on and the row action buttons render for the fetched rows.
-Actions other than `get` are sent with `fetch()` and the table reloads afterwards.
+Actions other than `get` are sent with `fetch()` and the table reloads afterwards. The row actions stay disabled
+until that `fetch()` settles; see [Row Actions](row-actions.md#while-an-action-runs).
 
 ## Totals and Export
 
