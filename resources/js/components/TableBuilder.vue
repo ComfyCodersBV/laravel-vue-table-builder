@@ -20,6 +20,7 @@ import {useTranslations} from '../composables/useTranslations'
 import {useTablePolling} from '../composables/useTablePolling'
 import {cn} from '../lib/utils'
 import {assertSupportedSchemaVersion} from '../lib/schema-version'
+import {resolveRowActionIcon, type RowActionIcons} from '../lib/row-action-icons'
 import {DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogRoot, DialogTitle} from 'reka-ui'
 import {useTableTransport, xsrfHeaders, type TableAdapter, type TableFetcher, type TableTransport} from '../composables/useTableTransport'
 import TablePagination from './TablePagination.vue'
@@ -39,6 +40,7 @@ const props = withDefaults(defineProps<{
     rowClass?: (row: any, index: number) => string | string[] | Record<string, boolean> | undefined
     emptyState?: EmptyState
     confirm?: (message: string, details?: ConfirmDetails) => boolean | Promise<boolean>
+    rowActionIcons?: RowActionIcons
 }>(), {
     transport: 'inertia',
     paginationPosition: 'bottom',
@@ -166,6 +168,10 @@ function toggleColumn(columnKey: string, visible: boolean) {
 }
 
 const slots = useSlots()
+
+function rowActionIcon(action: RowAction) {
+    return resolveRowActionIcon(action.icon, props.rowActionIcons)
+}
 
 function rowActionsFor(index: number): RowAction[] {
     return table.value.rowActions?.[index] ?? []
@@ -588,24 +594,50 @@ function isRowSelected(row: any): boolean {
     return key !== null && selectedKeys.value.has(key)
 }
 
-function toggleRowSelection(row: any) {
+const lastClickedKey = ref<RowKey | null>(null)
+
+function rangeKeys(fromKey: RowKey | null, toKey: RowKey): RowKey[] {
+    const from = fromKey === null ? -1 : pageKeys.value.indexOf(fromKey)
+    const to = pageKeys.value.indexOf(toKey)
+
+    if (from === -1 || to === -1) {
+        return [toKey]
+    }
+
+    return pageKeys.value.slice(Math.min(from, to), Math.max(from, to) + 1)
+}
+
+function clickRowSelection(row: any, event: MouseEvent) {
     const key = rowKeyOf(row)
 
     if (key === null) {
         return
     }
 
+    const keys = event.shiftKey ? rangeKeys(lastClickedKey.value, key) : [key]
+    const select = !isRowSelected(row)
     const next = new Set(allResultsSelected.value ? pageKeys.value : selectedKeys.value)
 
     allResultsSelected.value = false
+    lastClickedKey.value = key
 
-    if (next.has(key)) {
-        next.delete(key)
-    } else {
-        next.add(key)
+    for (const rangeKey of keys) {
+        if (select) {
+            next.add(rangeKey)
+
+            continue
+        }
+
+        next.delete(rangeKey)
     }
 
     selectedKeys.value = next
+}
+
+function preventShiftTextSelection(event: MouseEvent) {
+    if (event.shiftKey) {
+        event.preventDefault()
+    }
 }
 
 function selectCurrentPage() {
@@ -621,6 +653,7 @@ function selectAllResults() {
 function resetRowSelection() {
     allResultsSelected.value = false
     selectedKeys.value = new Set()
+    lastClickedKey.value = null
 }
 
 const filterState = computed(() => JSON.stringify({
@@ -1065,7 +1098,8 @@ useTablePolling({
                             <TableCell v-if="bulkActions.length > 0" :class="table.cellClass" @click.stop>
                                 <Checkbox :model-value="isRowSelected(row)"
                                           :disabled="rowKeyOf(row) === null"
-                                          @update:model-value="() => toggleRowSelection(row)" class="h-4 w-4"/>
+                                          @mousedown="preventShiftTextSelection"
+                                          @click="clickRowSelection(row, $event)" class="h-4 w-4"/>
                             </TableCell>
                             <TableCell v-for="column in visibleColumns" :key="column.key" :data-column-key="column.key"
                                        :class="[table.cellClass, column.class]">
@@ -1097,6 +1131,7 @@ useTablePolling({
                                         <template v-for="action in rowActionsFor(index)" :key="action.key">
                                             <span v-if="action.disabled" :title="action.disabledReason ?? undefined" class="inline-flex">
                                                 <Button size="sm" :variant="action.variant" disabled :data-row-action="action.key">
+                                                    <component :is="rowActionIcon(action)" v-if="rowActionIcon(action)" aria-hidden="true"/>
                                                     {{ action.label }}
                                                 </Button>
                                             </span>
@@ -1108,11 +1143,13 @@ useTablePolling({
                                                     data-row-action-download
                                                     @click="runRowAction(action, $event)"
                                                 >
+                                                    <component :is="rowActionIcon(action)" v-if="rowActionIcon(action)" aria-hidden="true"/>
                                                     {{ action.label }}
                                                 </a>
                                             </Button>
                                             <Button v-else-if="action.method === 'get'" size="sm" :variant="action.variant" as-child>
                                                 <a :href="action.url" :data-row-action="action.key" @click="runRowAction(action, $event)">
+                                                    <component :is="rowActionIcon(action)" v-if="rowActionIcon(action)" aria-hidden="true"/>
                                                     {{ action.label }}
                                                 </a>
                                             </Button>
@@ -1124,6 +1161,7 @@ useTablePolling({
                                                 :data-row-action="action.key"
                                                 @click="runRowAction(action, $event)"
                                             >
+                                                <component :is="rowActionIcon(action)" v-if="rowActionIcon(action)" aria-hidden="true"/>
                                                 {{ action.label }}
                                             </Button>
                                         </template>

@@ -1,4 +1,4 @@
-export const SUPPORTED_SCHEMA_VERSION = '1.0'
+export const SUPPORTED_SCHEMA_VERSION = '1.1'
 
 const majorOf = (version: string): string => version.split('.')[0]
 

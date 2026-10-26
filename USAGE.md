@@ -163,7 +163,7 @@ $table
 ```
 
 `confirm` also takes a callback that gets the row, for a question that names it:
-`confirm: fn (Room $room) => "Delete {$room->name}?"`.
+`confirm: fn (Room $room) => "Delete {$room->name}?"`. `icon: 'pencil'` shows a registered icon before the label.
 
 See [docs/row-actions.md](docs/row-actions.md).
 

@@ -8,6 +8,21 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
   current rows on screen. The transport exposes the state as `pending`.
 * The toolbar and the pagination wrap onto a second line in a narrow container instead of running out of it.
 
+## 1.11.1 - 2026-10-26
+* Updates the development dependencies in the lockfile for security advisories: undici 7.30.1 (denial of service via
+  excessive content-encodings) and vite 8.3.5 (launch-editor path checks on Windows). The published package is unchanged.
+
+## 1.11.0 - 2026-10-24
+* Holding Shift while clicking a row checkbox selects or unselects every row between the last clicked row and this
+  one, like Gmail: the range gets the new state of the clicked row. Only rows of the current page are in a range; when
+  the last clicked row is not on it, only the clicked row changes. Shift-clicking no longer selects the text of the
+  table. Keyboard use and tables without bulk actions are unchanged.
+* A row action with an `icon` (from `rowAction(icon: ...)` in laravel-table-builder) shows that icon before its label,
+  `aria-hidden`, so the label still names the button. The page maps names to components with
+  `registerRowActionIcons({power: Power})` or the new `rowActionIcons` prop, which wins; an unknown name shows the label
+  only. `resolveRowActionIcon()` is exported for custom `#actions` slots. Actions without an icon render as before.
+* `SUPPORTED_SCHEMA_VERSION` is now `1.1`, the version laravel-table-builder emits with icons.
+
 ## 1.10.0 - 2026-10-20
 * A row action's `confirm` can be a closure that gets the row, so the question can name it:
   `confirm: fn (App $app) => "Disconnect {$app->name}?"`. The core resolves it per row and the component asks the
