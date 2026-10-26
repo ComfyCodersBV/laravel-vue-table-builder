@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
-## Unreleased
+## 1.12.0 - 2026-10-26
 * While an http table is loading and has no rows yet, it shows a pulsing placeholder (`data-testid="table-loading"`)
   instead of the empty state, so a table that is still loading no longer reads as "no data". A reload keeps the
   current rows on screen. The transport exposes the state as `pending`.
