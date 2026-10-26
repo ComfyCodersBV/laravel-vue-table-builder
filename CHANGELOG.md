@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.13.0 - 2026-10-26
+* A double click on a row action sends one request. From the click until the request is done, every row action of the
+  table is disabled, also while the confirm question is open, so a second click no longer asks twice. The clicked
+  button of a non-`get` action gets `aria-busy="true"` and a spinning icon while its Inertia visit or `fetch()` runs.
+  The actions are enabled again when the request finishes, fails or is cancelled, and right away when the confirm
+  question is cancelled. `get` links and downloads get `aria-disabled` while another action runs. The `run` function
+  of the `#actions` slot keeps the same guard.
+
 ## 1.12.0 - 2026-10-26
 * While an http table is loading and has no rows yet, it shows a pulsing placeholder (`data-testid="table-loading"`)
   instead of the empty state, so a table that is still loading no longer reads as "no data". A reload keeps the

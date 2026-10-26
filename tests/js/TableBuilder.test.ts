@@ -242,6 +242,221 @@ describe('TableBuilder row actions', () => {
         expect(router.visit).not.toHaveBeenCalled()
     })
 
+    describe('while an action runs', () => {
+        type VisitOptions = {onStart?: () => void, onFinish?: () => void, onError?: (errors: Record<string, string>) => void}
+
+        let visitOptions: VisitOptions | null = null
+
+        beforeEach(() => {
+            visitOptions = null
+            vi.mocked(router.visit).mockImplementation((_url, options) => {
+                visitOptions = (options ?? {}) as VisitOptions
+                visitOptions.onStart?.()
+            })
+        })
+
+        afterEach(() => {
+            vi.mocked(router.visit).mockReset()
+            vi.unstubAllGlobals()
+        })
+
+        function runningTable(): TableData {
+            const table = tableData()
+
+            table.rowActions = [
+                [rowAction(), rowAction({key: 'disable', label: 'Disable', url: '/lines/a/disable', method: 'put'})],
+                [rowAction({key: 'disable', label: 'Disable', url: '/lines/b/disable', method: 'put'})],
+                [],
+            ]
+
+            return table
+        }
+
+        it('sends one request for a double click and shows the clicked button as busy', async () => {
+            const wrapper = mount(TableBuilder, {props: {table: runningTable()}})
+            const button = wrapper.findAll('tbody tr')[0].find('button[data-row-action="disable"]')
+
+            await button.trigger('click')
+            await button.trigger('click')
+            await flush()
+
+            expect(router.visit).toHaveBeenCalledTimes(1)
+            expect(button.attributes('disabled')).toBeDefined()
+            expect(button.attributes('aria-busy')).toBe('true')
+            expect(button.find('[data-row-action-spinner]').exists()).toBe(true)
+
+            const otherRow = wrapper.findAll('tbody tr')[1].find('button[data-row-action="disable"]')
+            const link = wrapper.find('a[data-row-action="edit"]')
+
+            expect(otherRow.attributes('disabled')).toBeDefined()
+            expect(otherRow.attributes('aria-busy')).toBeUndefined()
+            expect(link.attributes('aria-disabled')).toBe('true')
+
+            await link.trigger('click')
+            await flush()
+
+            expect(router.visit).toHaveBeenCalledTimes(1)
+
+            visitOptions!.onFinish!()
+            await flush()
+
+            expect(button.attributes('disabled')).toBeUndefined()
+            expect(button.attributes('aria-busy')).toBeUndefined()
+            expect(button.find('[data-row-action-spinner]').exists()).toBe(false)
+            expect(link.attributes('aria-disabled')).toBeUndefined()
+
+            await button.trigger('click')
+            await flush()
+
+            expect(router.visit).toHaveBeenCalledTimes(2)
+        })
+
+        it('ignores the run function of the actions slot while an action runs', async () => {
+            const table = runningTable()
+            let run: (action: RowAction) => Promise<void> = () => Promise.resolve()
+
+            mount(TableBuilder, {
+                props: {table},
+                slots: {
+                    actions: (slotProps: {run: (action: RowAction) => Promise<void>}) => {
+                        run = slotProps.run
+
+                        return h('span')
+                    },
+                },
+            })
+
+            await Promise.all([run(table.rowActions![0][1]), run(table.rowActions![1][0])])
+
+            expect(router.visit).toHaveBeenCalledTimes(1)
+
+            visitOptions!.onFinish!()
+            await run(table.rowActions![1][0])
+
+            expect(router.visit).toHaveBeenCalledTimes(2)
+        })
+
+        it('asks once when the button is clicked again while the confirmation is open', async () => {
+            let answer: (value: boolean) => void = () => {}
+            const confirm = vi.fn(() => new Promise<boolean>((resolve) => {
+                answer = resolve
+            }))
+            const table = runningTable()
+            table.rowActions![0][1].confirm = 'Disable this line?'
+
+            const wrapper = mount(TableBuilder, {props: {table, confirm}})
+            const button = wrapper.find('button[data-row-action="disable"]')
+
+            await button.trigger('click')
+            await button.trigger('click')
+            await flush()
+
+            expect(confirm).toHaveBeenCalledTimes(1)
+            expect(button.attributes('disabled')).toBeDefined()
+            expect(button.attributes('aria-busy')).toBeUndefined()
+
+            answer(true)
+            await flush()
+
+            expect(router.visit).toHaveBeenCalledTimes(1)
+            expect(button.attributes('aria-busy')).toBe('true')
+        })
+
+        it('enables the buttons again when the confirmation is cancelled', async () => {
+            const table = runningTable()
+            table.rowActions![0][1].confirm = 'Disable this line?'
+
+            const wrapper = mount(TableBuilder, {props: {table, confirm: () => Promise.resolve(false)}})
+            const button = wrapper.find('button[data-row-action="disable"]')
+
+            await button.trigger('click')
+            await flush()
+
+            expect(router.visit).not.toHaveBeenCalled()
+            expect(button.attributes('disabled')).toBeUndefined()
+            expect(button.attributes('aria-busy')).toBeUndefined()
+        })
+
+        it('releases the guard when the confirmation throws', async () => {
+            const table = runningTable()
+            table.rowActions![0][1].confirm = 'Disable this line?'
+
+            let run: (action: RowAction) => Promise<void> = () => Promise.resolve()
+
+            mount(TableBuilder, {
+                props: {table, confirm: () => Promise.reject(new Error('Dialog failed'))},
+                slots: {
+                    actions: (slotProps: {run: (action: RowAction) => Promise<void>}) => {
+                        run = slotProps.run
+
+                        return h('span')
+                    },
+                },
+            })
+
+            await expect(run(table.rowActions![0][1])).rejects.toThrow('Dialog failed')
+            await expect(run(table.rowActions![0][0])).resolves.toBeUndefined()
+
+            expect(router.visit).toHaveBeenCalledWith('/lines/a/edit')
+        })
+
+        it('enables the buttons again and shows the error when the visit fails', async () => {
+            const wrapper = mount(TableBuilder, {props: {table: runningTable()}})
+            const button = wrapper.find('button[data-row-action="disable"]')
+
+            await button.trigger('click')
+            await flush()
+
+            visitOptions!.onError!({line: 'The line is locked.'})
+            visitOptions!.onFinish!()
+            await flush()
+
+            expect(wrapper.text()).toContain('The line is locked.')
+            expect(button.attributes('disabled')).toBeUndefined()
+            expect(button.attributes('aria-busy')).toBeUndefined()
+        })
+
+        it('enables the buttons again when the visit is cancelled before it starts', async () => {
+            vi.mocked(router.visit).mockImplementation(() => {})
+            const wrapper = mount(TableBuilder, {props: {table: runningTable()}})
+            const button = wrapper.find('button[data-row-action="disable"]')
+
+            await button.trigger('click')
+            await flush()
+
+            expect(router.visit).toHaveBeenCalledTimes(1)
+            expect(button.attributes('disabled')).toBeUndefined()
+        })
+
+        it('guards the http transport until the request fails', async () => {
+            let respond: (response: Response) => void = () => {}
+            const fetchMock = vi.fn(() => new Promise<Response>((resolve) => {
+                respond = resolve
+            }))
+            vi.stubGlobal('fetch', fetchMock)
+
+            const table = runningTable()
+            const fetcher = vi.fn().mockResolvedValue({data: table.data, rowActions: table.rowActions})
+            const wrapper = mount(TableBuilder, {props: {table, transport: 'http', source: '/lines', fetcher}})
+            await flush()
+
+            const button = wrapper.find('button[data-row-action="disable"]')
+
+            await button.trigger('click')
+            await button.trigger('click')
+            await flush()
+
+            expect(fetchMock).toHaveBeenCalledTimes(1)
+            expect(button.attributes('aria-busy')).toBe('true')
+
+            respond(new Response('', {status: 500}))
+            await flush()
+
+            expect(button.attributes('disabled')).toBeUndefined()
+            expect(button.attributes('aria-busy')).toBeUndefined()
+        })
+    })
+
     it('renders a download action as a plain link the browser follows itself', async () => {
         const table = tableData()
         table.rowActions = [[rowAction({key: 'pdf', label: 'PDF', url: '/lines/a/pdf', download: 'line-a.pdf'})], [], []]

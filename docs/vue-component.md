@@ -176,7 +176,7 @@ A `vendor::` prefix is always stripped. `group` strips the file name the bundle 
 | Slot          | Scope                          | Renders                                                    |
 |---------------|--------------------------------|------------------------------------------------------------|
 | `cell-{key}`  | `row`, `value`, `index`, `column` | Replaces the cell body of the column named `{key}`      |
-| `actions`     | `row`, `index`, `actions`, `run` | A trailing column on every row, right aligned; clicks do not follow the row link. Replaces the buttons of [Row Actions](row-actions.md) |
+| `actions`     | `row`, `index`, `actions`, `run` | A trailing column on every row, right aligned; clicks do not follow the row link. Replaces the buttons of [Row Actions](row-actions.md); `run` ignores clicks while another row action runs |
 | `empty`       | `filtered`, `title`, `description`, `reset` | The content of the row shown when there are no rows. See [Empty State](empty-state.md) |
 | `toolbar`     | -                              | Controls next to the column selector above the table        |
 | `row-after`   | `row`, `index`, `columns`, `colspan` | Extra rows under each row. See [Nested Rows](#nested-rows) |

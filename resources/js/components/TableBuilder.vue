@@ -13,7 +13,7 @@ import {
 import {Input} from './ui/input';
 import {Checkbox} from './ui/checkbox';
 import {Button} from './ui/button';
-import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Download, Funnel, GripVertical, Search, X} from '@lucide/vue'
+import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Download, Funnel, GripVertical, LoaderCircle, Search, X} from '@lucide/vue'
 import type {BulkAction, ConfirmDetails, EmptyState, Filter, RowAction, TableData} from '../types/table-builder'
 import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
@@ -180,7 +180,18 @@ function rowActionsFor(index: number): RowAction[] {
 const hasRowActions = computed(() => (table.value.rowActions ?? []).some((actions) => actions.length > 0))
 const hasActions = computed(() => Boolean(slots.actions) || hasRowActions.value)
 
-const actionRunning = ref(false)
+const pendingRowAction = ref<RowAction | null>(null)
+const busyRowAction = ref<RowAction | null>(null)
+const actionRunning = computed(() => pendingRowAction.value !== null)
+
+function isBusyRowAction(action: RowAction): boolean {
+    return busyRowAction.value === action
+}
+
+function finishRowAction(): void {
+    pendingRowAction.value = null
+    busyRowAction.value = null
+}
 
 const awaitingConfirmation = ref(false)
 
@@ -236,9 +247,14 @@ async function runRowAction(action: RowAction, event?: MouseEvent): Promise<void
         }
 
         event?.preventDefault()
+        pendingRowAction.value = action
 
-        if (await confirmed(action.confirm)) {
-            triggerDownload(action)
+        try {
+            if (await confirmed(action.confirm)) {
+                triggerDownload(action)
+            }
+        } finally {
+            finishRowAction()
         }
 
         return
@@ -249,22 +265,34 @@ async function runRowAction(action: RowAction, event?: MouseEvent): Promise<void
     }
 
     event?.preventDefault()
+    pendingRowAction.value = action
 
-    if (!(await confirmed(action.confirm))) {
+    let accepted = false
+
+    try {
+        accepted = await confirmed(action.confirm)
+    } finally {
+        if (!accepted) {
+            finishRowAction()
+        }
+    }
+
+    if (!accepted) {
         return
     }
 
     actionError.value = null
 
     if (action.method === 'get') {
+        finishRowAction()
         router.visit(action.url)
 
         return
     }
 
-    if (props.transport === 'http') {
-        actionRunning.value = true
+    busyRowAction.value = action
 
+    if (props.transport === 'http') {
         fetch(action.url, {
             method: action.method.toUpperCase(),
             credentials: 'same-origin',
@@ -281,25 +309,31 @@ async function runRowAction(action: RowAction, event?: MouseEvent): Promise<void
                 actionError.value = exception instanceof Error ? exception.message : String(exception)
             })
             .finally(() => {
-                actionRunning.value = false
+                finishRowAction()
             })
 
         return
     }
 
+    let started = false
+
     router.visit(action.url, {
         method: action.method,
         preserveScroll: true,
         onStart: () => {
-            actionRunning.value = true
+            started = true
         },
         onFinish: () => {
-            actionRunning.value = false
+            finishRowAction()
         },
         onError: (errors) => {
             actionError.value = Object.values(errors)[0] ?? t('vue-table-builder::table.row_actions.error')
         },
     })
+
+    if (!started) {
+        finishRowAction()
+    }
 }
 
 const isFiltered = computed(() =>
@@ -1141,6 +1175,8 @@ useTablePolling({
                                                     :download="downloadName(action)"
                                                     :data-row-action="action.key"
                                                     data-row-action-download
+                                                    :aria-disabled="actionRunning ? 'true' : undefined"
+                                                    :class="{'pointer-events-none opacity-50': actionRunning}"
                                                     @click="runRowAction(action, $event)"
                                                 >
                                                     <component :is="rowActionIcon(action)" v-if="rowActionIcon(action)" aria-hidden="true"/>
@@ -1148,7 +1184,13 @@ useTablePolling({
                                                 </a>
                                             </Button>
                                             <Button v-else-if="action.method === 'get'" size="sm" :variant="action.variant" as-child>
-                                                <a :href="action.url" :data-row-action="action.key" @click="runRowAction(action, $event)">
+                                                <a
+                                                    :href="action.url"
+                                                    :data-row-action="action.key"
+                                                    :aria-disabled="actionRunning ? 'true' : undefined"
+                                                    :class="{'pointer-events-none opacity-50': actionRunning}"
+                                                    @click="runRowAction(action, $event)"
+                                                >
                                                     <component :is="rowActionIcon(action)" v-if="rowActionIcon(action)" aria-hidden="true"/>
                                                     {{ action.label }}
                                                 </a>
@@ -1158,10 +1200,12 @@ useTablePolling({
                                                 size="sm"
                                                 :variant="action.variant"
                                                 :disabled="actionRunning"
+                                                :aria-busy="isBusyRowAction(action) ? 'true' : undefined"
                                                 :data-row-action="action.key"
                                                 @click="runRowAction(action, $event)"
                                             >
-                                                <component :is="rowActionIcon(action)" v-if="rowActionIcon(action)" aria-hidden="true"/>
+                                                <LoaderCircle v-if="isBusyRowAction(action)" class="animate-spin" aria-hidden="true" data-row-action-spinner/>
+                                                <component :is="rowActionIcon(action)" v-else-if="rowActionIcon(action)" aria-hidden="true"/>
                                                 {{ action.label }}
                                             </Button>
                                         </template>
