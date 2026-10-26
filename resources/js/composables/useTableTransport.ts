@@ -123,6 +123,7 @@ export function useTableTransport(options: TableTransportOptions) {
     const error = ref<string | null>(null)
 
     const isHttp = computed(() => transport.value === 'http')
+    const pending = computed(() => isHttp.value && (loading.value || (fetched.value === null && error.value === null)))
 
     const namespacedKey = (key: 'sort' | 'filter' | 'page' | 'perPage') =>
         initial.value.queryKeys?.[key] ?? (name.value !== 'default' ? `${name.value}_${key}` : key)
@@ -445,6 +446,7 @@ export function useTableTransport(options: TableTransportOptions) {
         table,
         query,
         loading,
+        pending,
         error,
         isHttp,
         sortFor,

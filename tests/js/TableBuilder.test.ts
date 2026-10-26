@@ -1219,3 +1219,50 @@ describe('TableBuilder test hooks', () => {
         expect(wrapper.find('[data-testid="table-filter"]').exists()).toBe(true)
     })
 })
+
+describe('TableBuilder loading state', () => {
+    it('shows skeleton rows instead of the empty state until the first http response arrives', async () => {
+        let resolve: (value: unknown) => void = () => {}
+        const fetcher = vi.fn(() => new Promise((done) => {
+            resolve = done
+        }))
+
+        const wrapper = mount(TableBuilder, {
+            props: {table: {...tableData(), data: []}, transport: 'http', source: '/items', fetcher},
+        })
+
+        await new Promise((done) => setTimeout(done))
+
+        expect(wrapper.findAll('[data-testid="table-loading"]')).toHaveLength(1)
+        expect(wrapper.find('[data-testid="table-empty"]').exists()).toBe(false)
+
+        resolve({data: [], pagination: null})
+        await new Promise((done) => setTimeout(done))
+
+        expect(wrapper.find('[data-testid="table-loading"]').exists()).toBe(false)
+        expect(wrapper.find('[data-testid="table-empty"]').exists()).toBe(true)
+    })
+
+    it('keeps the rows on screen while a reload is running', async () => {
+        let resolve: (value: unknown) => void = () => {}
+        const rows = {data: [{id: 'a', name: 'First'}], pagination: null}
+        const fetcher = vi.fn()
+            .mockResolvedValueOnce(rows)
+            .mockImplementationOnce(() => new Promise((done) => {
+                resolve = done
+            }))
+
+        const wrapper = mount(TableBuilder, {
+            props: {table: {...tableData(), data: []}, transport: 'http', source: '/items', fetcher},
+        })
+
+        await new Promise((done) => setTimeout(done))
+        ;(wrapper.vm as unknown as {reload: () => void}).reload()
+        await new Promise((done) => setTimeout(done))
+
+        expect(wrapper.findAll('[data-testid="table-row"]')).toHaveLength(1)
+        expect(wrapper.find('[data-testid="table-loading"]').exists()).toBe(false)
+
+        resolve(rows)
+    })
+})

@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## Unreleased
+* While an http table is loading and has no rows yet, it shows a pulsing placeholder (`data-testid="table-loading"`)
+  instead of the empty state, so a table that is still loading no longer reads as "no data". A reload keeps the
+  current rows on screen. The transport exposes the state as `pending`.
+* The toolbar and the pagination wrap onto a second line in a narrow container instead of running out of it.
+
 ## 1.11.1 - 2026-10-26
 * Updates the development dependencies in the lockfile for security advisories: undici 7.30.1 (denial of service via
   excessive content-encodings) and vite 8.3.5 (launch-editor path checks on Windows). The published package is unchanged.

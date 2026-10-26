@@ -30,10 +30,10 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <div :class="compact ? 'flex items-center gap-3' : 'flex items-center justify-between gap-3'">
-        <div class="flex items-center gap-3">
+    <div :class="compact ? 'flex flex-wrap items-center gap-3' : 'flex flex-wrap items-center justify-between gap-3'">
+        <div class="flex flex-wrap items-center gap-3">
             <div v-if="perPageOptions && perPageOptions.length > 1" class="flex items-center gap-1.5">
-                <span class="text-sm text-muted-foreground">
+                <span class="whitespace-nowrap text-sm text-muted-foreground">
                     {{ t('vue-table-builder::table.pagination.per_page') }}
                 </span>
                 <DropdownMenu>
@@ -56,7 +56,7 @@ const emit = defineEmits<{
                 </DropdownMenu>
             </div>
 
-            <span class="text-sm text-muted-foreground" :data-testid="`${testIdPrefix}count`">
+            <span class="whitespace-nowrap text-sm text-muted-foreground" :data-testid="`${testIdPrefix}count`">
                 {{
                     t('vue-table-builder::table.pagination.showing', {
                         from: pagination.from ?? 0,
@@ -79,7 +79,7 @@ const emit = defineEmits<{
                 {{ t('vue-table-builder::table.pagination.previous') }}
             </button>
 
-            <div class="text-sm">
+            <div class="whitespace-nowrap text-sm">
                 {{
                     t('vue-table-builder::table.pagination.page_of', {
                         current: pagination.current_page,

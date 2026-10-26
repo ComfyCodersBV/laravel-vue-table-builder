@@ -84,6 +84,7 @@ const {
     table,
     query,
     loading,
+    pending,
     error: transportError,
     sortFor,
     applySort,
@@ -835,7 +836,7 @@ useTablePolling({
 
 <template>
     <div>
-        <div class="flex items-center gap-4 pt-2 pb-4">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 pb-4">
             <div class="flex flex-1 items-center gap-2">
                 <!-- Filter dropdown -->
                 <DropdownMenu v-if="table.filters && Object.keys(table.filters).length > 0"
@@ -921,7 +922,7 @@ useTablePolling({
                            class="pl-8"/>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center justify-end gap-2">
                 <TablePagination
                     v-if="showsTopPagination"
                     compact
@@ -1049,7 +1050,15 @@ useTablePolling({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableRow v-if="!table.data || table.data.length === 0" data-testid="table-empty">
+                    <TableRow v-if="pending && (!table.data || table.data.length === 0)" data-testid="table-loading">
+                        <TableCell :colspan="rowColspan">
+                            <div class="space-y-2" aria-busy="true">
+                                <div class="h-8 w-2/3 animate-pulse rounded-md bg-muted" />
+                                <div class="h-40 animate-pulse rounded-md bg-muted" />
+                            </div>
+                        </TableCell>
+                    </TableRow>
+                    <TableRow v-else-if="!table.data || table.data.length === 0" data-testid="table-empty">
                         <TableCell :colspan="rowColspan" class="text-center text-muted-foreground" data-empty-state>
                             <slot
                                 name="empty"
