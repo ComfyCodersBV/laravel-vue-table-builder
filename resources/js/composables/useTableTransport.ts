@@ -205,6 +205,10 @@ export function useTableTransport(options: TableTransportOptions) {
     }
 
     function currentParams(): URLSearchParams {
+        if (typeof window === 'undefined') {
+            return new URLSearchParams()
+        }
+
         return new URLSearchParams(window.location.search)
     }
 

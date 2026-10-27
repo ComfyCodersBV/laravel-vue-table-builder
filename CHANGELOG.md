@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.13.2 - 2026-10-27
+* A table renders during Inertia server-side rendering. Reading the sort and filters from the URL no longer touches
+  `window` on the server, which threw `ReferenceError: window is not defined`.
+
 ## 1.13.1 - 2026-10-27
 * The CrudBuilder page explains what `make:crud` generates on the table side: columns from the schema, sortable
   types, global search, pagination and the index action with row links, with an example table class and when to use
