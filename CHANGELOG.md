@@ -2,6 +2,11 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.13.1 - 2026-10-27
+* The CrudBuilder page explains what `make:crud` generates on the table side: columns from the schema, sortable
+  types, global search, pagination and the index action with row links, with an example table class and when to use
+  the CrudBuilder instead of TableBuilder alone.
+
 ## 1.13.0 - 2026-10-26
 * A double click on a row action sends one request. From the click until the request is done, every row action of the
   table is disabled, also while the confirm question is open, so a second click no longer asks twice. The clicked
