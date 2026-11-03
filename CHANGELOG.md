@@ -2,6 +2,17 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.14.0 - 2026-11-03
+* A row link is reachable with the keyboard. The first cell of a linked row holds a visually hidden `<a href>`
+  (`data-row-link`) named after the first column, so Tab reaches the row, Enter follows its link and a screen reader
+  announces it. A row modal gets a hidden button instead. The row is highlighted while that element has keyboard
+  focus. A ctrl-, cmd-, shift-, alt- or middle click on the link is left to the browser. When the first cell already
+  holds a link, the hidden link is left out. The fallback name uses the `row` translation that laravel-table-builder
+  1.2 already ships.
+* **Behaviour change:** a click on a button, link, input, label or other control inside a cell no longer also follows
+  the row link or emits `row-click`; only the control acts. Use `clickable: false` on a column to keep the whole cell
+  out of the row link, as before.
+
 ## 1.13.2 - 2026-10-27
 * A table renders during Inertia server-side rendering. Reading the sort and filters from the URL no longer touches
   `window` on the server, which threw `ReferenceError: window is not defined`.

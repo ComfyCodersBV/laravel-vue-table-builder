@@ -36,7 +36,7 @@ interface TableData {
     defaultSort: string
     bulkActions: BulkAction[]
     rowLinks: (string | null)[]
-    rowLinkType: 'modal' | 'link' | ''
+    rowLinkType: 'modal' | 'link' | 'href' | ''
     cellClass?: string
     headClass?: string
     rowActions?: RowAction[][]          // one list per row

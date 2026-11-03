@@ -1481,3 +1481,139 @@ describe('TableBuilder loading state', () => {
         resolve(rows)
     })
 })
+
+describe('TableBuilder row links', () => {
+    function linkedTable(): TableData {
+        const table = tableData()
+        table.columns = [column('name'), column('status')]
+        table.data = [{id: 'a', name: '<strong>First</strong> &amp; co&#33;', status: 'open'}, {id: 'b', name: 'Second', status: 'open'}]
+        table.rowLinks = ['/lines/a', null]
+        table.rowLinkType = 'link'
+
+        return table
+    }
+
+    beforeEach(() => {
+        vi.mocked(router.visit).mockClear()
+    })
+
+    it('renders a focusable link named after the row in the first cell of a linked row only', () => {
+        const wrapper = mount(TableBuilder, {props: {table: linkedTable()}})
+
+        const rows = wrapper.findAll('tbody tr')
+        const link = rows[0].find('td[data-column-key="name"] a[data-row-link]')
+
+        expect(link.attributes('href')).toBe('/lines/a')
+        expect(link.text()).toBe('First & co!')
+        expect(rows[0].findAll('a[data-row-link]')).toHaveLength(1)
+        expect(rows[1].find('a[data-row-link]').exists()).toBe(false)
+    })
+
+    it('follows the row link once when the link is activated', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: linkedTable()}})
+
+        await wrapper.find('a[data-row-link]').trigger('click')
+
+        expect(router.visit).toHaveBeenCalledTimes(1)
+        expect(router.visit).toHaveBeenCalledWith('/lines/a')
+    })
+
+    it('leaves a modified click on the link to the browser', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: linkedTable()}})
+
+        await wrapper.find('a[data-row-link]').trigger('click', {ctrlKey: true})
+
+        expect(router.visit).not.toHaveBeenCalled()
+    })
+
+    it('follows the row link from any cell but not from a button or link inside it', async () => {
+        const wrapper = mount(TableBuilder, {
+            props: {table: linkedTable()},
+            slots: {
+                'cell-status': () => [h('button', {class: 'inline-button'}, 'toggle'), h('span', {class: 'plain'}, 'open')],
+            },
+        })
+
+        await wrapper.find('.inline-button').trigger('click')
+        expect(router.visit).not.toHaveBeenCalled()
+
+        await wrapper.find('.plain').trigger('click')
+        expect(router.visit).toHaveBeenCalledWith('/lines/a')
+    })
+
+    it('names the link after the row position when the first column has no text', () => {
+        page.props = {vue_table_builder_table_translations: {row: 'rij'}}
+        const table = linkedTable()
+        table.data[0].name = ''
+
+        try {
+            const wrapper = mount(TableBuilder, {props: {table}})
+
+            expect(wrapper.find('a[data-row-link]').text()).toBe('rij 1')
+        } finally {
+            page.props = {}
+        }
+    })
+
+    it('leaves out the hidden link when the first cell already holds a link', () => {
+        const table = linkedTable()
+        table.data[0].name = '<a href="/elsewhere">First</a>'
+
+        const wrapper = mount(TableBuilder, {props: {table}})
+
+        expect(wrapper.find('[data-row-link]').exists()).toBe(false)
+    })
+
+    it('opens a modal row link through a button instead of a link', async () => {
+        const table = linkedTable()
+        table.rowLinkType = 'modal'
+        const fetchMock = vi.fn().mockResolvedValue({json: () => Promise.resolve({component: 'Edit'})})
+        vi.stubGlobal('fetch', fetchMock)
+
+        try {
+            const wrapper = mount(TableBuilder, {props: {table}})
+
+            const button = wrapper.find('button[data-row-link]')
+            await button.trigger('click')
+
+            expect(button.attributes('type')).toBe('button')
+            expect(wrapper.find('a[data-row-link]').exists()).toBe(false)
+            expect(fetchMock).toHaveBeenCalledTimes(1)
+            expect(fetchMock).toHaveBeenCalledWith('/lines/a', {headers: {Accept: 'application/json'}})
+        } finally {
+            vi.unstubAllGlobals()
+        }
+    })
+
+    it('opens a new tab link once, with noopener', async () => {
+        const table = linkedTable()
+        table.rowLinkTarget = '_blank'
+        const open = vi.spyOn(window, 'open').mockReturnValue(null)
+
+        try {
+            const wrapper = mount(TableBuilder, {props: {table}})
+
+            const link = wrapper.find('a[data-row-link]')
+            await link.trigger('click')
+
+            expect(link.attributes('target')).toBe('_blank')
+            expect(link.attributes('rel')).toBe('noopener')
+            expect(open).toHaveBeenCalledTimes(1)
+            expect(open).toHaveBeenCalledWith('/lines/a', '_blank', 'noopener')
+        } finally {
+            open.mockRestore()
+        }
+    })
+
+    it('does not emit row-click for a button inside a row without a link', async () => {
+        const onRowClick = vi.fn()
+        const wrapper = mount(TableBuilder, {
+            props: {table: tableData(), onRowClick},
+            slots: {'cell-name': () => h('button', {class: 'inline-button'}, 'toggle')},
+        })
+
+        await wrapper.find('.inline-button').trigger('click')
+
+        expect(onRowClick).not.toHaveBeenCalled()
+    })
+})

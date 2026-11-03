@@ -16,7 +16,7 @@ table once in PHP - columns, filters, search, sorting, pagination, and bulk acti
 - **Empty states** - own texts for an empty and for a filtered table, or an `#empty` slot
 - **Global & per-column search** - with configurable wildcard modes
 - **Bulk actions** - with optional confirmation dialogs and password prompts, and Shift-click to select a range of rows
-- **Row links & modals** - make any row clickable
+- **Row links & modals** - make any row clickable, and reachable with Tab and Enter
 - **Slots** - override any cell, add a row action column or extra toolbar controls
 - **HTTP transport** - point a table at an API instead of the current Inertia page
 - **TypeScript support** - full type definitions included

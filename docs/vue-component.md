@@ -51,6 +51,7 @@ The component renders all of the following automatically based on what the PHP b
 | Bulk action toolbar                 | `bulkActions` array is non-empty          |
 | Row checkboxes                      | bulk actions present                      |
 | Clickable rows                      | `rowLinks` array is non-empty, or a `row-click` listener is bound |
+| Keyboard row link in the first cell | the row has a `rowLinks` entry            |
 | Drag handles                        | `reorderable` is set                      |
 | Totals footer                       | `totals` is set and the table has rows    |
 | Export button                       | `export.url` is set                       |
@@ -219,10 +220,11 @@ storing the order on the server, how ties are broken and handling the event your
 
 ### Clicking Rows
 
-A row with a row link from the PHP builder follows that link. Every other row emits `row-click`, and
-gets the pointer cursor as soon as a listener is bound, so an `http` table can open a record without
-a server-side row link. Clicks on the drag handle, the selection checkbox, the `actions` slot and
-columns marked `clickable: false` never reach it.
+A row with a row link from the PHP builder follows that link, and its first cell holds a visually hidden link that
+Tab and Enter reach (see [Row Links](row-links.md#keyboard-and-screen-readers)). Every other row emits `row-click`,
+and gets the pointer cursor as soon as a listener is bound, so an `http` table can open a record without a
+server-side row link. Clicks on the drag handle, the selection checkbox, the `actions` slot, columns marked
+`clickable: false` and buttons, links or inputs inside a cell never reach it.
 
 ```vue
 

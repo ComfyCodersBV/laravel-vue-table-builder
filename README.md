@@ -140,6 +140,7 @@ Import the TableBuilder component:
 - ⚡ Optimized navigation with preserve-state and preserve-scroll
 - 🔌 Optional HTTP transport to drive a table from an API instead of the Inertia page
 - 🧩 Scoped slots for cells, row actions and extra toolbar controls
+- 🔗 Row links that work with the mouse anywhere on the row and with Tab and Enter through a hidden link in the first cell
 - ↕️ Drag-reorderable rows, per-row classes, a `row-click` event and a `row-after` slot for nested rows
 - 🔘 Row actions defined in the Table class, hidden or disabled per row, with a confirm question and an icon per row; double clicks are guarded with a busy state
 - ☑️ Bulk selection with Shift-click to select a range of rows

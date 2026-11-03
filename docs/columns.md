@@ -43,7 +43,7 @@ column(
 | `classes`     | `array\|string\|null`   | `null`                           | Per-column CSS classes                                             |
 | `as`          | `callable\|null`        | `null`                           | Transform the cell value before display                            |
 | `alignment`   | `string`                | `'left'`                         | Text alignment: `'left'`, `'center'`, `'right'`                    |
-| `clickable`   | `bool`                  | `true`                           | Whether clicking this cell follows the row link                    |
+| `clickable`   | `bool`                  | `true`                           | Whether clicking this cell follows the row link (controls inside it never do) |
 | `boolean`     | `bool`                  | `false`                          | Render a check or cross icon instead of the raw value              |
 | `exportAs`    | `callable\|null`        | `null`                           | The value written to a CSV [export](export.md) instead of `as`     |
 | `export`      | `bool`                  | `true`                           | Include the column in a CSV export                                 |
@@ -210,7 +210,8 @@ an icon.
 
 ## Non-clickable Cells
 
-By default, clicking a cell follows the row link. Disable this for action columns:
+By default, clicking a cell follows the row link, except on a button, link, input or other control inside it. Disable
+it for the whole cell, for example on action columns:
 
 ```php
 ->column('actions', 'Actions', clickable: false, canBeHidden: false)

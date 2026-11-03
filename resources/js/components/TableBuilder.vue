@@ -64,8 +64,17 @@ function clickedUnclickableColumn(event: MouseEvent): boolean {
     return visibleColumns.value.some((column) => column.key === columnKey && column.clickable === false)
 }
 
+const INTERACTIVE_ELEMENTS = 'a, button, input, select, textarea, label, summary, [role="button"], [role="checkbox"], [role="link"], [role="menuitem"]'
+
+function clickedInteractiveElement(event: MouseEvent): boolean {
+    const target = event.target as HTMLElement | null
+    const interactive = target?.closest?.(INTERACTIVE_ELEMENTS)
+
+    return Boolean(interactive && (event.currentTarget as HTMLElement | null)?.contains(interactive))
+}
+
 function clickRow(row: any, index: number, event: MouseEvent): void {
-    if (clickedUnclickableColumn(event)) {
+    if (clickedUnclickableColumn(event) || clickedInteractiveElement(event)) {
         return
     }
 
@@ -697,6 +706,65 @@ const filterState = computed(() => JSON.stringify({
 
 watch(filterState, () => resetRowSelection())
 
+function rowLinkFor(index: number): string | null {
+    return table.value.rowLinks?.[index] || null
+}
+
+const HTML_ENTITIES: Record<string, string> = {amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' '}
+
+function decodeEntity(entity: string, name: string): string {
+    if (!name.startsWith('#')) {
+        return HTML_ENTITIES[name.toLowerCase()] ?? entity
+    }
+
+    const hexadecimal = name[1] === 'x' || name[1] === 'X'
+    const codePoint = Number.parseInt(name.slice(hexadecimal ? 2 : 1), hexadecimal ? 16 : 10)
+
+    return codePoint > 0 && codePoint <= 0x10FFFF ? String.fromCodePoint(codePoint) : entity
+}
+
+function plainText(value: unknown): string {
+    if (value === null || value === undefined || typeof value === 'object') {
+        return ''
+    }
+
+    return String(value)
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, decodeEntity)
+        .replace(/\s+/g, ' ')
+        .trim()
+}
+
+function containsLink(value: unknown): boolean {
+    return typeof value === 'string' && /<a[\s>]/i.test(value)
+}
+
+function showsRowLink(row: any, index: number): boolean {
+    const column = visibleColumns.value[0]
+
+    return Boolean(rowLinkFor(index)) && !(column && containsLink(getCellValue(row, column.key)))
+}
+
+function rowLinkLabel(row: any, index: number): string {
+    const column = visibleColumns.value[0]
+    const text = column && !column.boolean ? plainText(getCellValue(row, column.key)) : ''
+
+    return text || `${t('row')} ${index + 1}`
+}
+
+function followRowLink(index: number, event: MouseEvent): void {
+    event.stopPropagation()
+
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+        return
+    }
+
+    event.preventDefault()
+    handleRowClick(index)
+}
+
+const ROW_LINK_FOCUS = 'has-[[data-row-link]:focus-visible]:bg-muted has-[[data-row-link]:focus-visible]:outline-2 has-[[data-row-link]:focus-visible]:-outline-offset-2 has-[[data-row-link]:focus-visible]:outline-ring'
+
 function handleRowClick(index: number) {
     if (!table.value.rowLinks || !table.value.rowLinks[index]) return
 
@@ -1114,6 +1182,7 @@ useTablePolling({
                             @drop="showsReorderHandles ? dropOnRow(index, $event) : undefined"
                             :class="[
                                 (table.rowLinks && table.rowLinks[index]) || listensToRowClick ? 'cursor-pointer hover:bg-muted/50' : '',
+                                rowLinkFor(index) ? ROW_LINK_FOCUS : '',
                                 cn(row?.__class, rowClass ? rowClass(row, index) : undefined),
                                 draggedIndex === index ? 'opacity-50' : '',
                                 overIndex === index && draggedIndex !== index ? 'border-t-2 border-t-primary' : '',
@@ -1135,8 +1204,24 @@ useTablePolling({
                                           @mousedown="preventShiftTextSelection"
                                           @click="clickRowSelection(row, $event)" class="h-4 w-4"/>
                             </TableCell>
-                            <TableCell v-for="column in visibleColumns" :key="column.key" :data-column-key="column.key"
-                                       :class="[table.cellClass, column.class]">
+                            <TableCell v-for="(column, columnIndex) in visibleColumns" :key="column.key" :data-column-key="column.key"
+                                       :class="[table.cellClass, column.class, columnIndex === 0 && showsRowLink(row, index) ? 'relative' : '']">
+                                <button
+                                    v-if="columnIndex === 0 && showsRowLink(row, index) && table.rowLinkType === 'modal'"
+                                    type="button"
+                                    class="sr-only"
+                                    data-row-link
+                                    @click.stop="handleRowClick(index)"
+                                >{{ rowLinkLabel(row, index) }}</button>
+                                <a
+                                    v-else-if="columnIndex === 0 && showsRowLink(row, index)"
+                                    :href="rowLinkFor(index) ?? undefined"
+                                    :target="table.rowLinkTarget === '_blank' ? '_blank' : undefined"
+                                    :rel="table.rowLinkTarget === '_blank' ? 'noopener' : undefined"
+                                    class="sr-only"
+                                    data-row-link
+                                    @click="followRowLink(index, $event)"
+                                >{{ rowLinkLabel(row, index) }}</a>
                                 <slot
                                     :name="`cell-${column.key}`"
                                     :row="row"

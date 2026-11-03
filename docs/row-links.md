@@ -13,6 +13,21 @@ $table->rowLink(fn($user) => route('users.show', $user));
 The callback receives the row item (model instance) and must return a URL string or `null`.
 
 Clicking anywhere on the row (except cells with `clickable: false`) navigates to the URL using an Inertia visit.
+Clicks on a button, link, input or other control inside a cell do their own work and do not follow the row link.
+
+## Keyboard and Screen Readers
+
+The first cell of a linked row holds a real `<a href>` (`data-row-link`), visually hidden. Tab reaches it, Enter
+follows the row link the same way a click does, and the row is highlighted while the link has keyboard focus. Its
+text is the plain text of the first column, or "row 2" (the `row` translation and the row number) when that column is
+empty or a boolean column, so a screen reader announces the row by name. A ctrl-, cmd-, shift-, alt- or middle click
+on that link is left to the browser, so it opens in a new tab or window.
+
+A row modal gets a visually hidden `<button type="button">` instead, because its URL returns JSON rather than a page.
+
+When the value of the first column already contains an `<a>`, for example from an `as` callback, the hidden link is
+left out so the row does not get two tab stops. A `cell-{key}` slot on the first column that renders its own link
+gets both; point that link at the row link, or put it in another column.
 
 ## External Row Links (non-Inertia pages)
 
@@ -35,9 +50,9 @@ $table->rowLink(fn($environment) => route('accesslogs.show', $environment), href
 
 The new tab wins over the row link type, so it works alongside `href` as well as on its own.
 
-A row is a `<tr>`, not an `<a>`. Even with `'_blank'` there is no middle click, no ctrl-click, no
-"copy link address" and no URL in the status bar, and a screen reader does not announce a link.
-When those matter, render an anchor in the column itself with an `as` callback instead.
+The row itself is a `<tr>`, not an `<a>`: a middle click or ctrl-click with the mouse on the row does not open a new
+tab, and hovering shows no URL in the status bar. The hidden link in the first cell covers keyboard and screen reader
+use. When a visible anchor matters, render one in the column itself with an `as` callback.
 
 ## Row Modals
 
@@ -47,7 +62,8 @@ Open a modal instead of navigating:
 $table->rowModal(fn($user) => route('users.edit', $user));
 ```
 
-This sets `rowLinkType` to `'modal'`. On click, the package fetches the URL with `Accept: application/json` and passes the response to your application's `openModal` function.
+This sets `rowLinkType` to `'modal'`. The first cell holds a hidden button that Tab and Enter reach (see
+[Keyboard and Screen Readers](#keyboard-and-screen-readers)). On click, the package fetches the URL with `Accept: application/json` and passes the response to your application's `openModal` function.
 
 ### Host app requirement
 
