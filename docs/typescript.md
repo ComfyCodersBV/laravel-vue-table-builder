@@ -56,7 +56,7 @@ interface RowAction {
     url: string
     method: 'get' | 'post' | 'put' | 'patch' | 'delete'
     confirm: string | null              // already resolved for this row
-    variant: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+    variant: 'default' | 'success' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
     disabled: boolean
     disabledReason: string | null
     download?: boolean | string         // only on download actions

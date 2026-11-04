@@ -78,7 +78,7 @@ export interface ConfirmDetails {
 
 export type RowActionMethod = 'get' | 'post' | 'put' | 'patch' | 'delete'
 
-export type RowActionVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+export type RowActionVariant = 'default' | 'success' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
 
 export interface RowAction {
     key: string

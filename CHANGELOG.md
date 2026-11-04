@@ -5,6 +5,8 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
 ## 1.15.0 - 2026-11-04
 * A ctrl-, cmd-, shift- or middle click on a linked row opens its row link in a new tab instead of following it in the
   current one. A right click does nothing, rows without a link are unchanged and a row modal still opens its modal.
+* Row actions accept the `success` variant: a green button for positive actions such as confirming or marking as paid.
+  Before, an unknown variant rendered a button without a background.
 
 ## 1.14.0 - 2026-11-03
 * A row link is reachable with the keyboard. The first cell of a linked row holds a visually hidden `<a href>`

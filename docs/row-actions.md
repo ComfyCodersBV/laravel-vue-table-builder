@@ -42,7 +42,7 @@ rowAction(
 | `route`    | A route name resolved as `route($route, $item)`; use `url` when the route needs more parameters              |
 | `method`   | `get`, `post`, `put`, `patch` or `delete`                                                                     |
 | `confirm`  | Question asked before the action runs, or a callback receiving the row item. `null` or `''` asks nothing     |
-| `variant`  | Button variant: `default`, `destructive`, `outline`, `secondary`, `ghost` or `link`                          |
+| `variant`  | Button variant: `default`, `success`, `destructive`, `outline`, `secondary`, `ghost` or `link`               |
 | `visible`  | `false` or a callback returning `false` leaves the action out of the payload for that row                    |
 | `disabled` | `true`, or a callback returning `true` or a reason string. The reason is shown as the button's tooltip      |
 | `key`      | Identifier of the action, defaults to the slug of the label. Registering a key again replaces the action     |
