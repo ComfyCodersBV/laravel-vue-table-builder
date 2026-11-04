@@ -50,9 +50,10 @@ $table->rowLink(fn($environment) => route('accesslogs.show', $environment), href
 
 The new tab wins over the row link type, so it works alongside `href` as well as on its own.
 
-The row itself is a `<tr>`, not an `<a>`: a middle click or ctrl-click with the mouse on the row does not open a new
-tab, and hovering shows no URL in the status bar. The hidden link in the first cell covers keyboard and screen reader
-use. When a visible anchor matters, render one in the column itself with an `as` callback.
+A ctrl-, cmd-, shift- or middle click anywhere on the row opens its link in a new tab, like it would on a link. A
+right click is left alone, and a row modal ignores the modifier keys because its URL returns JSON rather than a page.
+The row itself is a `<tr>`, not an `<a>`, so hovering shows no URL in the status bar and the browser's context menu
+has no "open link in new tab". When a visible anchor matters, render one in the column itself with an `as` callback.
 
 ## Row Modals
 

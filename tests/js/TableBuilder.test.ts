@@ -1541,6 +1541,59 @@ describe('TableBuilder row links', () => {
         expect(router.visit).toHaveBeenCalledWith('/lines/a')
     })
 
+    it.each([
+        ['ctrl', {ctrlKey: true}],
+        ['meta', {metaKey: true}],
+        ['shift', {shiftKey: true}],
+    ])('opens the row link in a new tab on a %s click on the row', async (_, modifier) => {
+        const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+        try {
+            const wrapper = mount(TableBuilder, {props: {table: linkedTable()}})
+
+            await wrapper.find('td[data-column-key="status"]').trigger('click', modifier)
+
+            expect(open).toHaveBeenCalledWith('/lines/a', '_blank', 'noopener')
+            expect(router.visit).not.toHaveBeenCalled()
+        } finally {
+            open.mockRestore()
+        }
+    })
+
+    it('opens the row link in a new tab on a middle click but ignores a right click', async () => {
+        const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+        try {
+            const wrapper = mount(TableBuilder, {props: {table: linkedTable()}})
+            const cell = wrapper.find('td[data-column-key="status"]')
+
+            await cell.trigger('auxclick', {button: 2})
+            expect(open).not.toHaveBeenCalled()
+
+            await cell.trigger('auxclick', {button: 1})
+            expect(open).toHaveBeenCalledWith('/lines/a', '_blank', 'noopener')
+            expect(router.visit).not.toHaveBeenCalled()
+        } finally {
+            open.mockRestore()
+        }
+    })
+
+    it('does not open a new tab for a row without a link', async () => {
+        const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+        try {
+            const wrapper = mount(TableBuilder, {props: {table: linkedTable()}})
+            const cell = wrapper.findAll('tbody tr')[1].find('td[data-column-key="status"]')
+
+            await cell.trigger('click', {ctrlKey: true})
+            await cell.trigger('auxclick', {button: 1})
+
+            expect(open).not.toHaveBeenCalled()
+        } finally {
+            open.mockRestore()
+        }
+    })
+
     it('names the link after the row position when the first column has no text', () => {
         page.props = {vue_table_builder_table_translations: {row: 'rij'}}
         const table = linkedTable()

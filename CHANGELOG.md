@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.15.0 - 2026-11-04
+* A ctrl-, cmd-, shift- or middle click on a linked row opens its row link in a new tab instead of following it in the
+  current one. A right click does nothing, rows without a link are unchanged and a row modal still opens its modal.
+
 ## 1.14.0 - 2026-11-03
 * A row link is reachable with the keyboard. The first cell of a linked row holds a visually hidden `<a href>`
   (`data-row-link`) named after the first column, so Tab reaches the row, Enter follows its link and a screen reader

@@ -78,13 +78,29 @@ function clickRow(row: any, index: number, event: MouseEvent): void {
         return
     }
 
-    if (table.value.rowLinks && table.value.rowLinks[index]) {
+    const url = rowLinkFor(index)
+
+    if (url && opensInNewTab(event) && table.value.rowLinkType !== 'modal') {
+        window.open(url, '_blank', 'noopener')
+
+        return
+    }
+
+    if (url) {
         handleRowClick(index)
 
         return
     }
 
     emit('row-click', {row, index, key: rowKeyOf(row), event})
+}
+
+function middleClickRow(row: any, index: number, event: MouseEvent): void {
+    if (event.button !== 1 || !rowLinkFor(index)) {
+        return
+    }
+
+    clickRow(row, index, event)
 }
 
 const tableName = computed(() => props.name || props.table?.name || 'default')
@@ -1178,6 +1194,7 @@ useTablePolling({
                         <TableRow
                             data-testid="table-row"
                             @click="clickRow(row, index, $event)"
+                            @auxclick="middleClickRow(row, index, $event)"
                             @dragover="showsReorderHandles ? dragOverRow(index, $event) : undefined"
                             @drop="showsReorderHandles ? dropOnRow(index, $event) : undefined"
                             :class="[
