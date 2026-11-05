@@ -20,6 +20,8 @@ public function boot(): void
     TableBuilder::defaultColumnCanBeHidden(true);
     TableBuilder::defaultHighlightFirstColumn(false);
     TableBuilder::defaultGlobalSearch(false);
+    TableBuilder::defaultRowActionsIconOnly(false);
+    TableBuilder::defaultRowActionIcons([]);
 }
 ```
 
@@ -50,6 +52,15 @@ public function boot(): void
 
 Both are read when a column is registered, so set them before any table is built. An explicit `canBeHidden:` or
 `highlight:` on a column always wins.
+
+### Row Actions
+
+| Method                                                | Default | Description                                                                                  |
+|-------------------------------------------------------|---------|----------------------------------------------------------------------------------------------|
+| `TableBuilder::defaultRowActionsIconOnly(bool)`       | `false` | Render every row action that has an icon as an icon-only button                              |
+| `TableBuilder::defaultRowActionIcons(array $icons)`   | `[]`    | Icon per action key for actions without one; no argument gives `edit` → `pencil`, `delete` → `trash-2` |
+
+See [Row Actions](row-actions.md#one-switch-for-the-whole-app).
 
 ### UI
 

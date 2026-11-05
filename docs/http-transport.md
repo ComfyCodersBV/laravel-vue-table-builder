@@ -161,5 +161,8 @@ const {table, loading, error, sortFor, applySort, applyFilter, applySearch, appl
     })
 ```
 
+`applySortValue('-name')` sets a sort directly (`null` for the default order), as the sort select of the
+[grid layout](grid-layout.md) does; `currentSortValue()` returns the active one in the same form.
+
 Changing `source` or `transport` after mount reloads the table. A response that a newer request has
 overtaken is discarded, so fast typing cannot leave stale rows on screen.

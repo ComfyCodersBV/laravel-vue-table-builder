@@ -13,17 +13,19 @@ import {
 import {Input} from './ui/input';
 import {Checkbox} from './ui/checkbox';
 import {Button} from './ui/button';
-import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Download, Funnel, GripVertical, LoaderCircle, Search, X} from '@lucide/vue'
-import type {BulkAction, ConfirmDetails, EmptyState, Filter, RowAction, TableData} from '../types/table-builder'
+import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Download, Funnel, GripVertical, LayoutGrid, List, Search, X} from '@lucide/vue'
+import type {BulkAction, ConfirmDetails, EmptyState, Filter, RowAction, TableData, TableLayout} from '../types/table-builder'
 import {useDebounceFn} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
 import {useTablePolling} from '../composables/useTablePolling'
 import {cn} from '../lib/utils'
 import {assertSupportedSchemaVersion} from '../lib/schema-version'
-import {resolveRowActionIcon, type RowActionIcons} from '../lib/row-action-icons'
+import type {RowActionIcons} from '../lib/row-action-icons'
 import {DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogRoot, DialogTitle} from 'reka-ui'
 import {useTableTransport, xsrfHeaders, type TableAdapter, type TableFetcher, type TableTransport} from '../composables/useTableTransport'
 import TablePagination from './TablePagination.vue'
+import RowActionButtons from './RowActionButtons.vue'
+import SelectAllMenu from './SelectAllMenu.vue'
 
 const {t} = useTranslations('vue_table_builder_table_translations')
 
@@ -41,10 +43,12 @@ const props = withDefaults(defineProps<{
     emptyState?: EmptyState
     confirm?: (message: string, details?: ConfirmDetails) => boolean | Promise<boolean>
     rowActionIcons?: RowActionIcons
+    gridClass?: string
 }>(), {
     transport: 'inertia',
     paginationPosition: 'bottom',
     reorderable: false,
+    gridClass: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6',
 })
 
 assertSupportedSchemaVersion(props.table.schemaVersion)
@@ -59,7 +63,7 @@ const emit = defineEmits<{
 const listensToRowClick = Boolean(getCurrentInstance()?.vnode.props?.onRowClick)
 
 function clickedUnclickableColumn(event: MouseEvent): boolean {
-    const columnKey = (event.target as HTMLElement | null)?.closest<HTMLElement>('td[data-column-key]')?.dataset.columnKey
+    const columnKey = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-column-key]')?.dataset.columnKey
 
     return visibleColumns.value.some((column) => column.key === columnKey && column.clickable === false)
 }
@@ -113,6 +117,8 @@ const {
     error: transportError,
     sortFor,
     applySort,
+    applySortValue,
+    currentSortValue,
     applyFilter,
     applySearch,
     applyPerPage,
@@ -194,10 +200,6 @@ function toggleColumn(columnKey: string, visible: boolean) {
 
 const slots = useSlots()
 
-function rowActionIcon(action: RowAction) {
-    return resolveRowActionIcon(action.icon, props.rowActionIcons)
-}
-
 function rowActionsFor(index: number): RowAction[] {
     return table.value.rowActions?.[index] ?? []
 }
@@ -208,10 +210,6 @@ const hasActions = computed(() => Boolean(slots.actions) || hasRowActions.value)
 const pendingRowAction = ref<RowAction | null>(null)
 const busyRowAction = ref<RowAction | null>(null)
 const actionRunning = computed(() => pendingRowAction.value !== null)
-
-function isBusyRowAction(action: RowAction): boolean {
-    return busyRowAction.value === action
-}
 
 function finishRowAction(): void {
     pendingRowAction.value = null
@@ -938,6 +936,78 @@ function postBulkAction(action: BulkAction, payload: BulkPayload): void {
     })
 }
 
+const LAYOUTS: TableLayout[] = ['table', 'grid']
+
+const defaultLayout = computed<TableLayout>(() => {
+    const configured = props.table.defaultLayout ?? props.table.layout
+
+    return configured === 'grid' ? 'grid' : 'table'
+})
+
+const layoutQueryKey = computed(() =>
+    props.table.queryKeys?.layout ?? (tableName.value !== 'default' ? `${tableName.value}_layout` : 'layout')
+)
+
+function initialLayout(): TableLayout {
+    const fallback: TableLayout = props.table.layout === 'grid' ? 'grid' : 'table'
+
+    if (!props.table.layoutToggle || props.transport === 'http' || typeof window === 'undefined') {
+        return fallback
+    }
+
+    const requested = new URLSearchParams(window.location.search).get(layoutQueryKey.value)
+
+    return LAYOUTS.includes(requested as TableLayout) ? requested as TableLayout : fallback
+}
+
+const layout = ref<TableLayout>(initialLayout())
+const isGrid = computed(() => layout.value === 'grid')
+
+function setLayout(next: TableLayout): void {
+    if (next === layout.value) {
+        return
+    }
+
+    layout.value = next
+
+    if (props.transport === 'http' || typeof window === 'undefined') {
+        return
+    }
+
+    const params = new URLSearchParams(window.location.search)
+
+    if (next === defaultLayout.value) {
+        params.delete(layoutQueryKey.value)
+    } else {
+        params.set(layoutQueryKey.value, next)
+    }
+
+    const search = params.toString()
+
+    router.replace({
+        url: `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`,
+        preserveState: true,
+        preserveScroll: true,
+    })
+}
+
+const sortableColumns = computed(() => table.value.columns.filter((column) => column.sortable))
+const showsSortSelect = computed(() => isGrid.value && sortableColumns.value.length > 0)
+
+function handleSortSelect(value: string): void {
+    applySortValue(value || null)
+}
+
+function tileTitleColumn() {
+    return visibleColumns.value[0] ?? null
+}
+
+const tileMetaColumns = computed(() => visibleColumns.value.slice(1))
+
+function rowSelectionLabel(row: any, index: number): string {
+    return t('vue-table-builder::table.select_row', {label: rowLinkLabel(row, index)})
+}
+
 useTablePolling({
     seconds: computed(() => table.value.poll),
     paused: computed(() =>
@@ -1059,6 +1129,40 @@ useTablePolling({
                     </a>
                 </Button>
 
+                <select
+                    v-if="showsSortSelect"
+                    class="h-9 rounded-md border bg-white px-3 text-sm dark:bg-gray-800"
+                    :aria-label="t('vue-table-builder::table.sort.label')"
+                    :value="currentSortValue() ?? ''"
+                    data-table-sort
+                    @change="(e) => handleSortSelect((e.target as HTMLSelectElement).value)">
+                    <option v-if="!table.defaultSort" value="">{{ t('vue-table-builder::table.sort.default') }}</option>
+                    <template v-for="column in sortableColumns" :key="column.key">
+                        <option :value="column.key">{{ t('vue-table-builder::table.sort.asc', {column: column.label}) }}</option>
+                        <option :value="`-${column.key}`">{{ t('vue-table-builder::table.sort.desc', {column: column.label}) }}</option>
+                    </template>
+                </select>
+
+                <div v-if="table.layoutToggle" class="inline-flex rounded-md border" role="group" :aria-label="t('vue-table-builder::table.layout.toggle')" data-layout-toggle>
+                    <Button
+                        v-for="option in LAYOUTS"
+                        :key="option"
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        class="rounded-none first:rounded-l-md last:rounded-r-md"
+                        :class="layout === option ? 'bg-muted text-foreground' : 'text-muted-foreground'"
+                        :aria-pressed="layout === option ? 'true' : 'false'"
+                        :aria-label="t(`vue-table-builder::table.layout.${option}`)"
+                        :title="t(`vue-table-builder::table.layout.${option}`)"
+                        :data-layout="option"
+                        @click="setLayout(option)"
+                    >
+                        <LayoutGrid v-if="option === 'grid'" class="h-4 w-4" aria-hidden="true"/>
+                        <List v-else class="h-4 w-4" aria-hidden="true"/>
+                    </Button>
+                </div>
+
                 <DropdownMenu v-if="columnSelector">
                     <DropdownMenuTrigger as-child>
                         <Button variant="outline" class="ml-auto" data-testid="table-columns">
@@ -1123,34 +1227,179 @@ useTablePolling({
             </div>
         </div>
 
-        <div class="rounded-md border" :class="loading ? 'opacity-60 transition-opacity' : ''"
+        <div v-if="isGrid" :class="loading ? 'opacity-60 transition-opacity' : ''" :aria-busy="loading" data-table-grid>
+            <div v-if="bulkActions.length > 0 && table.data && table.data.length > 0" class="mb-3 flex items-center text-sm">
+                <SelectAllMenu
+                    :checked="allVisibleItemsAreSelected"
+                    :selected-count="selectedCount"
+                    :page-count="table.data.length"
+                    :total="table.pagination ? table.pagination.total : null"
+                    @clear="resetRowSelection"
+                    @select-page="selectCurrentPage"
+                    @select-all="selectAllResults"
+                >
+                    <span class="text-muted-foreground">{{ t('vue-table-builder::table.bulk_actions.title') }}</span>
+                </SelectAllMenu>
+            </div>
+
+            <div v-if="pending && (!table.data || table.data.length === 0)" :class="['grid gap-3', gridClass]" data-testid="table-loading" aria-busy="true">
+                <div v-for="placeholder in 4" :key="placeholder" class="h-32 animate-pulse rounded-lg bg-muted" />
+            </div>
+            <div v-else-if="!table.data || table.data.length === 0" class="rounded-md border p-6 text-center text-muted-foreground" data-testid="table-empty" data-empty-state>
+                <slot
+                    name="empty"
+                    :filtered="isFiltered"
+                    :title="emptyTitle"
+                    :description="emptyDescription"
+                    :reset="resetFilters"
+                >
+                    <p :class="emptyDescription ? 'font-medium text-foreground' : ''">{{ emptyTitle }}</p>
+                    <p v-if="emptyDescription" class="mt-1 text-sm">{{ emptyDescription }}</p>
+                </slot>
+            </div>
+            <div v-else :class="['grid gap-3', gridClass]">
+                <div
+                    v-for="(row, index) in table.data"
+                    :key="rowVnodeKey(row, index)"
+                    data-testid="table-tile"
+                    class="relative flex min-w-0 flex-col rounded-lg border bg-card p-3 text-sm text-card-foreground shadow-xs"
+                    :class="[
+                        rowLinkFor(index) || listensToRowClick ? 'cursor-pointer hover:bg-muted/50' : '',
+                        rowLinkFor(index) ? ROW_LINK_FOCUS : '',
+                        isRowSelected(row) ? 'ring-2 ring-primary' : '',
+                        cn(row?.__class, rowClass ? rowClass(row, index) : undefined),
+                    ]"
+                    @click="clickRow(row, index, $event)"
+                    @auxclick="middleClickRow(row, index, $event)"
+                >
+                    <button
+                        v-if="showsRowLink(row, index) && table.rowLinkType === 'modal'"
+                        type="button"
+                        class="sr-only"
+                        data-row-link
+                        @click.stop="handleRowClick(index)"
+                    >{{ rowLinkLabel(row, index) }}</button>
+                    <a
+                        v-else-if="showsRowLink(row, index)"
+                        :href="rowLinkFor(index) ?? undefined"
+                        :target="table.rowLinkTarget === '_blank' ? '_blank' : undefined"
+                        :rel="table.rowLinkTarget === '_blank' ? 'noopener' : undefined"
+                        class="sr-only"
+                        data-row-link
+                        @click="followRowLink(index, $event)"
+                    >{{ rowLinkLabel(row, index) }}</a>
+
+                    <div v-if="bulkActions.length > 0" class="absolute top-3 right-3 z-10 flex" @click.stop>
+                        <Checkbox :model-value="isRowSelected(row)"
+                                  :disabled="rowKeyOf(row) === null"
+                                  :aria-label="rowSelectionLabel(row, index)"
+                                  data-tile-checkbox
+                                  @mousedown="preventShiftTextSelection"
+                                  @click="clickRowSelection(row, $event)" class="h-4 w-4"/>
+                    </div>
+
+                    <slot
+                        name="tile"
+                        :row="row"
+                        :index="index"
+                        :columns="visibleColumns"
+                        :actions="rowActionsFor(index)"
+                        :run="runRowAction"
+                        :selected="isRowSelected(row)"
+                        :link="rowLinkFor(index)"
+                    >
+                        <div
+                            v-if="tileTitleColumn()"
+                            class="min-w-0 font-medium break-words"
+                            :class="bulkActions.length > 0 ? 'pr-6' : ''"
+                            :data-column-key="tileTitleColumn()!.key"
+                            data-tile-title
+                        >
+                            <slot
+                                :name="`cell-${tileTitleColumn()!.key}`"
+                                :row="row"
+                                :value="getCellValue(row, tileTitleColumn()!.key)"
+                                :index="index"
+                                :column="tileTitleColumn()!"
+                            >
+                                <Check
+                                    v-if="tileTitleColumn()!.boolean && isTruthy(getCellValue(row, tileTitleColumn()!.key))"
+                                    class="size-4 text-emerald-600"
+                                    role="img"
+                                    :aria-label="t('export.yes')"
+                                />
+                                <X
+                                    v-else-if="tileTitleColumn()!.boolean"
+                                    class="size-4 text-muted-foreground"
+                                    role="img"
+                                    :aria-label="t('export.no')"
+                                />
+                                <span v-else v-html="getCellValue(row, tileTitleColumn()!.key)"></span>
+                            </slot>
+                        </div>
+
+                        <dl v-if="tileMetaColumns.length > 0" class="mt-2 space-y-1 text-xs text-muted-foreground">
+                            <div v-for="column in tileMetaColumns" :key="column.key" class="flex min-w-0 items-center gap-1" :data-column-key="column.key" data-tile-meta>
+                                <dt class="shrink-0">{{ column.label }}:</dt>
+                                <dd class="min-w-0 truncate text-foreground">
+                                    <slot
+                                        :name="`cell-${column.key}`"
+                                        :row="row"
+                                        :value="getCellValue(row, column.key)"
+                                        :index="index"
+                                        :column="column"
+                                    >
+                                        <Check
+                                            v-if="column.boolean && isTruthy(getCellValue(row, column.key))"
+                                            class="size-4 text-emerald-600"
+                                            role="img"
+                                            :aria-label="t('export.yes')"
+                                        />
+                                        <X
+                                            v-else-if="column.boolean"
+                                            class="size-4 text-muted-foreground"
+                                            role="img"
+                                            :aria-label="t('export.no')"
+                                        />
+                                        <span v-else v-html="getCellValue(row, column.key)"></span>
+                                    </slot>
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <div v-if="hasActions" class="mt-auto flex flex-wrap justify-end gap-1 pt-3" data-tile-actions @click.stop>
+                            <slot name="actions" :row="row" :index="index" :actions="rowActionsFor(index)" :run="runRowAction">
+                                <RowActionButtons
+                                    :actions="rowActionsFor(index)"
+                                    :icons="rowActionIcons"
+                                    :running="actionRunning"
+                                    :busy="busyRowAction"
+                                    icon-only
+                                    @run="runRowAction"
+                                />
+                            </slot>
+                        </div>
+                    </slot>
+                </div>
+            </div>
+        </div>
+
+        <div v-else class="rounded-md border" :class="loading ? 'opacity-60 transition-opacity' : ''"
              :aria-busy="loading">
             <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead v-if="showsReorderHandles" :class="[table.headClass, 'w-px']" />
                         <TableHead v-if="bulkActions.length > 0" :class="[table.headClass, 'w-10']">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger as-child>
-                                    <div class="cursor-pointer">
-                                        <Checkbox :model-value="allVisibleItemsAreSelected"
-                                                  class="h-4 w-4 pointer-events-none"/>
-                                    </div>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start">
-                                    <DropdownMenuItem v-if="selectedCount > 0" @click="resetRowSelection">
-                                        {{ t('vue-table-builder::table.bulk_actions.clear_selection') }}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem v-if="!allVisibleItemsAreSelected" @click="selectCurrentPage">
-                                        {{ t('vue-table-builder::table.bulk_actions.select_this_page', {count: String(table.data.length)}) }}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem v-if="table.pagination" @click="selectAllResults">
-                                        {{
-                                            t('vue-table-builder::table.bulk_actions.select_all_results', {total: String(table.pagination.total)})
-                                        }}
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <SelectAllMenu
+                                :checked="allVisibleItemsAreSelected"
+                                :selected-count="selectedCount"
+                                :page-count="table.data.length"
+                                :total="table.pagination ? table.pagination.total : null"
+                                @clear="resetRowSelection"
+                                @select-page="selectCurrentPage"
+                                @select-all="selectAllResults"
+                            />
                         </TableHead>
                         <TableHead v-for="column in visibleColumns" :key="column.key" :class="table.headClass">
                             <button v-if="column.sortable" @click="applySort(column)"
@@ -1264,53 +1513,13 @@ useTablePolling({
                             <TableCell v-if="hasActions" :class="[table.cellClass, 'text-right']" @click.stop>
                                 <slot name="actions" :row="row" :index="index" :actions="rowActionsFor(index)" :run="runRowAction">
                                     <div class="flex justify-end gap-2">
-                                        <template v-for="action in rowActionsFor(index)" :key="action.key">
-                                            <span v-if="action.disabled" :title="action.disabledReason ?? undefined" class="inline-flex">
-                                                <Button size="sm" :variant="action.variant" disabled :data-row-action="action.key">
-                                                    <component :is="rowActionIcon(action)" v-if="rowActionIcon(action)" aria-hidden="true"/>
-                                                    {{ action.label }}
-                                                </Button>
-                                            </span>
-                                            <Button v-else-if="action.download" size="sm" :variant="action.variant" as-child>
-                                                <a
-                                                    :href="action.url"
-                                                    :download="downloadName(action)"
-                                                    :data-row-action="action.key"
-                                                    data-row-action-download
-                                                    :aria-disabled="actionRunning ? 'true' : undefined"
-                                                    :class="{'pointer-events-none opacity-50': actionRunning}"
-                                                    @click="runRowAction(action, $event)"
-                                                >
-                                                    <component :is="rowActionIcon(action)" v-if="rowActionIcon(action)" aria-hidden="true"/>
-                                                    {{ action.label }}
-                                                </a>
-                                            </Button>
-                                            <Button v-else-if="action.method === 'get'" size="sm" :variant="action.variant" as-child>
-                                                <a
-                                                    :href="action.url"
-                                                    :data-row-action="action.key"
-                                                    :aria-disabled="actionRunning ? 'true' : undefined"
-                                                    :class="{'pointer-events-none opacity-50': actionRunning}"
-                                                    @click="runRowAction(action, $event)"
-                                                >
-                                                    <component :is="rowActionIcon(action)" v-if="rowActionIcon(action)" aria-hidden="true"/>
-                                                    {{ action.label }}
-                                                </a>
-                                            </Button>
-                                            <Button
-                                                v-else
-                                                size="sm"
-                                                :variant="action.variant"
-                                                :disabled="actionRunning"
-                                                :aria-busy="isBusyRowAction(action) ? 'true' : undefined"
-                                                :data-row-action="action.key"
-                                                @click="runRowAction(action, $event)"
-                                            >
-                                                <LoaderCircle v-if="isBusyRowAction(action)" class="animate-spin" aria-hidden="true" data-row-action-spinner/>
-                                                <component :is="rowActionIcon(action)" v-else-if="rowActionIcon(action)" aria-hidden="true"/>
-                                                {{ action.label }}
-                                            </Button>
-                                        </template>
+                                        <RowActionButtons
+                                            :actions="rowActionsFor(index)"
+                                            :icons="rowActionIcons"
+                                            :running="actionRunning"
+                                            :busy="busyRowAction"
+                                            @run="runRowAction"
+                                        />
                                     </div>
                                 </slot>
                             </TableCell>

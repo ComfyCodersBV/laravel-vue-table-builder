@@ -91,6 +91,7 @@ export interface RowAction {
     disabledReason: string | null
     download?: boolean | string
     icon?: string
+    iconOnly?: boolean
 }
 
 export interface EmptyState {
@@ -112,6 +113,7 @@ export interface QueryKeys {
     page: string
     perPage: string
     columns: string
+    layout?: string
 }
 
 export interface Totals {
@@ -123,6 +125,8 @@ export interface ExportConfig {
     label: string
     url: string | null
 }
+
+export type TableLayout = 'table' | 'grid'
 
 export interface TableData {
     schemaVersion?: string
@@ -148,5 +152,8 @@ export interface TableData {
     totals?: Totals | null
     export?: ExportConfig | null
     columnToggle?: boolean
+    layout?: TableLayout
+    defaultLayout?: TableLayout
+    layoutToggle?: boolean
     poll?: number
 }

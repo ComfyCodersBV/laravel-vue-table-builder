@@ -32,6 +32,7 @@ rowAction(
     ?string $key = null,
     bool|string $download = false,
     string|Closure|null $icon = null,
+    ?bool $iconOnly = null,
 ): self
 ```
 
@@ -48,6 +49,7 @@ rowAction(
 | `key`      | Identifier of the action, defaults to the slug of the label. Registering a key again replaces the action     |
 | `download` | `true` or a file name: the action downloads a file instead of visiting a page. Only with the `get` method    |
 | `icon`     | Name of an icon shown before the label, or a callback receiving the row item. `null` or `''` shows none       |
+| `iconOnly` | `true` shows only the icon, `false` keeps the label; `null` follows the table and global default             |
 
 `url` or `route` is required.
 
@@ -93,6 +95,62 @@ so screen readers read the same button as before. An unknown name renders the la
 can look an icon up with `resolveRowActionIcon(action.icon)`.
 
 The resolved action carries `icon` only when it has one. Requires `tranquil-tools/laravel-table-builder` 1.2.
+
+## Icon-Only Buttons
+
+Generic actions such as edit and delete read better as a compact icon button. `iconOnly: true` renders only the icon:
+
+```php
+$table
+    ->rowAction('Edit', url: fn (Room $room) => route('rooms.edit', $room), icon: 'pencil', iconOnly: true)
+    ->rowAction('Delete', url: fn (Room $room) => route('rooms.destroy', $room), method: 'delete', icon: 'trash-2', iconOnly: true);
+```
+
+`rowActionsIconOnly()` does this for every action of the table that has an icon; an action opts out with
+`iconOnly: false`.
+
+- The button is square (`size="icon-sm"`) and the label becomes its `aria-label` and `title` tooltip, so screen
+  readers and hover still name it.
+- A disabled action shows `Label: reason` as its tooltip and accessible name.
+- While a non-`get` action runs, the spinner takes the place of the icon.
+- The option needs an icon: the payload carries `iconOnly: true` only when the action has an icon name for that row,
+  and the page shows the label anyway when that name is not registered.
+
+### One Switch for the Whole App
+
+Turn icon-only buttons on for every table in a service provider, and give the common actions a default icon so the
+table classes need no `icon:`:
+
+```php
+use TranquilTools\TableBuilder\TableBuilder;
+
+public function boot(): void
+{
+    TableBuilder::defaultRowActionsIconOnly();
+    TableBuilder::defaultRowActionIcons();
+}
+```
+
+```ts
+import {registerDefaultRowActionIcons} from '@table-builder'
+
+registerDefaultRowActionIcons()
+```
+
+`defaultRowActionIcons()` maps an action key to an icon name, used when the action has no icon of its own. Without
+arguments it is `['edit' => 'pencil', 'delete' => 'trash-2']`. An action with the `delete` method gets the `delete`
+icon whatever its key. The key is the slug of the label, so Dutch labels need their own entries:
+
+```php
+TableBuilder::defaultRowActionIcons([
+    'bewerken' => 'pencil',
+    'verwijderen' => 'trash-2',
+]);
+```
+
+`registerDefaultRowActionIcons()` registers the Lucide `Pencil` and `Trash2` components as `pencil` and `trash-2`;
+register any other name with `registerRowActionIcons()`. Both PHP defaults are off by default. A table overrides
+the global icon-only default with `rowActionsIconOnly(false)`. Requires `tranquil-tools/laravel-table-builder` 1.3.
 
 ## Authorization
 

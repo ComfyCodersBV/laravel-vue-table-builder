@@ -296,8 +296,22 @@ export function useTableTransport(options: TableTransportOptions) {
 
         const direction = nextSort(column)
 
+        applySortValue(direction ? (direction === 'desc' ? `-${column.key}` : column.key) : null)
+    }
+
+    function currentSortValue(): string | null {
+        const column = (table.value.columns ?? []).find((candidate) => candidate.sortable && sortFor(candidate))
+
+        if (!column) {
+            return null
+        }
+
+        return sortFor(column) === 'desc' ? `-${column.key}` : column.key
+    }
+
+    function applySortValue(sort: string | null): void {
         if (isHttp.value) {
-            query.value.sort = direction ? (direction === 'desc' ? `-${column.key}` : column.key) : null
+            query.value.sort = sort || null
             query.value.page = 1
 
             return void load()
@@ -305,8 +319,8 @@ export function useTableTransport(options: TableTransportOptions) {
 
         const params = currentParams()
 
-        if (direction) {
-            params.set(namespacedKey('sort'), direction === 'desc' ? `-${column.key}` : column.key)
+        if (sort) {
+            params.set(namespacedKey('sort'), sort)
         } else {
             params.delete(namespacedKey('sort'))
         }
@@ -455,6 +469,8 @@ export function useTableTransport(options: TableTransportOptions) {
         isHttp,
         sortFor,
         applySort,
+        applySortValue,
+        currentSortValue,
         applyFilter,
         applySearch,
         applyPerPage,

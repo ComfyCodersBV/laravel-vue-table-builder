@@ -2,6 +2,31 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.16.0 - 2026-11-05
+* Icon-only row actions. An action with `iconOnly: true` (from `rowAction(..., iconOnly: true)`,
+  `rowActionsIconOnly()` or the app-wide `TableBuilder::defaultRowActionsIconOnly()`) renders as a square
+  `size="icon-sm"` button with only its icon; the label becomes its `aria-label` and `title` tooltip. A disabled one
+  shows `Label: reason` as its tooltip and accessible name, and a running one shows the spinner in place of the icon. Without a registered
+  icon the action keeps its label.
+* `registerDefaultRowActionIcons()` registers the Lucide `Pencil` and `Trash2` icons as `pencil` and `trash-2`, the
+  names `TableBuilder::defaultRowActionIcons()` gives edit and delete actions, so an app switches to icon buttons in
+  one place. `DEFAULT_ROW_ACTION_ICONS` holds the same map.
+* Grid layout. A table with `->grid()` renders its rows as tiles: the first visible column as title, the other visible
+  columns as `Label: value` lines and the row actions as icon buttons in the footer of the tile. Search, filters,
+  pagination, row links, `row-click`, the empty state and bulk selection (a checkbox per tile and a select menu above
+  the grid) work as in the table, and a sort select in the toolbar replaces the column headers. The grid shows 2 to 6
+  tiles per row depending on the screen width; the `grid-class` prop takes your own column classes.
+* `#tile` slot with `row`, `index`, `columns`, `actions`, `run`, `selected` and `link` replaces the content of a tile.
+  `cell-{key}` slots also render in the default tile.
+* `->layoutToggle()` shows a list/grid switch in the toolbar. The choice is kept in the `{name}_layout` query key with
+  an Inertia `router.replace`, so a refresh, the back button and a shared link keep it, and is removed for the default
+  layout. With the `http` transport the url is left alone and the choice stays in the component.
+* `RowActionButtons` is exported, for custom tiles and `#actions` slots that want the standard buttons.
+* `useTableTransport()` returns `applySortValue(sort)` and `currentSortValue()`.
+* The select-all checkbox menu is a focusable button named after the bulk actions, in the table header too.
+* Drag-to-reorder, the totals footer and the `row-after` slot stay table-only.
+* Supports schema version `1.2` and requires `tranquil-tools/laravel-table-builder` 1.3.
+
 ## 1.15.0 - 2026-11-04
 * A ctrl-, cmd-, shift- or middle click on a linked row opens its row link in a new tab instead of following it in the
   current one. A right click does nothing, rows without a link are unchanged and a row modal still opens its modal.

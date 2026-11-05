@@ -18,6 +18,7 @@
     - [Reordering](reordering.md)
     - [Empty State](empty-state.md)
     - [Row Links & Modals](row-links.md)
+    - [Grid Layout](grid-layout.md)
 
 - **Frontend**
     - [Vue Component](vue-component.md)

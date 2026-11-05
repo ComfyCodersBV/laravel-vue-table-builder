@@ -163,11 +163,21 @@ $table
 ```
 
 `confirm` also takes a callback that gets the row, for a question that names it:
-`confirm: fn (Room $room) => "Delete {$room->name}?"`. `icon: 'pencil'` shows a registered icon before the label.
+`confirm: fn (Room $room) => "Delete {$room->name}?"`. `icon: 'pencil'` shows a registered icon before the label,
+and `iconOnly: true` (or `rowActionsIconOnly()` on the table, or `TableBuilder::defaultRowActionsIconOnly()` for the
+app) shows only the icon with the label as tooltip.
 While an action runs, the row actions of the table are disabled and the clicked button shows a spinner, so a double
 click sends one request.
 
 See [docs/row-actions.md](docs/row-actions.md).
+
+### Grid Layout
+
+```php
+$table->grid()->layoutToggle();
+```
+
+Renders the rows as tiles, with a list/grid switch kept in the url. See [docs/grid-layout.md](docs/grid-layout.md).
 
 ### Empty State
 

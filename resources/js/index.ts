@@ -1,7 +1,8 @@
 export { default as TableBuilder } from './components/TableBuilder.vue'
+export { default as RowActionButtons } from './components/RowActionButtons.vue'
 export { TableCell, TableRow } from './components/ui/table'
 export { SUPPORTED_SCHEMA_VERSION, assertSupportedSchemaVersion } from './lib/schema-version'
-export { registerRowActionIcons, resolveRowActionIcon } from './lib/row-action-icons'
+export { DEFAULT_ROW_ACTION_ICONS, registerDefaultRowActionIcons, registerRowActionIcons, resolveRowActionIcon } from './lib/row-action-icons'
 export type { RowActionIcons } from './lib/row-action-icons'
 export { useTablePolling } from './composables/useTablePolling'
 export type { TablePollingOptions } from './composables/useTablePolling'
@@ -33,5 +34,6 @@ export type {
     RowActionVariant,
     SearchInput,
     TableData,
+    TableLayout,
     Totals,
 } from './types/table-builder'

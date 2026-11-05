@@ -9,7 +9,8 @@ table once in PHP - columns, filters, search, sorting, pagination, and bulk acti
 - **Inertia.js integration** - seamless SPA experience without custom AJAX code
 - **Column visibility** - users can show/hide columns via a dropdown
 - **Filters** - select, free text, date, date range and callback-based filters
-- **Row actions** - per-row buttons defined in PHP, hidden or disabled per row, with a confirm question and an icon per row, including file downloads, guarded against double clicks
+- **Row actions** - per-row buttons defined in PHP, hidden or disabled per row, with a confirm question and an icon per row or as icon-only buttons, including file downloads, guarded against double clicks
+- **Grid layout** - render the rows as responsive tiles, with an optional list/grid switch kept in the url
 - **Totals** - a footer row with sums, averages or your own aggregates over the filtered rows
 - **CSV export** - a streamed, spreadsheet-safe export of the filtered and sorted rows
 - **Reordering** - drag rows into a new order that the package stores itself

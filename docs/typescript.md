@@ -18,6 +18,7 @@ import type {
     Totals,
     ExportConfig,
     DateRangePreset,
+    TableLayout,
 } from '@/types/table-builder'
 ```
 
@@ -47,6 +48,9 @@ interface TableData {
     totals?: Totals | null
     export?: ExportConfig | null
     columnToggle?: boolean              // false hides the "Columns" menu
+    layout?: TableLayout                // the layout to render now
+    defaultLayout?: TableLayout         // the layout of the table class
+    layoutToggle?: boolean              // true shows the list/grid switch
     poll?: number                       // seconds between reloads, only with ->poll()
 }
 
@@ -61,7 +65,10 @@ interface RowAction {
     disabledReason: string | null
     download?: boolean | string         // only on download actions
     icon?: string                       // only on actions with an icon
+    iconOnly?: boolean                  // only when the action renders as an icon-only button
 }
+
+type TableLayout = 'table' | 'grid'
 
 interface Totals {
     label: string | null
@@ -97,6 +104,7 @@ interface QueryKeys {
     page: string
     perPage: string
     columns: string
+    layout?: string
 }
 ```
 

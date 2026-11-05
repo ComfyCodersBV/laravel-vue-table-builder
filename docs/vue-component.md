@@ -33,6 +33,7 @@ The component is exported from the package's `resources/js/components/` director
 | `reorderable` | `boolean` | No   | Adds a drag handle in front of every row. See [Reordering](reordering.md)                                                                                                                                                                                                  |
 | `rowClass` | `(row, index) => string \| string[] \| Record<string, boolean>` | No | Extra classes per row, for status colours and similar. Merged with the classes of `$table->rowClass()`, the prop last so it wins a conflicting Tailwind class. See [Row classes](#row-classes)                                       |
 | `emptyState` | `EmptyState` | No | Texts for an empty table, overriding the ones from the Table class. See [Empty State](empty-state.md)                                                                                                                                                              |
+| `gridClass` | `string` | No | Tailwind grid column classes of the [grid layout](grid-layout.md#grid-columns). Defaults to `grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6` |
 | `rowActionIcons` | `Record<string, Component>` | No | Icon components per icon name for the row actions of this table, over the ones from `registerRowActionIcons()`. See [Row Actions](row-actions.md#icons) |
 | `confirm` | `(message, details?) => boolean \| Promise<boolean>` | No | Asks the confirmation of a row or bulk action. Defaults to `window.confirm()`. A row action passes its text as resolved for that row, so a `confirm` closure in PHP can name the row. A bulk action passes `details` with its `text`, `confirmButton` and `cancelButton`. See [Row Actions](row-actions.md) and [Bulk Actions](bulk-actions.md)                                                                                                                                       |
 
@@ -56,6 +57,9 @@ The component renders all of the following automatically based on what the PHP b
 | Totals footer                       | `totals` is set and the table has rows    |
 | Export button                       | `export.url` is set                       |
 | Reset button                        | any filter/search/sort is active          |
+| Tiles instead of rows               | `layout` is `grid`, see [Grid Layout](grid-layout.md) |
+| List/grid switch                    | `layoutToggle` is `true`                  |
+| Sort select                         | the grid layout shows and a column is sortable |
 
 ## User Interactions
 
@@ -73,6 +77,8 @@ in-memory query and refetch from `source` instead; the url is left alone. See [H
 | Change per-page               | `{name}_perPage=N` (or `perPage=N`) |
 | Select rows + run bulk action | POST to signed URL                  |
 | Shift-click a row checkbox    | none: selects or unselects the range since the last clicked row |
+| Pick a sort in the grid       | `sort=column` or `sort=-column`     |
+| Switch list/grid              | `{name}_layout=grid` (replaced, not pushed; removed for the default layout) |
 
 ## Search Debounce
 
@@ -181,6 +187,7 @@ A `vendor::` prefix is always stripped. `group` strips the file name the bundle 
 | `empty`       | `filtered`, `title`, `description`, `reset` | The content of the row shown when there are no rows. See [Empty State](empty-state.md) |
 | `toolbar`     | -                              | Controls next to the column selector above the table        |
 | `row-after`   | `row`, `index`, `columns`, `colspan` | Extra rows under each row. See [Nested Rows](#nested-rows) |
+| `tile`        | `row`, `index`, `columns`, `actions`, `run`, `selected`, `link` | The content of a tile in the grid layout. See [Grid Layout](grid-layout.md#your-own-tile) |
 | `total-{key}` | `value`, `column`, `totals`    | Replaces the total of the column named `{key}` in the footer. See [Totals](totals.md) |
 
 ```vue
