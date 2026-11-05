@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {resolveConfirmHandler} from '../lib/confirm-handler'
 import {router} from '@inertiajs/vue3'
 import {computed, getCurrentInstance, ref, useSlots, watch} from 'vue'
 import {Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow,} from './ui/table'
@@ -226,8 +227,10 @@ async function confirmed(message: string | null, details?: ConfirmDetails): Prom
     awaitingConfirmation.value = true
 
     try {
-        if (props.confirm) {
-            return details ? await props.confirm(message, details) : await props.confirm(message)
+        const handler = resolveConfirmHandler(props.confirm)
+
+        if (handler) {
+            return details ? await handler(message, details) : await handler(message)
         }
 
         return window.confirm(details?.text ? `${message}\n\n${details.text}` : message)

@@ -84,8 +84,8 @@ every row and memory stays flat.
 Pass `true` to use the default translated confirmation message (`bulk_actions.confirm`).
 
 The Vue component asks before it posts, through the same mechanism as [row actions](row-actions.md#how-they-run):
-`window.confirm()` with the message and `confirmText` below it, or the component's `confirm` prop. That prop gets the
-message and the other texts:
+the component's `confirm` prop, else the handler registered with `registerConfirmHandler()`, else `window.confirm()`
+with the message and `confirmText` below it. The prop and the handler get the message and the other texts:
 
 ```vue
 <TableBuilder

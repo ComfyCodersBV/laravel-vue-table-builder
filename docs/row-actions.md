@@ -165,13 +165,22 @@ Use `disabled` with a reason when the user should see that the action exists but
   clicks open a new tab as usual.
 - Other methods are sent as an Inertia visit with that method and `preserveScroll`. With the `http`
   transport they are sent with `fetch()` and the table reloads afterwards.
-- `confirm` uses `window.confirm()` unless the component gets a `confirm` prop:
+- `confirm` asks through the component's `confirm` prop, else through the handler registered with
+  `registerConfirmHandler()`, and only falls back to `window.confirm()` when neither is set:
 
 ```vue
 <TableBuilder :table="table" :confirm="(message) => dialog.ask(message)"/>
 ```
 
-The prop may return a boolean or a promise of one. Bulk actions use the same prop and pass a second `details` argument; see
+Register the app's own dialog once, in the entry file, so every table uses it without a prop:
+
+```ts
+import {registerConfirmHandler} from '@table-builder'
+
+registerConfirmHandler((message, details) => dialog.ask(message, details?.text))
+```
+
+The prop and the handler may return a boolean or a promise of one. Bulk actions use the same prop and pass a second `details` argument; see
 [Bulk Actions](bulk-actions.md#confirmation-dialog).
 
 ## While an Action Runs

@@ -3,6 +3,7 @@ import {router} from '@inertiajs/vue3'
 import {mount} from '@vue/test-utils'
 import {defineComponent, h} from 'vue'
 import TableBuilder from '../../resources/js/components/TableBuilder.vue'
+import {registerConfirmHandler} from '../../resources/js/lib/confirm-handler'
 import {registerRowActionIcons} from '../../resources/js/lib/row-action-icons'
 import type {Column, RowAction, TableData} from '../../resources/js/types/table-builder'
 
@@ -231,6 +232,27 @@ describe('TableBuilder row actions', () => {
 
         expect(confirm).toHaveBeenCalledTimes(1)
         expect(router.visit).toHaveBeenLastCalledWith('/apps/local', expect.objectContaining({method: 'delete'}))
+    })
+
+    it('asks the registered confirm handler instead of the browser dialog', async () => {
+        const handler = vi.fn(() => Promise.resolve(false))
+        const browserConfirm = vi.fn(() => true)
+        vi.stubGlobal('confirm', browserConfirm)
+        registerConfirmHandler(handler)
+
+        try {
+            const wrapper = mount(TableBuilder, {props: {table: tableWithActions()}})
+
+            await wrapper.find('button[data-row-action="delete"]').trigger('click')
+            await flush()
+
+            expect(handler).toHaveBeenCalledWith('Delete this line?')
+            expect(browserConfirm).not.toHaveBeenCalled()
+            expect(router.visit).not.toHaveBeenCalled()
+        } finally {
+            registerConfirmHandler(null)
+            vi.unstubAllGlobals()
+        }
     })
 
     it('does not run an action that is not confirmed', async () => {

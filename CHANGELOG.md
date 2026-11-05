@@ -2,6 +2,11 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.17.0 - 2026-11-05
+* `registerConfirmHandler()` sets an app-wide confirmation handler for row and bulk actions, so every table asks
+  through the app's own dialog without a `confirm` prop on each component. The prop still wins, and `window.confirm()`
+  is only the fallback when neither is set.
+
 ## 1.16.0 - 2026-11-05
 * Icon-only row actions. An action with `iconOnly: true` (from `rowAction(..., iconOnly: true)`,
   `rowActionsIconOnly()` or the app-wide `TableBuilder::defaultRowActionsIconOnly()`) renders as a square

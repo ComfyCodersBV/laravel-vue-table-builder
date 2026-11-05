@@ -142,7 +142,7 @@ Import the TableBuilder component:
 - 🧩 Scoped slots for cells, row actions and extra toolbar controls
 - 🔗 Row links that work with the mouse anywhere on the row and with Tab and Enter through a hidden link in the first cell
 - ↕️ Drag-reorderable rows, per-row classes, a `row-click` event and a `row-after` slot for nested rows
-- 🔘 Row actions defined in the Table class, hidden or disabled per row, with a confirm question and an icon per row or as icon-only buttons; double clicks are guarded with a busy state
+- 🔘 Row actions defined in the Table class, hidden or disabled per row, with a confirm question (through your own dialog with `registerConfirmHandler()`) and an icon per row or as icon-only buttons; double clicks are guarded with a busy state
 - 🧱 A grid layout that renders the rows as responsive tiles, with a list/grid switch kept in the url
 - ☑️ Bulk selection with Shift-click to select a range of rows
 - 💾 Server-side reorder persistence on an order column
