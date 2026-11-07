@@ -49,7 +49,6 @@ const props = withDefaults(defineProps<{
     transport: 'inertia',
     paginationPosition: 'bottom',
     reorderable: false,
-    gridClass: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6',
 })
 
 assertSupportedSchemaVersion(props.table.schemaVersion)
@@ -1081,6 +1080,17 @@ function setLayout(next: TableLayout): void {
 
 const sortableColumns = computed(() => table.value.columns.filter((column) => column.sortable))
 const showsSortSelect = computed(() => isGrid.value && sortableColumns.value.length > 0)
+const sortSelectValue = computed(() => currentSortValue() ?? '')
+const showsDefaultSortOption = computed(() => {
+    const defaultSortKey = (table.value.defaultSort ?? '').replace(/^-/, '')
+
+    return !defaultSortKey || !sortableColumns.value.some((column) => column.key === defaultSortKey)
+})
+
+const DEFAULT_GRID_CLASS = 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6'
+const DEFAULT_GRID_BELOW_CLASS = 'grid-cols-1 sm:grid-cols-2'
+
+const tileGridClass = computed(() => props.gridClass ?? (chosenLayout.value === null && belowGridBreakpoint.value ? DEFAULT_GRID_BELOW_CLASS : DEFAULT_GRID_CLASS))
 
 function handleSortSelect(value: string): void {
     applySortValue(value || null)
@@ -1221,10 +1231,10 @@ useTablePolling({
                     v-if="showsSortSelect"
                     class="h-9 rounded-md border bg-white px-3 text-sm pointer-coarse:h-10 dark:bg-gray-800"
                     :aria-label="t('vue-table-builder::table.sort.label')"
-                    :value="currentSortValue() ?? ''"
+                    :value="sortSelectValue"
                     data-table-sort
                     @change="(e) => handleSortSelect((e.target as HTMLSelectElement).value)">
-                    <option v-if="!table.defaultSort" value="">{{ t('vue-table-builder::table.sort.default') }}</option>
+                    <option v-if="showsDefaultSortOption" value="">{{ t('vue-table-builder::table.sort.default') }}</option>
                     <template v-for="column in sortableColumns" :key="column.key">
                         <option :value="column.key">{{ t('vue-table-builder::table.sort.asc', {column: column.label}) }}</option>
                         <option :value="`-${column.key}`">{{ t('vue-table-builder::table.sort.desc', {column: column.label}) }}</option>
@@ -1330,7 +1340,7 @@ useTablePolling({
                 </SelectAllMenu>
             </div>
 
-            <div v-if="pending && (!table.data || table.data.length === 0)" :class="['grid gap-3', gridClass]" data-testid="table-loading" aria-busy="true">
+            <div v-if="pending && (!table.data || table.data.length === 0)" :class="['grid gap-3', tileGridClass]" data-testid="table-loading" aria-busy="true">
                 <div v-for="placeholder in 4" :key="placeholder" class="h-32 animate-pulse rounded-lg bg-muted" />
             </div>
             <div v-else-if="!table.data || table.data.length === 0" class="rounded-md border p-6 text-center text-muted-foreground" data-testid="table-empty" data-empty-state>
@@ -1345,7 +1355,7 @@ useTablePolling({
                     <p v-if="emptyDescription" class="mt-1 text-sm">{{ emptyDescription }}</p>
                 </slot>
             </div>
-            <div v-else :class="['grid gap-3', gridClass]">
+            <div v-else :class="['grid gap-3', tileGridClass]">
                 <div
                     v-for="(row, index) in table.data"
                     :key="rowVnodeKey(row, index)"

@@ -35,8 +35,9 @@ $table
 ```
 
 The tiles below the breakpoint are the same tiles as the grid layout: the default tile, `cell-{key}` slots and your
-own `#tile` slot all apply. The switch follows the screen while the page is open, so rotating a tablet or resizing the
-window switches between tiles and rows. A column with [`hideBelow`](columns.md#hiding-a-column-on-small-screens) at
+own `#tile` slot all apply. They sit one per row on phones and two from `sm`; the `grid-class` prop overrides that.
+The switch follows the screen while the page is open, so rotating a tablet or resizing the window switches between
+tiles and rows. A column with [`hideBelow`](columns.md#hiding-a-column-on-small-screens) at
 the same breakpoint or wider is left out of those tiles, which keeps the phone tiles short.
 
 The component checks the width with `matchMedia`, using Tailwind's default widths (`sm` 40rem, `md` 48rem, `lg` 64rem,
@@ -76,7 +77,7 @@ $table->grid()->layoutToggle();  // tiles by default, the user may switch to the
   A `row-click` listener works the same way.
 - The grid has no column headers, so a sort select appears in the toolbar when the table has sortable columns. It
   lists every sortable column ascending and descending, and a "Default order" option when the table has no
-  `defaultSort`.
+  `defaultSort` or sorts by default on a column that is not sortable.
 
 ## Grid Columns
 

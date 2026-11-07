@@ -208,6 +208,54 @@ describe('the first visible column', () => {
 })
 
 describe('tiles below a breakpoint', () => {
+    it('shows one tile per row on phones and two from sm', () => {
+        narrow = true
+
+        const wrapper = mount(TableBuilder, {props: {table: tableData({gridBelow: 'md'})}})
+
+        expect(wrapper.find('[data-testid="table-tile"]').element.parentElement!.className).toContain('grid-cols-1 sm:grid-cols-2')
+    })
+
+    it('keeps the grid-class prop below the breakpoint', () => {
+        narrow = true
+
+        const wrapper = mount(TableBuilder, {props: {table: tableData({gridBelow: 'md'}), gridClass: 'grid-cols-3'}})
+
+        expect(wrapper.find('[data-testid="table-tile"]').element.parentElement!.className).toContain('grid-cols-3')
+    })
+
+    it('selects the default order when the default sort is not a sortable column', () => {
+        narrow = true
+
+        const wrapper = mount(TableBuilder, {
+            props: {table: tableData({gridBelow: 'md', defaultSort: '-id', columns: [column('name', {sortable: true}), column('email')]})},
+        })
+
+        const select = wrapper.find('[data-table-sort]').element as HTMLSelectElement
+
+        expect(select.value).toBe('')
+        expect(select.options[0].value).toBe('')
+    })
+
+    it('keeps the default order option after the user picks a sort', () => {
+        narrow = true
+
+        const wrapper = mount(TableBuilder, {
+            props: {table: tableData({gridBelow: 'md', defaultSort: '-id', columns: [column('name', {sortable: true, sorted: 'asc'}), column('email')]})},
+        })
+
+        const select = wrapper.find('[data-table-sort]').element as HTMLSelectElement
+
+        expect(select.value).toBe('name')
+        expect(select.options[0].value).toBe('')
+    })
+
+    it('keeps the wide grid columns for a grid table on a wide screen', () => {
+        const wrapper = mount(TableBuilder, {props: {table: tableData({gridBelow: 'md', layout: 'grid', defaultLayout: 'grid'})}})
+
+        expect(wrapper.find('[data-testid="table-tile"]').element.parentElement!.className).toContain('grid-cols-2 md:grid-cols-3')
+    })
+
     it('renders the table without matchMedia', () => {
         delete (window as {matchMedia?: unknown}).matchMedia
 

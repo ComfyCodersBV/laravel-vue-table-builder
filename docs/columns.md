@@ -223,8 +223,8 @@ turns it into fixed classes such as `hidden md:table-cell`. Those classes live i
 - In the [grid layout](grid-layout.md) the column's `Label: value` line hides below the same breakpoint. Combined
   with `gridBelow('md')`, a column with `hideBelow: 'md'` or wider is left out of the phone tiles and shows in the
   table from `md`.
-- The columns menu still lists the column. When the user turns it on there, it shows at every width until the page
-  reloads: an explicit choice wins over the breakpoint.
+- The columns menu still lists the column, checked while it is hidden by the breakpoint. When the user turns it off
+  and on again there, it shows at every width until the page reloads: an explicit choice wins over the breakpoint.
 - `hidden: true` still hides a column at every width until the user turns it on.
 
 ## Alignment

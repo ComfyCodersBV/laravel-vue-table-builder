@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.19.1 - 2026-11-07
+* Tiles shown by `gridBelow()` sit one per row on phones and two from `sm`, instead of the two to six of the grid
+  layout. The `grid-class` prop still wins.
+* The sort select of the grid offers and selects "Default order" when the table's `defaultSort` is not a sortable
+  column, instead of showing an empty select.
+
 ## 1.19.0 - 2026-11-07
 * Column header classes. `headerClasses` on a column (sent as `head_class` by `tranquil-tools/laravel-table-builder`
   1.5) lands on its header cell. The `classes` of a column keep reaching the body and totals cells only, so existing
