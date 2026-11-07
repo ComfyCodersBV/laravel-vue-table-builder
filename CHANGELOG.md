@@ -7,6 +7,8 @@ All notable changes to `laravel-vue-table-builder` will be documented in this fi
   `tranquil-tools/laravel-table-builder` 1.4. A dialog opened from an action finds its row by that key instead of by
   its url. The row actions page shows how.
 * Supports schema version `1.3` and requires `tranquil-tools/laravel-table-builder` 1.4.
+* The `docs/` folder ships with the package again, so `vendor/tranquil-tools/laravel-vue-table-builder/docs` holds the
+  same pages as the repository.
 
 ## 1.17.0 - 2026-11-05
 * `registerConfirmHandler()` sets an app-wide confirmation handler for row and bulk actions, so every table asks
