@@ -144,9 +144,13 @@ Add custom CSS classes to columns:
 
 ```php
 $table
-    ->column('id', 'ID', class: 'w-20')
-    ->column('name', 'Name', headerClass: 'bg-blue-100');
+    ->column('id', 'ID', classes: 'w-20')
+    ->column('name', 'Name', headerClasses: 'bg-blue-100')
+    ->column('email', 'Email', hideBelow: 'md');
 ```
+
+`classes` reach the body cells, `headerClasses` the header cell, and `hideBelow` hides the header and the cells below
+a breakpoint. See [docs/columns.md](docs/columns.md).
 
 ### Row Actions
 
@@ -177,7 +181,8 @@ See [docs/row-actions.md](docs/row-actions.md).
 $table->grid()->layoutToggle();
 ```
 
-Renders the rows as tiles, with a list/grid switch kept in the url. See [docs/grid-layout.md](docs/grid-layout.md).
+Renders the rows as tiles, with a list/grid switch kept in the url. `$table->gridBelow('md')` renders tiles on small
+screens and the table from `md`, without a switch. See [docs/grid-layout.md](docs/grid-layout.md).
 
 ### Empty State
 

@@ -26,6 +26,8 @@ column(
     bool $boolean = false,
     ?callable $exportAs = null,
     bool $export = true,
+    array|string|null $headerClasses = null,
+    ?string $hideBelow = null,
 ): self
 ```
 
@@ -47,6 +49,8 @@ column(
 | `boolean`     | `bool`                  | `false`                          | Render a check or cross icon instead of the raw value              |
 | `exportAs`    | `callable\|null`        | `null`                           | The value written to a CSV [export](export.md) instead of `as`     |
 | `export`      | `bool`                  | `true`                           | Include the column in a CSV export                                 |
+| `headerClasses` | `array\|string\|null` | `null`                           | CSS classes for the header cell only, see [CSS Classes](#css-classes) |
+| `hideBelow`   | `string\|null`          | `null`                           | Hide the column below `'sm'`, `'md'`, `'lg'` or `'xl'`, see [Hiding a Column on Small Screens](#hiding-a-column-on-small-screens) |
 
 Only `key` and `label` are safe to pass positionally; use named arguments for the rest.
 
@@ -183,13 +187,45 @@ Per-column classes accept a string, a (nested) array of strings, or a conditiona
 ->column('id', 'ID', classes: ['w-16' => true, 'hidden' => $compact])
 ```
 
-The classes end up in the `class` key of the column payload.
+The classes end up in the `class` key of the column payload and reach the body cells and the totals cell, not the
+header cell. Give the header its own classes with `headerClasses`, which takes the same forms and arrives as
+`head_class`:
+
+```php
+->column('amount', 'Amount', classes: 'text-right tabular-nums', headerClasses: 'w-32 text-right')
+```
+
+To hide a column on small screens, use `hideBelow` rather than responsive classes: it hides the header too.
 
 For global cell/header classes across all columns, use [`class()`](global-defaults.md):
 
 ```php
 $table->class(cell: 'py-2', head: 'bg-muted');
 ```
+
+## Hiding a Column on Small Screens
+
+`hideBelow` hides a less important column below a breakpoint: its header, its cells and its total, so the header stays
+aligned with the cells. The breakpoints are Tailwind's: `sm`, `md`, `lg` and `xl`.
+
+```php
+->column('name', 'Name')
+->column('email', 'Email', hideBelow: 'md')      // hidden on phones
+->column('created_at', 'Created', hideBelow: 'lg') // hidden on phones and tablets
+```
+
+An unknown breakpoint throws an `InvalidArgumentException`. The payload carries it as `hide_below`, and the renderer
+turns it into fixed classes such as `hidden md:table-cell`. Those classes live in the component's `.vue` files, so the
+`@source` line from the [installation](installation.md#tailwind-css) covers them.
+
+- The first visible column always shows, also with `hideBelow`: it holds the keyboard row link in the table and is
+  the title of a tile.
+- In the [grid layout](grid-layout.md) the column's `Label: value` line hides below the same breakpoint. Combined
+  with `gridBelow('md')`, a column with `hideBelow: 'md'` or wider is left out of the phone tiles and shows in the
+  table from `md`.
+- The columns menu still lists the column. When the user turns it on there, it shows at every width until the page
+  reloads: an explicit choice wins over the breakpoint.
+- `hidden: true` still hides a column at every width until the user turns it on.
 
 ## Alignment
 

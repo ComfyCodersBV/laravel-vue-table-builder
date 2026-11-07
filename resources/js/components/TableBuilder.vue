@@ -15,8 +15,8 @@ import {Input} from './ui/input';
 import {Checkbox} from './ui/checkbox';
 import {Button} from './ui/button';
 import {ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Download, Funnel, GripVertical, LayoutGrid, List, Search, X} from '@lucide/vue'
-import type {BulkAction, ConfirmDetails, EmptyState, Filter, RowAction, TableData, TableLayout} from '../types/table-builder'
-import {useDebounceFn} from '@vueuse/core'
+import type {Breakpoint, BulkAction, Column, ConfirmDetails, EmptyState, Filter, RowAction, TableData, TableLayout} from '../types/table-builder'
+import {useDebounceFn, useMediaQuery} from '@vueuse/core'
 import {useTranslations} from '../composables/useTranslations'
 import {useTablePolling} from '../composables/useTablePolling'
 import {cn} from '../lib/utils'
@@ -190,13 +190,58 @@ const visibleColumns = computed(() =>
     table.value.columns.filter(column => !hiddenColumns.value.has(column.key))
 )
 
+const shownAtEveryWidth = ref<Set<string>>(new Set())
+
 function toggleColumn(columnKey: string, visible: boolean) {
     if (visible) {
         hiddenColumns.value.delete(columnKey)
+        shownAtEveryWidth.value.add(columnKey)
     } else {
         hiddenColumns.value.add(columnKey)
+        shownAtEveryWidth.value.delete(columnKey)
     }
     hiddenColumns.value = new Set(hiddenColumns.value)
+    shownAtEveryWidth.value = new Set(shownAtEveryWidth.value)
+}
+
+const HIDE_BELOW_CELL: Record<Breakpoint, string> = {
+    sm: 'hidden sm:table-cell',
+    md: 'hidden md:table-cell',
+    lg: 'hidden lg:table-cell',
+    xl: 'hidden xl:table-cell',
+}
+
+const HIDE_BELOW_TILE_LINE: Record<Breakpoint, string> = {
+    sm: 'hidden sm:flex',
+    md: 'hidden md:flex',
+    lg: 'hidden lg:flex',
+    xl: 'hidden xl:flex',
+}
+
+function hidesBelow(column: Column): Breakpoint | null {
+    const breakpoint = column.hide_below
+
+    if (!breakpoint || !(breakpoint in HIDE_BELOW_CELL) || shownAtEveryWidth.value.has(column.key)) {
+        return null
+    }
+
+    return breakpoint
+}
+
+function cellVisibilityClass(column: Column): string {
+    if (column.key === visibleColumns.value[0]?.key) {
+        return ''
+    }
+
+    const breakpoint = hidesBelow(column)
+
+    return breakpoint ? HIDE_BELOW_CELL[breakpoint] : ''
+}
+
+function tileLineClass(column: Column): string {
+    const breakpoint = hidesBelow(column)
+
+    return breakpoint ? HIDE_BELOW_TILE_LINE[breakpoint] : 'flex'
 }
 
 const slots = useSlots()
@@ -780,6 +825,8 @@ function followRowLink(index: number, event: MouseEvent): void {
     handleRowClick(index)
 }
 
+const CHECKBOX_CLASS = 'relative h-4 w-4 pointer-coarse:after:absolute pointer-coarse:after:-inset-3'
+
 const ROW_LINK_FOCUS = 'has-[[data-row-link]:focus-visible]:bg-muted has-[[data-row-link]:focus-visible]:outline-2 has-[[data-row-link]:focus-visible]:-outline-offset-2 has-[[data-row-link]:focus-visible]:outline-ring'
 
 function handleRowClick(index: number) {
@@ -951,19 +998,57 @@ const layoutQueryKey = computed(() =>
     props.table.queryKeys?.layout ?? (tableName.value !== 'default' ? `${tableName.value}_layout` : 'layout')
 )
 
-function initialLayout(): TableLayout {
-    const fallback: TableLayout = props.table.layout === 'grid' ? 'grid' : 'table'
-
-    if (!props.table.layoutToggle || props.transport === 'http' || typeof window === 'undefined') {
-        return fallback
+function initialChoice(): TableLayout | null {
+    if (!props.table.layoutToggle) {
+        return null
     }
 
-    const requested = new URLSearchParams(window.location.search).get(layoutQueryKey.value)
+    if (props.transport !== 'http' && typeof window !== 'undefined') {
+        const requested = new URLSearchParams(window.location.search).get(layoutQueryKey.value)
 
-    return LAYOUTS.includes(requested as TableLayout) ? requested as TableLayout : fallback
+        if (LAYOUTS.includes(requested as TableLayout)) {
+            return requested as TableLayout
+        }
+    }
+
+    const served: TableLayout = props.table.layout === 'grid' ? 'grid' : 'table'
+
+    return served !== defaultLayout.value ? served : null
 }
 
-const layout = ref<TableLayout>(initialLayout())
+const BREAKPOINT_WIDTHS: Record<Breakpoint, string> = {
+    sm: '40rem',
+    md: '48rem',
+    lg: '64rem',
+    xl: '80rem',
+}
+
+function breakpointWidth(breakpoint: Breakpoint): string {
+    if (typeof document === 'undefined') {
+        return BREAKPOINT_WIDTHS[breakpoint]
+    }
+
+    const themed = getComputedStyle(document.documentElement).getPropertyValue(`--breakpoint-${breakpoint}`).trim()
+
+    return themed || BREAKPOINT_WIDTHS[breakpoint]
+}
+
+const gridBelowQuery = computed(() => {
+    const breakpoint = table.value.gridBelow
+
+    if (!breakpoint || !(breakpoint in BREAKPOINT_WIDTHS)) {
+        return 'not all'
+    }
+
+    return `not all and (min-width: ${breakpointWidth(breakpoint)})`
+})
+
+const belowGridBreakpoint = useMediaQuery(gridBelowQuery)
+
+const automaticLayout = computed<TableLayout>(() => belowGridBreakpoint.value ? 'grid' : defaultLayout.value)
+
+const chosenLayout = ref<TableLayout | null>(initialChoice())
+const layout = computed<TableLayout>(() => chosenLayout.value ?? automaticLayout.value)
 const isGrid = computed(() => layout.value === 'grid')
 
 function setLayout(next: TableLayout): void {
@@ -971,7 +1056,7 @@ function setLayout(next: TableLayout): void {
         return
     }
 
-    layout.value = next
+    chosenLayout.value = next === automaticLayout.value ? null : next
 
     if (props.transport === 'http' || typeof window === 'undefined') {
         return
@@ -979,7 +1064,7 @@ function setLayout(next: TableLayout): void {
 
     const params = new URLSearchParams(window.location.search)
 
-    if (next === defaultLayout.value) {
+    if (chosenLayout.value === null) {
         params.delete(layoutQueryKey.value)
     } else {
         params.set(layoutQueryKey.value, next)
@@ -1033,7 +1118,7 @@ useTablePolling({
                 <DropdownMenu v-if="table.filters && Object.keys(table.filters).length > 0"
                               v-model:open="filterDropdownOpen">
                     <DropdownMenuTrigger as-child>
-                        <Button variant="outline" :aria-label="t('vue-table-builder::table.filters.toggle')" data-filter-toggle data-testid="table-filter">
+                        <Button variant="outline" class="pointer-coarse:h-10" :aria-label="t('vue-table-builder::table.filters.toggle')" data-filter-toggle data-testid="table-filter">
                             <Funnel class="h-4 w-4" aria-hidden="true"/>
                         </Button>
                     </DropdownMenuTrigger>
@@ -1043,7 +1128,7 @@ useTablePolling({
 
                             <Input
                                 v-if="filter.type === 'text'"
-                                class="w-full"
+                                class="w-full pointer-coarse:h-10"
                                 :model-value="textFilterValues[filter.key] ?? ''"
                                 :placeholder="filter.label"
                                 :data-testid="`table-filter-${filter.key}`"
@@ -1053,7 +1138,7 @@ useTablePolling({
                             <Input
                                 v-else-if="filter.type === 'date'"
                                 type="date"
-                                class="w-full"
+                                class="w-full pointer-coarse:h-10"
                                 :model-value="filter.value ?? ''"
                                 :data-filter-key="filter.key"
                                 @change="(e: Event) => handleFilterChange(filter.key, (e.target as HTMLInputElement).value)"
@@ -1062,7 +1147,7 @@ useTablePolling({
                             <div v-else-if="filter.type === 'date_range'" class="flex flex-col gap-2">
                                 <select
                                     v-if="filter.presets?.length"
-                                    class="w-full rounded-md border bg-white px-3 py-2 dark:bg-gray-800"
+                                    class="w-full rounded-md border bg-white px-3 py-2 pointer-coarse:h-10 dark:bg-gray-800"
                                     :value="presetSelection(filter)"
                                     :data-filter-preset="filter.key"
                                     @change="(e) => handlePresetChange(filter, (e.target as HTMLSelectElement).value)">
@@ -1075,7 +1160,7 @@ useTablePolling({
                                 <template v-if="showsDateRangeInputs(filter)">
                                     <Input
                                         type="date"
-                                        class="w-full"
+                                        class="w-full pointer-coarse:h-10"
                                         :aria-label="`${filter.label} ${t('vue-table-builder::table.filters.from')}`"
                                         :model-value="dateRangeValues[filter.key]?.from ?? ''"
                                         :data-filter-key="`${filter.key}.from`"
@@ -1083,7 +1168,7 @@ useTablePolling({
                                     />
                                     <Input
                                         type="date"
-                                        class="w-full"
+                                        class="w-full pointer-coarse:h-10"
                                         :aria-label="`${filter.label} ${t('vue-table-builder::table.filters.to')}`"
                                         :model-value="dateRangeValues[filter.key]?.to ?? ''"
                                         :data-filter-key="`${filter.key}.to`"
@@ -1094,7 +1179,7 @@ useTablePolling({
 
                             <select
                                 v-else
-                                class="w-full rounded-md border bg-white px-3 py-2 dark:bg-gray-800"
+                                class="w-full rounded-md border bg-white px-3 py-2 pointer-coarse:h-10 dark:bg-gray-800"
                                 :value="filter.value || ''"
                                 :data-testid="`table-filter-${filter.key}`"
                                 @change="(e) => handleFilterChange(filter.key, (e.target as HTMLSelectElement).value)">
@@ -1110,7 +1195,7 @@ useTablePolling({
                 <div v-if="table.searchInputs?.global" class="relative flex-1">
                     <Search class="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-muted-foreground"/>
                     <Input ref="searchInput" v-model="searchValue" data-testid="table-search" :placeholder="table.searchInputs?.global?.label"
-                           class="pl-8"/>
+                           class="pl-8 pointer-coarse:h-10"/>
                 </div>
             </div>
             <div class="flex flex-wrap items-center justify-end gap-2">
@@ -1125,7 +1210,7 @@ useTablePolling({
 
                 <slot name="toolbar" />
 
-                <Button v-if="table.export?.url" variant="outline" as-child>
+                <Button v-if="table.export?.url" variant="outline" class="pointer-coarse:h-10" as-child>
                     <a :href="table.export.url" download data-table-export @click="prepareExport">
                         <Download class="h-4 w-4"/>
                         {{ table.export.label }}
@@ -1134,7 +1219,7 @@ useTablePolling({
 
                 <select
                     v-if="showsSortSelect"
-                    class="h-9 rounded-md border bg-white px-3 text-sm dark:bg-gray-800"
+                    class="h-9 rounded-md border bg-white px-3 text-sm pointer-coarse:h-10 dark:bg-gray-800"
                     :aria-label="t('vue-table-builder::table.sort.label')"
                     :value="currentSortValue() ?? ''"
                     data-table-sort
@@ -1153,7 +1238,7 @@ useTablePolling({
                         type="button"
                         size="icon"
                         variant="ghost"
-                        class="rounded-none first:rounded-l-md last:rounded-r-md"
+                        class="rounded-none first:rounded-l-md last:rounded-r-md pointer-coarse:size-10"
                         :class="layout === option ? 'bg-muted text-foreground' : 'text-muted-foreground'"
                         :aria-pressed="layout === option ? 'true' : 'false'"
                         :aria-label="t(`vue-table-builder::table.layout.${option}`)"
@@ -1168,7 +1253,7 @@ useTablePolling({
 
                 <DropdownMenu v-if="columnSelector">
                     <DropdownMenuTrigger as-child>
-                        <Button variant="outline" class="ml-auto" data-testid="table-columns">
+                        <Button variant="outline" class="ml-auto pointer-coarse:h-10" data-testid="table-columns">
                             {{ t('vue-table-builder::table.columns') }}
                             <ChevronDown class="ml-2 h-4 w-4"/>
                         </Button>
@@ -1211,7 +1296,7 @@ useTablePolling({
             <div class="flex items-center space-x-2">
                 <DropdownMenu>
                     <DropdownMenuTrigger as-child>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" class="pointer-coarse:h-10">
                             {{ t('vue-table-builder::table.bulk_actions.title') }}
                             <ChevronDown class="ml-2 h-4 w-4"/>
                         </Button>
@@ -1298,7 +1383,7 @@ useTablePolling({
                                   :aria-label="rowSelectionLabel(row, index)"
                                   data-tile-checkbox
                                   @mousedown="preventShiftTextSelection"
-                                  @click="clickRowSelection(row, $event)" class="h-4 w-4"/>
+                                  @click="clickRowSelection(row, $event)" :class="CHECKBOX_CLASS"/>
                     </div>
 
                     <slot
@@ -1342,7 +1427,7 @@ useTablePolling({
                         </div>
 
                         <dl v-if="tileMetaColumns.length > 0" class="mt-2 space-y-1 text-xs text-muted-foreground">
-                            <div v-for="column in tileMetaColumns" :key="column.key" class="flex min-w-0 items-center gap-1" :data-column-key="column.key" data-tile-meta>
+                            <div v-for="column in tileMetaColumns" :key="column.key" :class="['min-w-0 items-center gap-1', tileLineClass(column)]" :data-column-key="column.key" data-tile-meta>
                                 <dt class="shrink-0">{{ column.label }}:</dt>
                                 <dd class="min-w-0 truncate text-foreground">
                                     <slot
@@ -1404,9 +1489,9 @@ useTablePolling({
                                 @select-all="selectAllResults"
                             />
                         </TableHead>
-                        <TableHead v-for="column in visibleColumns" :key="column.key" :class="table.headClass">
+                        <TableHead v-for="column in visibleColumns" :key="column.key" :class="[table.headClass, column.head_class, cellVisibilityClass(column)]" :data-column-key="column.key">
                             <button v-if="column.sortable" @click="applySort(column)"
-                                    class="flex cursor-pointer items-center gap-1.5 hover:text-foreground"
+                                    class="flex cursor-pointer items-center gap-1.5 hover:text-foreground pointer-coarse:min-h-10"
                                     :class="{ 'font-semibold text-foreground': sortFor(column) }"
                                     type="button">
                                 {{ column.label }}
@@ -1471,10 +1556,10 @@ useTablePolling({
                                 <Checkbox :model-value="isRowSelected(row)"
                                           :disabled="rowKeyOf(row) === null"
                                           @mousedown="preventShiftTextSelection"
-                                          @click="clickRowSelection(row, $event)" class="h-4 w-4"/>
+                                          @click="clickRowSelection(row, $event)" :class="CHECKBOX_CLASS"/>
                             </TableCell>
                             <TableCell v-for="(column, columnIndex) in visibleColumns" :key="column.key" :data-column-key="column.key"
-                                       :class="[table.cellClass, column.class, columnIndex === 0 && showsRowLink(row, index) ? 'relative' : '']">
+                                       :class="[table.cellClass, column.class, cellVisibilityClass(column), columnIndex === 0 && showsRowLink(row, index) ? 'relative' : '']">
                                 <button
                                     v-if="columnIndex === 0 && showsRowLink(row, index) && table.rowLinkType === 'modal'"
                                     type="button"
@@ -1535,7 +1620,7 @@ useTablePolling({
                         <TableCell v-if="showsReorderHandles" :class="[table.cellClass, 'w-px']" />
                         <TableCell v-if="bulkActions.length > 0" :class="table.cellClass" />
                         <TableCell v-for="(column, columnIndex) in visibleColumns" :key="column.key"
-                                   :data-total-key="column.key" :class="[table.cellClass, column.class]">
+                                   :data-total-key="column.key" :class="[table.cellClass, column.class, cellVisibilityClass(column)]">
                             <slot
                                 :name="`total-${column.key}`"
                                 :value="totalFor(column.key)"
@@ -1582,7 +1667,7 @@ useTablePolling({
                                 v-model="chosenValue"
                                 name="choice"
                                 required
-                                class="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+                                class="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm pointer-coarse:h-10 shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
                             >
                                 <option value="" disabled>{{ t('vue-table-builder::table.bulk_actions.choose') }}</option>
                                 <option v-for="choice in choiceAction.choices" :key="choice.value" :value="choice.value">
@@ -1591,10 +1676,10 @@ useTablePolling({
                             </select>
                         </label>
                         <div class="flex justify-end gap-2">
-                            <Button type="button" variant="outline" @click="choiceDialogOpen = false">
+                            <Button type="button" variant="outline" class="pointer-coarse:h-10" @click="choiceDialogOpen = false">
                                 {{ choiceAction.cancelButton || t('vue-table-builder::table.bulk_actions.cancel') }}
                             </Button>
-                            <Button type="submit" :disabled="!chosenValue">
+                            <Button type="submit" class="pointer-coarse:h-10" :disabled="!chosenValue">
                                 {{ choiceAction.confirmButton || t('vue-table-builder::table.bulk_actions.apply') }}
                             </Button>
                         </div>

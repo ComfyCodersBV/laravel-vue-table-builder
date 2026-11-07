@@ -32,6 +32,10 @@ function sizeOf(action: RowAction): 'sm' | 'icon-sm' {
     return showsIconOnly(action) ? 'icon-sm' : 'sm'
 }
 
+function touchClassOf(action: RowAction): string {
+    return showsIconOnly(action) ? 'pointer-coarse:size-10' : 'pointer-coarse:h-10'
+}
+
 function labelOf(action: RowAction): string | undefined {
     return showsIconOnly(action) ? action.label : undefined
 }
@@ -60,12 +64,12 @@ function run(action: RowAction, event: MouseEvent): void {
 <template>
     <template v-for="action in actions" :key="action.key">
         <span v-if="action.disabled" :title="disabledTitle(action)" class="inline-flex">
-            <Button :size="sizeOf(action)" :variant="action.variant" disabled :aria-label="showsIconOnly(action) ? disabledTitle(action) : undefined" :data-row-action="action.key" :data-icon-only="showsIconOnly(action) ? '' : undefined">
+            <Button :size="sizeOf(action)" :variant="action.variant" :class="touchClassOf(action)" disabled :aria-label="showsIconOnly(action) ? disabledTitle(action) : undefined" :data-row-action="action.key" :data-icon-only="showsIconOnly(action) ? '' : undefined">
                 <component :is="iconOf(action)" v-if="iconOf(action)" aria-hidden="true"/>
                 <template v-if="!showsIconOnly(action)">{{ action.label }}</template>
             </Button>
         </span>
-        <Button v-else-if="action.download || action.method === 'get'" :size="sizeOf(action)" :variant="action.variant" as-child>
+        <Button v-else-if="action.download || action.method === 'get'" :size="sizeOf(action)" :variant="action.variant" :class="touchClassOf(action)" as-child>
             <a
                 :href="action.url"
                 :download="action.download ? downloadName(action) : undefined"
@@ -86,6 +90,7 @@ function run(action: RowAction, event: MouseEvent): void {
             v-else
             :size="sizeOf(action)"
             :variant="action.variant"
+            :class="touchClassOf(action)"
             :disabled="running"
             :aria-busy="isBusy(action) ? 'true' : undefined"
             :aria-label="labelOf(action)"

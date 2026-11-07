@@ -20,6 +20,33 @@ public function configure(TableBuilder $table): void
 
 `->grid()` is short for `->layout('grid')`. `->layout('table')` is the default.
 
+## Tiles on Small Screens
+
+`->gridBelow('md')` renders tiles below a breakpoint and the table from it, without a toggle. Use it for a table that
+reads better as a list of cards on a phone. The breakpoints are `sm`, `md`, `lg` and `xl`; an unknown one throws an
+`InvalidArgumentException`, and `gridBelow(null)` turns it off again.
+
+```php
+$table
+    ->gridBelow('md')
+    ->column('reference', 'Reference')
+    ->column('customer.name', 'Customer')
+    ->column('total', 'Total');
+```
+
+The tiles below the breakpoint are the same tiles as the grid layout: the default tile, `cell-{key}` slots and your
+own `#tile` slot all apply. The switch follows the screen while the page is open, so rotating a tablet or resizing the
+window switches between tiles and rows. A column with [`hideBelow`](columns.md#hiding-a-column-on-small-screens) at
+the same breakpoint or wider is left out of those tiles, which keeps the phone tiles short.
+
+The component checks the width with `matchMedia`, using Tailwind's default widths (`sm` 40rem, `md` 48rem, `lg` 64rem,
+`xl` 80rem) unless your theme exposes `--breakpoint-*` variables on the root element. Without `matchMedia`, such as
+during server-side rendering, the table renders; with SSR a phone therefore shows the table until the page hydrates.
+
+With `->layoutToggle()` as well, the switch shows the layout on screen. A choice that differs from what the screen
+width would show is kept in the url, so a user who picks the list on a phone keeps it; picking the automatic layout
+again removes the key.
+
 ## Letting the User Switch
 
 `->layoutToggle()` adds a list/grid switch to the toolbar. The configured layout is the default; the user's choice
@@ -98,4 +125,4 @@ button, link or input inside the tile does not follow the row link, only the con
 Drag-to-reorder, the totals footer and the `row-after` slot render in the table layout only. Switch a table with
 those features to the grid and they are left out.
 
-Requires `tranquil-tools/laravel-table-builder` 1.3.
+Requires `tranquil-tools/laravel-table-builder` 1.3, and 1.5 for `gridBelow()`.

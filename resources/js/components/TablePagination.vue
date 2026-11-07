@@ -38,7 +38,7 @@ const emit = defineEmits<{
                 </span>
                 <DropdownMenu>
                     <DropdownMenuTrigger as-child>
-                        <Button variant="outline" size="sm" class="cursor-pointer" :data-testid="`${testIdPrefix}per-page`">
+                        <Button variant="outline" size="sm" class="cursor-pointer pointer-coarse:h-10" :data-testid="`${testIdPrefix}per-page`">
                             {{ pagination.per_page }}
                             <ChevronDown class="ml-1 h-3.5 w-3.5"/>
                         </Button>
@@ -70,7 +70,7 @@ const emit = defineEmits<{
         <div class="flex items-center gap-2">
             <button
                 type="button"
-                class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-background enabled:cursor-pointer"
+                class="inline-flex h-9 pointer-coarse:h-10 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-background enabled:cursor-pointer"
                 :data-testid="`${testIdPrefix}previous`"
                 :disabled="pagination.current_page <= 1"
                 @click="emit('navigate', -1)"
@@ -90,7 +90,7 @@ const emit = defineEmits<{
 
             <button
                 type="button"
-                class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-background enabled:cursor-pointer"
+                class="inline-flex h-9 pointer-coarse:h-10 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-background enabled:cursor-pointer"
                 :data-testid="`${testIdPrefix}next`"
                 :disabled="pagination.current_page >= pagination.last_page"
                 @click="emit('navigate', 1)"

@@ -23,7 +23,7 @@ const {t} = useTranslations('vue_table_builder_table_translations')
     <DropdownMenu>
         <DropdownMenuTrigger as-child>
             <div
-                class="flex cursor-pointer items-center gap-2"
+                class="relative flex cursor-pointer items-center gap-2 pointer-coarse:after:absolute pointer-coarse:after:-inset-3"
                 role="button"
                 tabindex="0"
                 :aria-label="t('vue-table-builder::table.bulk_actions.title')"

@@ -1,3 +1,5 @@
+export type Breakpoint = 'sm' | 'md' | 'lg' | 'xl'
+
 export interface Column {
     key: string
     label: string
@@ -7,6 +9,8 @@ export interface Column {
     sorted: 'asc' | 'desc' | false
     highlight: boolean
     class: string
+    head_class?: string
+    hide_below?: Breakpoint | null
     alignment: string
     clickable: boolean
     boolean: boolean
@@ -156,5 +160,6 @@ export interface TableData {
     layout?: TableLayout
     defaultLayout?: TableLayout
     layoutToggle?: boolean
+    gridBelow?: Breakpoint | null
     poll?: number
 }

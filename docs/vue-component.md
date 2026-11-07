@@ -58,6 +58,8 @@ The component renders all of the following automatically based on what the PHP b
 | Export button                       | `export.url` is set                       |
 | Reset button                        | any filter/search/sort is active          |
 | Tiles instead of rows               | `layout` is `grid`, see [Grid Layout](grid-layout.md) |
+| Tiles on small screens              | the screen is narrower than `gridBelow`, see [Tiles on Small Screens](grid-layout.md#tiles-on-small-screens) |
+| Column hidden on small screens      | the screen is narrower than its `hide_below`, see [Columns](columns.md#hiding-a-column-on-small-screens) |
 | List/grid switch                    | `layoutToggle` is `true`                  |
 | Sort select                         | the grid layout shows and a column is sortable |
 
@@ -107,7 +109,14 @@ $table->class(cell: 'py-3 text-sm', head: 'bg-muted font-semibold');
 ->column('id', 'ID', classes: ['w-16' => true, 'hidden' => $compact])
 ```
 
-The resolved classes arrive in the `class` key of the column payload.
+The resolved classes arrive in the `class` key of the column payload and apply to the body and totals cells.
+`headerClasses` gives the header cell its own classes (`head_class`), and `hideBelow: 'md'` hides the whole column
+below a breakpoint, see [Columns](columns.md#hiding-a-column-on-small-screens).
+
+### Touch screens
+
+On a coarse pointer the buttons, inputs, menu items and checkbox hit areas of the table grow to at least 40px. See
+[Installation](installation.md#touch-screens).
 
 ### CSS Variables
 

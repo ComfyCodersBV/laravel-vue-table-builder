@@ -51,6 +51,7 @@ interface TableData {
     layout?: TableLayout                // the layout to render now
     defaultLayout?: TableLayout         // the layout of the table class
     layoutToggle?: boolean              // true shows the list/grid switch
+    gridBelow?: Breakpoint | null       // tiles below this breakpoint, the table from it
     poll?: number                       // seconds between reloads, only with ->poll()
 }
 
@@ -120,11 +121,15 @@ interface Column {
     sortable: boolean
     sorted: 'asc' | 'desc' | false
     highlight: boolean
-    class: string
+    class: string                       // body and totals cells
+    head_class?: string                 // header cell
+    hide_below?: Breakpoint | null      // hidden below this breakpoint
     alignment: string
     clickable: boolean
     boolean: boolean
 }
+
+type Breakpoint = 'sm' | 'md' | 'lg' | 'xl'
 ```
 
 ## `PaginationData`

@@ -2,6 +2,24 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.19.0 - 2026-11-07
+* Column header classes. `headerClasses` on a column (sent as `head_class` by `tranquil-tools/laravel-table-builder`
+  1.5) lands on its header cell. The `classes` of a column keep reaching the body and totals cells only, so existing
+  tables render as before.
+* `hideBelow: 'sm'|'md'|'lg'|'xl'` on a column hides its header, cells and total below that breakpoint with fixed
+  classes such as `hidden md:table-cell`, and its `Label: value` line in a tile with `hidden md:flex`. The first
+  visible column always shows, so the keyboard row link and the tile title stay. A column the user turns on in the
+  columns menu shows at every width until the page reloads.
+* `->gridBelow('md')` renders tiles below the breakpoint and the table from it, without a toggle, with the default
+  tile, `cell-{key}` slots and the `#tile` slot. The component follows the screen width through `matchMedia`; without
+  it the table renders. With `->layoutToggle()` the switch shows the layout on screen, and a choice against the
+  automatic layout is kept in the `{name}_layout` query key.
+* Touch sizes. On a coarse pointer (`pointer-coarse:`) the toolbar buttons, search input, filter inputs and selects,
+  sort select, sortable headers, layout switch, pagination, per-page menu, bulk action menu and choice dialog, row
+  action buttons and menu items grow to at least 40px, and the selection checkboxes get a 40px hit area. With a mouse nothing changes. Requires Tailwind CSS 4.1.
+* The installation page documents the `@source` line that lets Tailwind scan the component's `.vue` files.
+* Supports schema version `1.4` and requires `tranquil-tools/laravel-table-builder` 1.5.
+
 ## 1.18.0 - 2026-11-07
 * The `RowAction` type has `rowKey`: the row key of its row, the same value as the row's `__key`, sent by
   `tranquil-tools/laravel-table-builder` 1.4. A dialog opened from an action finds its row by that key instead of by

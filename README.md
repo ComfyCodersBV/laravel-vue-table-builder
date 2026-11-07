@@ -143,7 +143,9 @@ Import the TableBuilder component:
 - 🔗 Row links that work with the mouse anywhere on the row and with Tab and Enter through a hidden link in the first cell
 - ↕️ Drag-reorderable rows, per-row classes, a `row-click` event and a `row-after` slot for nested rows
 - 🔘 Row actions defined in the Table class, hidden or disabled per row, with a confirm question (through your own dialog with `registerConfirmHandler()`) and an icon per row or as icon-only buttons; double clicks are guarded with a busy state
-- 🧱 A grid layout that renders the rows as responsive tiles, with a list/grid switch kept in the url
+- 🧱 A grid layout that renders the rows as responsive tiles, with a list/grid switch kept in the url, or tiles on phones and rows from a breakpoint with `gridBelow()`
+- 📐 `hideBelow` hides a less important column, header included, below a breakpoint
+- 👆 Touch-sized buttons, menu items and checkbox hit areas on coarse pointers, compact with a mouse
 - ☑️ Bulk selection with Shift-click to select a range of rows
 - 💾 Server-side reorder persistence on an order column
 - 📅 Date and date range filters, configurable query keys and empty states
