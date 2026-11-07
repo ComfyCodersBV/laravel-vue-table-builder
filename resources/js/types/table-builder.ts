@@ -92,6 +92,7 @@ export interface RowAction {
     download?: boolean | string
     icon?: string
     iconOnly?: boolean
+    rowKey?: string | number
 }
 
 export interface EmptyState {

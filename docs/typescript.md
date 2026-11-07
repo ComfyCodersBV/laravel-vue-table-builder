@@ -66,6 +66,7 @@ interface RowAction {
     download?: boolean | string         // only on download actions
     icon?: string                       // only on actions with an icon
     iconOnly?: boolean                  // only when the action renders as an icon-only button
+    rowKey?: string | number            // the row key of its row, the same value as row.__key
 }
 
 type TableLayout = 'table' | 'grid'

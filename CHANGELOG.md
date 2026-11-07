@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.18.0 - 2026-11-07
+* The `RowAction` type has `rowKey`: the row key of its row, the same value as the row's `__key`, sent by
+  `tranquil-tools/laravel-table-builder` 1.4. A dialog opened from an action finds its row by that key instead of by
+  its url. The row actions page shows how.
+* Supports schema version `1.3` and requires `tranquil-tools/laravel-table-builder` 1.4.
+
 ## 1.17.0 - 2026-11-05
 * `registerConfirmHandler()` sets an app-wide confirmation handler for row and bulk actions, so every table asks
   through the app's own dialog without a `confirm` prop on each component. The prop still wins, and `window.confirm()`

@@ -246,3 +246,19 @@ row and a `run` function, so you can restyle them and keep the behaviour:
 the table runs. The slot gets no busy state, so a custom rendering shows none.
 
 The resolved actions are also in `table.rowActions`, an array with one list of actions per row.
+
+## Matching an Action to Its Row
+
+Every resolved action carries `rowKey`: the row key of its row, the same value as the row's `__key` (the model key,
+or the column set with `rowKey()`). A dialog that opens from an action finds its row by that key, without parsing the
+url:
+
+```ts
+const editing = ref<RowAction | null>(null)
+
+const editedRow = computed(() =>
+    table.data.find((row) => row.__key === editing.value?.rowKey) ?? null,
+)
+```
+
+A row without a key sends its actions without `rowKey`.
