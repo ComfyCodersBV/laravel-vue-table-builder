@@ -2,6 +2,9 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.20.0 - 2026-11-23
+* The renderer supports schema version `1.5` and requires `tranquil-tools/laravel-table-builder` `^1.6`.
+
 ## 1.19.1 - 2026-11-07
 * Tiles shown by `gridBelow()` sit one per row on phones and two from `sm`, instead of the two to six of the grid
   layout. The `grid-class` prop still wins.
