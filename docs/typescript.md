@@ -36,6 +36,7 @@ interface TableData {
     perPageOptions: number[]
     defaultSort: string
     bulkActions: BulkAction[]
+    bulkActionsAlwaysVisible?: boolean  // true shows the bulk actions bar without a selection
     rowLinks: (string | null)[]
     rowLinkType: 'modal' | 'link' | 'href' | ''
     cellClass?: string

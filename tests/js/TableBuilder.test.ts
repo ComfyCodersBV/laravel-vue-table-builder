@@ -1692,3 +1692,54 @@ describe('TableBuilder row links', () => {
         expect(onRowClick).not.toHaveBeenCalled()
     })
 })
+
+describe('TableBuilder bulk actions always visible', () => {
+    beforeEach(() => {
+        page.props = {vue_table_builder_table_translations: {bulk_actions: {selected_simple: ':count :type selected'}, rows: 'rows'}}
+    })
+
+    afterEach(() => {
+        page.props = {}
+    })
+
+    function bulkTable(overrides: Record<string, unknown> = {}): TableData {
+        return {
+            ...tableData(),
+            bulkActions: [{key: '0', label: 'Resolve', url: '/bulk', confirm: false, confirmText: '', confirmButton: '', cancelButton: '', requirePassword: false}],
+            ...overrides,
+        } as unknown as TableData
+    }
+
+    function bulkButton(wrapper: ReturnType<typeof mount>) {
+        return wrapper.find('[data-bulk-actions-bar]').findAll('button').find((button) => button.text() === 'title')!
+    }
+
+    it.each(['table', 'grid'])('shows the bar with a disabled button before a row is selected in the %s layout', (layout) => {
+        const wrapper = mount(TableBuilder, {props: {table: bulkTable({bulkActionsAlwaysVisible: true, layout})}})
+
+        expect(wrapper.find('[data-bulk-actions-bar]').exists()).toBe(true)
+        expect(wrapper.find('[data-bulk-actions-bar]').text()).toContain('0 rows selected')
+        expect(bulkButton(wrapper).attributes('disabled')).toBeDefined()
+    })
+
+    it('enables the button once a row is selected', async () => {
+        const wrapper = mount(TableBuilder, {props: {table: bulkTable({bulkActionsAlwaysVisible: true})}})
+
+        await wrapper.find('tbody [role="checkbox"]').trigger('click')
+        await flush()
+
+        expect(bulkButton(wrapper).attributes('disabled')).toBeUndefined()
+    })
+
+    it('hides the bar before a row is selected without the flag', () => {
+        const wrapper = mount(TableBuilder, {props: {table: bulkTable()}})
+
+        expect(wrapper.find('[data-bulk-actions-bar]').exists()).toBe(false)
+    })
+
+    it('hides the bar of a table without bulk actions even with the flag', () => {
+        const wrapper = mount(TableBuilder, {props: {table: {...tableData(), bulkActionsAlwaysVisible: true}}})
+
+        expect(wrapper.find('[data-bulk-actions-bar]').exists()).toBe(false)
+    })
+})

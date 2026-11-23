@@ -3,6 +3,10 @@
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
 ## 1.20.0 - 2026-11-23
+* `->bulkActionsAlwaysVisible()` (sent as `bulkActionsAlwaysVisible` by `tranquil-tools/laravel-table-builder` 1.6)
+  keeps the bulk actions bar visible without a selection: it shows 0 selected rows and its menu button stays disabled
+  until a row is selected, in the table and the grid layout. A table without bulk actions shows no bar. Without the
+  option nothing changes.
 * The renderer supports schema version `1.5` and requires `tranquil-tools/laravel-table-builder` `^1.6`.
 
 ## 1.19.1 - 2026-11-07

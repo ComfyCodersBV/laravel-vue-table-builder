@@ -146,7 +146,7 @@ Import the TableBuilder component:
 - 🧱 A grid layout that renders the rows as responsive tiles, with a list/grid switch kept in the url, or tiles on phones and rows from a breakpoint with `gridBelow()`
 - 📐 `hideBelow` hides a less important column, header included, below a breakpoint
 - 👆 Touch-sized buttons, menu items and checkbox hit areas on coarse pointers, compact with a mouse
-- ☑️ Bulk selection with Shift-click to select a range of rows
+- ☑️ Bulk selection with Shift-click to select a range of rows, and a bulk actions bar that can stay visible without a selection
 - 💾 Server-side reorder persistence on an order column
 - 📅 Date and date range filters, configurable query keys and empty states
 - 📱 Fully responsive design

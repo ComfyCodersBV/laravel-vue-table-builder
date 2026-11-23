@@ -260,6 +260,24 @@ public function performBulkAction(int $key, array $ids): void
 
 `$key` is the zero-based index of the action in the order they were registered in `configure()`.
 
+## Keeping the Bar Visible
+
+The bulk actions bar appears once a row is selected. `->bulkActionsAlwaysVisible()` keeps it on screen without a
+selection, so users see that the table has bulk actions before they select anything:
+
+```php
+$table
+    ->bulkAction('Archive', each: fn ($message) => $message->archive())
+    ->bulkActionsAlwaysVisible();
+```
+
+Without a selection the bar shows 0 selected rows and its menu button is disabled; it enables as soon as a row is
+selected. It works the same in the table and the grid layout. A table without bulk actions shows no bar, also with
+the option on. `bulkActionsAlwaysVisible(false)` turns it off again. The payload carries `bulkActionsAlwaysVisible`
+(`false` by default).
+
+Requires `tranquil-tools/laravel-table-builder` 1.6.
+
 ## Multiple Bulk Actions
 
 ```php
