@@ -144,6 +144,7 @@ export interface TableData {
     perPageOptions: number[]
     defaultSort: string
     bulkActions: BulkAction[]
+    bulkActionsAlwaysVisible?: boolean
     rowLinks: (string | null)[]
     rowLinkType: 'modal' | 'link' | 'href' | ''
     rowLinkTarget: '_self' | '_blank'

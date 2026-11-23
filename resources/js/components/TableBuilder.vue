@@ -678,6 +678,9 @@ const selectedCount = computed(() =>
     allResultsSelected.value && table.value.pagination ? table.value.pagination.total : selectedKeys.value.size
 )
 const bulkActions = computed(() => table.value.bulkActions ?? [])
+const showsBulkActionsBar = computed(() =>
+    bulkActions.value.length > 0 && (selectedCount.value > 0 || table.value.bulkActionsAlwaysVisible === true)
+)
 
 const pageKeys = computed(() =>
     (table.value.data ?? []).map((row) => rowKeyOf(row)).filter((key): key is RowKey => key !== null)
@@ -1291,7 +1294,8 @@ useTablePolling({
         </div>
 
         <!-- Bulk Actions Bar -->
-        <div v-if="table.bulkActions && table.bulkActions.length > 0 && selectedCount > 0"
+        <div v-if="showsBulkActionsBar"
+             data-bulk-actions-bar
              class="mb-4 flex items-center justify-between rounded-md border bg-gray-50 p-3 dark:bg-gray-800">
             <div class="flex items-center space-x-2">
           <span class="text-sm font-medium">
@@ -1305,8 +1309,8 @@ useTablePolling({
             </div>
             <div class="flex items-center space-x-2">
                 <DropdownMenu>
-                    <DropdownMenuTrigger as-child>
-                        <Button variant="outline" size="sm" class="pointer-coarse:h-10">
+                    <DropdownMenuTrigger as-child :disabled="selectedCount === 0">
+                        <Button variant="outline" size="sm" class="pointer-coarse:h-10" :disabled="selectedCount === 0">
                             {{ t('vue-table-builder::table.bulk_actions.title') }}
                             <ChevronDown class="ml-2 h-4 w-4"/>
                         </Button>

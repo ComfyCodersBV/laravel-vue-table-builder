@@ -49,7 +49,7 @@ The component renders all of the following automatically based on what the PHP b
 | Search inputs                       | searchInputs map is non-empty             |
 | Pagination controls                 | `pagination` object is present            |
 | Per-page selector                   | `perPageOptions` has more than one option |
-| Bulk action toolbar                 | `bulkActions` array is non-empty          |
+| Bulk action toolbar                 | `bulkActions` array is non-empty and a row is selected, or `bulkActionsAlwaysVisible` is `true` |
 | Row checkboxes                      | bulk actions present                      |
 | Clickable rows                      | `rowLinks` array is non-empty, or a `row-click` listener is bound |
 | Keyboard row link in the first cell | the row has a `rowLinks` entry            |

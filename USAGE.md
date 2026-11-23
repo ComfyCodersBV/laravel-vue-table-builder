@@ -175,6 +175,16 @@ click sends one request.
 
 See [docs/row-actions.md](docs/row-actions.md).
 
+### Bulk Actions Bar
+
+```php
+$table->bulkAction('Archive', each: fn (Room $room) => $room->archive())
+    ->bulkActionsAlwaysVisible();
+```
+
+The bulk actions bar shows once a row is selected. `bulkActionsAlwaysVisible()` keeps it visible with 0 selected and
+the menu disabled until a row is selected. See [docs/bulk-actions.md](docs/bulk-actions.md#keeping-the-bar-visible).
+
 ### Grid Layout
 
 ```php
