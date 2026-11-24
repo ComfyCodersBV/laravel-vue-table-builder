@@ -2,6 +2,9 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.21.1 - 2026-11-24
+* Update the npm lockfile for security advisories in transitive development dependencies.
+
 ## 1.21.0 - 2026-11-24
 * `searchPlacement: 'above'` (sent by `tranquil-tools/laravel-table-builder` 1.7 from `->searchPlacement('above')` or the
   app-wide `TableBuilder::defaultSearchPlacement('above')`) puts the global search on its own full width row, with the
