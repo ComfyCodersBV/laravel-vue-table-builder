@@ -149,6 +149,7 @@ Import the TableBuilder component:
 - ☑️ Bulk selection with Shift-click to select a range of rows, and a bulk actions bar that can stay visible without a selection
 - 💾 Server-side reorder persistence on an order column
 - 📅 Date and date range filters, configurable query keys and empty states
+- 🔎 A global search inline next to the filters, or on its own row above them with `searchPlacement('above')` per table or app-wide
 - 📱 Fully responsive design
 
 ## Changelog

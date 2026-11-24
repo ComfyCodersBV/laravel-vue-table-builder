@@ -173,6 +173,24 @@ against each configured column, without term splitting or search methods.
 A `QueryBuilder` resource never passes through this filter: its rows are already filtered by the SQL query, paginated or
 not, so term splitting and search methods keep working.
 
+## Placement
+
+By default the global search sits inline, right of the filter button and left of the pagination and toolbar buttons.
+`searchPlacement('above')` puts it on its own full width row, with the filter button, pagination and toolbar buttons
+on the row below:
+
+```php
+$table->withGlobalSearch()->searchPlacement('above');
+```
+
+Set it once for every table in a service provider; a table's own `searchPlacement()` still wins:
+
+```php
+TableBuilder::defaultSearchPlacement('above');
+```
+
+The placement only applies when the table has a global search. It needs `tranquil-tools/laravel-table-builder` 1.7.
+
 ## Global Default
 
 Enable global search on every table in a service provider:

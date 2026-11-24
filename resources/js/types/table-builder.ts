@@ -141,6 +141,7 @@ export interface TableData {
     pagination?: PaginationData
     filters: Filter[]
     searchInputs: Record<string, SearchInput>
+    searchPlacement?: 'inline' | 'above'
     perPageOptions: number[]
     defaultSort: string
     bulkActions: BulkAction[]

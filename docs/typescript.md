@@ -33,6 +33,7 @@ interface TableData {
     pagination?: PaginationData
     filters: Filter[]
     searchInputs: Record<string, SearchInput>
+    searchPlacement?: 'inline' | 'above' // 'above' puts the global search on its own row first
     perPageOptions: number[]
     defaultSort: string
     bulkActions: BulkAction[]

@@ -2,6 +2,13 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.21.0 - 2026-11-24
+* `searchPlacement: 'above'` (sent by `tranquil-tools/laravel-table-builder` 1.7 from `->searchPlacement('above')` or the
+  app-wide `TableBuilder::defaultSearchPlacement('above')`) puts the global search on its own full width row, with the
+  filter button, pagination and toolbar buttons on the row below. Without it, or on a table without global search,
+  nothing changes.
+* The renderer supports schema version `1.6` and requires `tranquil-tools/laravel-table-builder` `^1.7`.
+
 ## 1.20.0 - 2026-11-23
 * `->bulkActionsAlwaysVisible()` (sent as `bulkActionsAlwaysVisible` by `tranquil-tools/laravel-table-builder` 1.6)
   keeps the bulk actions bar visible without a selection: it shows 0 selected rows and its menu button stays disabled

@@ -635,6 +635,37 @@ describe('TableBuilder empty state', () => {
     })
 })
 
+describe('TableBuilder search placement', () => {
+    const global = {global: {key: 'global', label: 'Search', value: ''}}
+
+    it('keeps the search inline next to the filter button by default', () => {
+        const wrapper = mount(TableBuilder, {props: {table: {...tableData(), searchInputs: global} as TableData}})
+
+        const toolbar = wrapper.find('[data-search-placement]')
+
+        expect(toolbar.attributes('data-search-placement')).toBe('inline')
+        expect(toolbar.element.firstElementChild?.hasAttribute('data-table-search-wrapper')).toBe(false)
+        expect(wrapper.findAll('[data-testid="table-search"]')).toHaveLength(1)
+    })
+
+    it('puts the search on its own full width row above the other controls when the table asks for it', () => {
+        const wrapper = mount(TableBuilder, {props: {table: {...tableData(), searchInputs: global, searchPlacement: 'above'} as TableData}})
+
+        const toolbar = wrapper.find('[data-search-placement]')
+
+        expect(toolbar.attributes('data-search-placement')).toBe('above')
+        expect(toolbar.element.firstElementChild?.hasAttribute('data-table-search-wrapper')).toBe(true)
+        expect(toolbar.element.firstElementChild?.classList.contains('basis-full')).toBe(true)
+        expect(wrapper.findAll('[data-testid="table-search"]')).toHaveLength(1)
+    })
+
+    it('ignores the above placement when the table has no global search', () => {
+        const wrapper = mount(TableBuilder, {props: {table: {...tableData(), searchPlacement: 'above'} as TableData}})
+
+        expect(wrapper.find('[data-search-placement]').attributes('data-search-placement')).toBe('inline')
+    })
+})
+
 describe('TableBuilder reorder persistence', () => {
     beforeEach(() => {
         vi.mocked(router.post).mockClear()

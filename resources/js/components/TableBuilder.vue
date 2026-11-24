@@ -159,6 +159,8 @@ function prepareExport(event: MouseEvent): void {
 
 const rowKeyName = computed(() => table.value.rowKey || 'id')
 
+const searchAbove = computed(() => table.value.searchPlacement === 'above' && Boolean(table.value.searchInputs?.global))
+
 function rawRowValue(row: any, key: string): any {
     if (key === rowKeyName.value && row !== null && typeof row === 'object' && '__key' in row) {
         return row.__key
@@ -1125,7 +1127,12 @@ useTablePolling({
 
 <template>
     <div>
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 pb-4">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 pb-4" :data-search-placement="searchAbove ? 'above' : 'inline'">
+            <div v-if="searchAbove" class="relative basis-full" data-table-search-wrapper>
+                <Search class="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-muted-foreground"/>
+                <Input ref="searchInput" v-model="searchValue" data-testid="table-search" :placeholder="table.searchInputs?.global?.label"
+                       class="pl-8 pointer-coarse:h-10"/>
+            </div>
             <div class="flex flex-1 items-center gap-2">
                 <!-- Filter dropdown -->
                 <DropdownMenu v-if="table.filters && Object.keys(table.filters).length > 0"
@@ -1205,7 +1212,7 @@ useTablePolling({
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <!-- Search Input -->
-                <div v-if="table.searchInputs?.global" class="relative flex-1">
+                <div v-if="table.searchInputs?.global && !searchAbove" class="relative flex-1" data-table-search-wrapper>
                     <Search class="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-muted-foreground"/>
                     <Input ref="searchInput" v-model="searchValue" data-testid="table-search" :placeholder="table.searchInputs?.global?.label"
                            class="pl-8 pointer-coarse:h-10"/>

@@ -20,6 +20,7 @@ public function boot(): void
     TableBuilder::defaultColumnCanBeHidden(true);
     TableBuilder::defaultHighlightFirstColumn(false);
     TableBuilder::defaultGlobalSearch(false);
+    TableBuilder::defaultSearchPlacement('inline');
     TableBuilder::defaultRowActionsIconOnly(false);
     TableBuilder::defaultRowActionIcons([]);
 }
@@ -42,6 +43,7 @@ public function boot(): void
 |----------------------------------------------------|---------|-----------------------------------------------------------------------------|
 | `TableBuilder::defaultSearchDebounce(int $ms)`     | `350`   | Milliseconds to debounce search input changes                               |
 | `TableBuilder::defaultGlobalSearch(string\|false)` | `false` | Enable global search on all tables with an optional label; `false` disables |
+| `TableBuilder::defaultSearchPlacement(string)`     | `'inline'` | `'above'` puts the global search on its own row above the other controls |
 
 ### Columns
 
