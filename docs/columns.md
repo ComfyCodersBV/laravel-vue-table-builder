@@ -28,6 +28,7 @@ column(
     bool $export = true,
     array|string|null $headerClasses = null,
     ?string $hideBelow = null,
+    ?callable $normalizeSearch = null,
 ): self
 ```
 
@@ -51,6 +52,7 @@ column(
 | `export`      | `bool`                  | `true`                           | Include the column in a CSV export                                 |
 | `headerClasses` | `array\|string\|null` | `null`                           | CSS classes for the header cell only, see [CSS Classes](#css-classes) |
 | `hideBelow`   | `string\|null`          | `null`                           | Hide the column below `'sm'`, `'md'`, `'lg'` or `'xl'`, see [Hiding a Column on Small Screens](#hiding-a-column-on-small-screens) |
+| `normalizeSearch` | `callable\|null`   | `null`                           | Transform the typed term of this column's search input; needs `searchable: true`, see [Normalizing the Search Term](search.md#normalizing-the-search-term) |
 
 Only `key` and `label` are safe to pass positionally; use named arguments for the rest.
 
@@ -269,7 +271,8 @@ That is shorthand for:
 ```
 
 Any non-empty string is treated the same as `true`. Use [`searchInput()`](search.md) directly when you need multiple
-columns in one input or a specific search method.
+columns in one input or a specific search method. `normalizeSearch` transforms the typed term first, for example to
+strip spaces from a phone number, see [Normalizing the Search Term](search.md#normalizing-the-search-term).
 
 ## Global Column Defaults
 

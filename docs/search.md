@@ -22,13 +22,14 @@ The global search stores its value in `filter[global]`.
 ### Signature
 
 ```php
-withGlobalSearch(?string $label = null, array $columns = []): self
+withGlobalSearch(?string $label = null, array $columns = [], ?callable $normalize = null): self
 ```
 
-| Parameter | Description                                            |
-|-----------|--------------------------------------------------------|
-| `label`   | Placeholder text (defaults to translated "Search...")  |
-| `columns` | Columns to search; if empty, falls back to the input's key |
+| Parameter   | Description                                                          |
+|-------------|----------------------------------------------------------------------|
+| `label`     | Placeholder text (defaults to translated "Search...")                |
+| `columns`   | Columns to search; if empty, falls back to the input's key           |
+| `normalize` | Transforms the typed term before it is applied, see [Normalizing the Search Term](#normalizing-the-search-term) |
 
 ### Remove Global Search
 
@@ -58,6 +59,7 @@ searchInput(
     ?string $label = null,
     ?string $defaultValue = null,
     array $columns = [],
+    ?callable $normalize = null,
 ): self
 ```
 
@@ -67,6 +69,7 @@ searchInput(
 | `label`        | `string\|null`  | auto from key | Label shown on the input                                                     |
 | `defaultValue` | `string\|null`  | `null`        | Pre-filled search term                                                       |
 | `columns`      | `array`         | `[]`          | Override which columns are searched (with optional search method per column) |
+| `normalize`    | `callable\|null` | `null`       | Transforms the typed term before it is applied, see [Normalizing the Search Term](#normalizing-the-search-term) |
 
 ### Searchable Shorthand
 
@@ -82,6 +85,24 @@ That is the same as:
 ->column('name', 'Name')
 ->searchInput('name', 'Name')
 ```
+
+## Normalizing the Search Term
+
+A search input takes a `normalize` callable that transforms the typed term before it is applied, so a phone number
+typed as `06 1234 5678` finds `0612345678`. It runs on the whole term, before the term is split into words, and also for
+a collection resource. A term that normalizes to an empty string skips that search input, but still counts as an
+active search filter. The search field keeps showing the value as typed.
+
+```php
+$table->column('phone', 'Phone', searchable: true, normalizeSearch: fn (string $term) => str_replace(' ', '', $term));
+$table->withGlobalSearch(columns: ['phone', 'name'], normalize: fn (string $term) => trim($term));
+$table->searchInput(key: 'phone', normalize: fn (string $term) => preg_replace('/\D/', '', $term));
+```
+
+`normalizeSearch` on `column()` only works together with `searchable: true`. A global search bar has one normalizer for
+all its columns: when columns need different normalizers, register a separate `searchInput()` per column.
+
+It needs `tranquil-tools/laravel-table-builder` 1.8.
 
 ## Search Methods
 
