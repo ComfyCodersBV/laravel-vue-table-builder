@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-vue-table-builder` will be documented in this file.
 
+## 1.21.2 - 2026-11-28
+* Require `tranquil-tools/laravel-table-builder` 1.8 and document its search term normalizer: `normalize` on
+  `searchInput()` and `withGlobalSearch()`, and `normalizeSearch` on `column()`.
+
 ## 1.21.1 - 2026-11-24
 * Update the npm lockfile for security advisories in transitive development dependencies.
 

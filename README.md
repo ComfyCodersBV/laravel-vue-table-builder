@@ -150,6 +150,7 @@ Import the TableBuilder component:
 - 💾 Server-side reorder persistence on an order column
 - 📅 Date and date range filters, configurable query keys and empty states
 - 🔎 A global search inline next to the filters, or on its own row above them with `searchPlacement('above')` per table or app-wide
+- 🧹 A search term normalizer per search input or column, so `06 1234 5678` finds `0612345678`
 - 📱 Fully responsive design
 
 ## Changelog
